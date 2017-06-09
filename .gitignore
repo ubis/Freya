@@ -1,0 +1,6 @@
+## Ignore Gogland IDE project settings
+.idea/
+
+## Ignore Binaries, logs...
+bin/
+log/

@@ -13,7 +13,9 @@ pipelines:
           - mkdir -pv "${PACKAGE_PATH}"
           - tar -cO --exclude-vcs --exclude=bitbucket-pipelines.yml . | tar -xv -C "${PACKAGE_PATH}"
           - cd "${PACKAGE_PATH}"/src
+          - export GOPATH=${PACKAGE_PATH}
           - echo ${GOPATH}
+          - cd loginserver
           - go get -v
           - go build -v
           - go test -v

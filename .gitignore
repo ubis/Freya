@@ -4,3 +4,4 @@
 ## Ignore Binaries, logs...
 bin/
 log/
+pkg/

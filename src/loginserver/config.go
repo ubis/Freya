@@ -45,7 +45,7 @@ func (c *Config) Read() {
 	@param 	section 	conf section
 	@param	key			conf key
 	@param	def			default value
-	@return	string value, either from conf or default
+	@return	string value, either from conf or default and error, if any
  */
 func (c *Config) getString(section string, key string, def string) (string, error) {
 	if value, err := c.file.SectionGet(section, key); err != true {
@@ -61,7 +61,7 @@ func (c *Config) getString(section string, key string, def string) (string, erro
 	@param 	section 	conf section
 	@param	key			conf key
 	@param	def			default value
-	@return	int value, either from conf or default
+	@return	int value, either from conf or default and error, if any
  */
 func (c *Config) getInt(section string, key string, def int) (int, error) {
 	if value, err := c.file.SectionGet(section, key); err != true {
@@ -77,7 +77,7 @@ func (c *Config) getInt(section string, key string, def int) (int, error) {
 	@param 	section 	conf section
 	@param	key			conf key
 	@param	def			default value
-	@return	bool value, either from conf or default
+	@return	bool value, either from conf or default and error, if any
  */
 func (c *Config) getBool(section string, key string, def bool) (bool, error) {
 	if value, err := c.file.SectionGet(section, key); err != true {

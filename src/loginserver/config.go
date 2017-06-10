@@ -1,9 +1,8 @@
 package main
 
 import (
-	"strconv"
-	"share/lib/goini"
 	"share/directory"
+	"share/conf"
 )
 
 // Default values
@@ -23,24 +22,14 @@ func (c *Config) Read() {
 	log.Info("Reading configuration...")
 
 	var location = directory.Root() + "/cfg/loginserver.ini"
-	var ini 	 = goini.New()
 
 	// parse configuration file...
-	if err := ini.ParseFile(location); err != nil {
+	if err := conf.Open(location); err != nil {
 		log.Fatalf("Couldn't read configuration file %s. %s", location, err.Error())
 		return
 	}
 
 	// read values from configuration...
-	if port, err := ini.SectionGet("network", "port"); err != true {
-		c.Port = C_Port
-	} else {
-		c.Port, _ = strconv.Atoi(port)
-	}
-
-	if maxUsers, err := ini.SectionGet("server", "max_users"); err != true {
-		c.MaxUsers = C_MaxUsers
-	} else {
-		c.MaxUsers, _ = strconv.Atoi(maxUsers)
-	}
+	c.Port	   = conf.GetInt("network", "port", C_Port)
+	c.MaxUsers = conf.GetInt("server", "max_users", C_MaxUsers)
 }

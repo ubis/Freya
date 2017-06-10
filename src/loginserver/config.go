@@ -14,6 +14,7 @@ const (
 
 // Configuration struct
 type Config struct {
+	file 		*goini.INI
 	Port		int
 	MaxUsers	int
 }
@@ -31,16 +32,57 @@ func (c *Config) Read() {
 		return
 	}
 
+	c.file = ini
+
 	// read values from configuration...
-	if port, err := ini.SectionGet("network", "port"); err != true {
-		c.Port = C_Port
-	} else {
-		c.Port, _ = strconv.Atoi(port)
+	c.Port, _     = c.getInt("network", "port", C_Port)
+	c.MaxUsers, _ = c.getInt("server", "max_users", C_MaxUsers)
+}
+
+/*
+	Gets value from configuration file, if section or key isn't found,
+	default value will be returned
+	@param 	section 	conf section
+	@param	key			conf key
+	@param	def			default value
+	@return	string value, either from conf or default
+ */
+func (c *Config) getString(section string, key string, def string) (string, error) {
+	if value, err := c.file.SectionGet(section, key); err != true {
+		return value, nil
 	}
 
-	if maxUsers, err := ini.SectionGet("server", "max_users"); err != true {
-		c.MaxUsers = C_MaxUsers
-	} else {
-		c.MaxUsers, _ = strconv.Atoi(maxUsers)
+	return def, nil
+}
+
+/*
+	Gets value from configuration file, if section or key isn't found,
+	default value will be returned
+	@param 	section 	conf section
+	@param	key			conf key
+	@param	def			default value
+	@return	int value, either from conf or default
+ */
+func (c *Config) getInt(section string, key string, def int) (int, error) {
+	if value, err := c.file.SectionGet(section, key); err != true {
+		return strconv.Atoi(value)
 	}
+
+	return def, nil
+}
+
+/*
+	Gets value from configuration file, if section or key isn't found,
+	default value will be returned
+	@param 	section 	conf section
+	@param	key			conf key
+	@param	def			default value
+	@return	bool value, either from conf or default
+ */
+func (c *Config) getBool(section string, key string, def bool) (bool, error) {
+	if value, err := c.file.SectionGet(section, key); err != true {
+		return strconv.ParseBool(value)
+	}
+
+	return def, nil
 }

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"share/logger"
-	"share/network"
+    "share/logger"
+    "share/network"
 )
 
 var log = logger.Init("loginserver")
@@ -10,10 +10,10 @@ var log = logger.Init("loginserver")
 var g_ServerConfig = Config{}
 
 func main() {
-	log.Info("LoginServer init")
-	g_ServerConfig.Read()
+    log.Info("LoginServer init")
+    g_ServerConfig.Read()
 
-	RegisterEvents()
+    RegisterEvents()
 
-	network.Init(g_ServerConfig.Port)
+    network.Init(g_ServerConfig.Port)
 }

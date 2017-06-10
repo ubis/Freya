@@ -48,7 +48,7 @@ func (c *Config) Read() {
 	@return	string value, either from conf or default and error, if any
  */
 func (c *Config) getString(section string, key string, def string) (string, error) {
-	if value, err := c.file.SectionGet(section, key); err != true {
+	if value, ok := c.file.SectionGet(section, key); ok != false {
 		return value, nil
 	}
 
@@ -64,7 +64,7 @@ func (c *Config) getString(section string, key string, def string) (string, erro
 	@return	int value, either from conf or default and error, if any
  */
 func (c *Config) getInt(section string, key string, def int) (int, error) {
-	if value, err := c.file.SectionGet(section, key); err != true {
+	if value, ok := c.file.SectionGet(section, key); ok != false {
 		return strconv.Atoi(value)
 	}
 
@@ -80,7 +80,7 @@ func (c *Config) getInt(section string, key string, def int) (int, error) {
 	@return	bool value, either from conf or default and error, if any
  */
 func (c *Config) getBool(section string, key string, def bool) (bool, error) {
-	if value, err := c.file.SectionGet(section, key); err != true {
+	if value, ok := c.file.SectionGet(section, key); ok != false {
 		return strconv.ParseBool(value)
 	}
 

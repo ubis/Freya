@@ -3,9 +3,10 @@ package network
 import (
     "net"
     "fmt"
+    "sync"
     "share/logger"
     "share/event"
-    "sync"
+    "share/models/server"
 )
 
 var log     = logger.Instance()
@@ -18,15 +19,21 @@ var userIdx uint16 = 0
     Network initialization
     @param  port    Server port to listen on
  */
-func Init(port int) {
+func Init(_settings interface{}) {
     log.Info("Configuring network...")
+
+    var settings, ok = _settings.(models.Settings);
+    if !ok {
+        log.Fatal("Cannot parse server settings!")
+        return
+    }
 
     // register client disconnect event
     event.Register(event.ClientDisconnectEvent, event.Handler(OnClientDisconnect))
 
     // prepare to listen for incoming connections
     // listening on Ip.Any
-    var l, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
+    var l, err = net.Listen("tcp", fmt.Sprintf(":%d", settings.ListenPort))
 
     if err != nil {
         log.Fatal(err.Error())
@@ -45,7 +52,7 @@ func Init(port int) {
         }
 
         // create user session
-        var session = Session{socket:socket}
+        var session = Session{socket: socket}
 
         lock.RLock()
         // in case its used already...
@@ -67,7 +74,7 @@ func Init(port int) {
         event.Trigger(event.ClientConnectEvent, &session)
 
         // handle new client session
-        go session.Start()
+        go session.Start(&settings.XorKeyTable)
     }
 }
 

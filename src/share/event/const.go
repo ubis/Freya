@@ -8,6 +8,6 @@ const (
 
 // Server events for network
 const (
-    PacketReceiveEvent      = "onPacketReceive"
-    PacketSendEvent         = "onPacketSent"
+    PacketReceivedEvent     = "onPacketReceive"
+    PacketSentEvent         = "onPacketSent"
 )

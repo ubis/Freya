@@ -7,7 +7,7 @@ var log = logger.Instance()
 // XorKeyTable structure
 type XorKeyTable struct {
     KeyTable []uint32
-    Seed2nd  uint32
+    Seed2nd     uint32
 }
 
 // Initializes XorKeyTable

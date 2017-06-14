@@ -4,6 +4,7 @@ import (
     "encoding/binary"
     "errors"
     "fmt"
+    "math/rand"
 )
 
 var MASK = []uint32 { 0xFFFFFFFF, 0xFFFFFF00, 0xFFFF0000, 0xFF000000 };
@@ -23,9 +24,10 @@ type Encryption struct {
     @param  key     or key table
  */
 func (e *Encryption) Init(key *XorKeyTable) {
-    e.Key                     = key
     e.isFirstPacket           = true
     e.xorKeyTableBaseMultiple = 1
+    e.Key                     = key
+    e.RecvXorKeyIdx           = uint32(rand.Intn(RecvXorKeyNum))
 }
 
 /*

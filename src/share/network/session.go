@@ -4,6 +4,7 @@ import (
     "net"
     "share/event"
     "share/encryption"
+    "share/models/server"
 )
 
 const MAX_RECV_BUFFER_SIZE = 4096
@@ -12,21 +13,24 @@ type Session struct {
     socket      net.Conn
     buffer      []byte
 
+    Settings    *models.Settings
     Encryption  encryption.Encryption
     UserIdx     uint16
+    AuthKey     uint32
 }
 
 /*
     Starts session goroutine
     @param  key encryption XorKeyTable
  */
-func (s *Session) Start(key *encryption.XorKeyTable) {
+func (s *Session) Start(settings models.Settings) {
     // create new receiving buffer
-    s.buffer    = make([]byte, MAX_RECV_BUFFER_SIZE)
+    s.buffer     = make([]byte, MAX_RECV_BUFFER_SIZE)
+    s.Settings   = &settings
     s.Encryption = encryption.Encryption{}
 
     // init encryption
-    s.Encryption.Init(key)
+    s.Encryption.Init(&settings.XorKeyTable)
 
     for {
         // read data

@@ -74,7 +74,7 @@ func Init(_settings interface{}) {
         event.Trigger(event.ClientConnectEvent, &session)
 
         // handle new client session
-        go session.Start(&settings.XorKeyTable)
+        go session.Start(settings)
     }
 }
 

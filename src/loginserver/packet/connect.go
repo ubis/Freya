@@ -1,6 +1,9 @@
 package packet
 
-import "share/network"
+import (
+    "share/network"
+    "time"
+)
 
 // Connect2Svr Packet
 func Connect2Svr(session *network.Session, data []uint8) {
@@ -15,10 +18,12 @@ func Connect2Svr(session *network.Session, data []uint8) {
         return
     }
 
+    session.AuthKey = uint32(time.Now().Unix())
+
     var s2c = S2C_CONNECT2SVR{
         S2C_HEADER{MAGIC_KEY, 0, CONNECT2SVR},
         session.Encryption.Key.Seed2nd,
-        0x00112233,
+        session.AuthKey,
         session.UserIdx,
         uint16(session.Encryption.RecvXorKeyIdx),
     }

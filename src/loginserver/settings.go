@@ -1,8 +1,6 @@
 package main
 
-import (
-    "share/models/server"
-)
+import "share/models/server"
 
 type Settings struct {
     Global models.Settings

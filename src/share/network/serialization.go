@@ -3,43 +3,69 @@ package network
 import (
     "bytes"
     "encoding/binary"
+    "errors"
+    "fmt"
 )
 
-type C2S_HEADER struct {
-    MagicKey 	uint16
-    Length		uint16
-    Checksum	uint32
-    Opcode 		uint16
-}
-
-type C2S_CONNECT2SVR struct {
-    Header 		C2S_HEADER
-    AuthKey 	uint32
-}
+/*
+    Attempts to deserialize binary array to specified struct
+    @param  data        source data array
+    @param  structure   specified struct
+    @return error if deserialization failed
+ */
 func Deserialize(data []uint8, structure interface{}) error {
-    var buffer = bytes.NewBuffer(data)
+    // first serialize empty structure
+    var buffer = new(bytes.Buffer)
+    binary.Write(buffer, binary.LittleEndian, structure);
 
-    if err := binary.Read(buffer, binary.LittleEndian, &structure); err != nil {
-        return err
+    // check data length
+    if len(buffer.Bytes()) != len(data) {
+        return errors.New(
+            fmt.Sprintf("Invalid len (Detected: %d, required: %d)",
+                len(data),
+                len(buffer.Bytes()),
+            ),
+        )
     }
 
-    buffer.Reset()
+    // now try to deserialize real data...
+    buffer = bytes.NewBuffer(data)
+    if err := binary.Read(buffer, binary.LittleEndian, structure); err != nil {
+        return errors.New(
+            fmt.Sprintf(
+            "Cannot deserialize (Array len: %d, Detected len: %d, Type: %d)\n%s",
+                len(data),
+                int(data[2] + (data[3] >> 16)),
+                int(data[8] + (data[9] >> 16)),
+                err.Error(),
+            ),
+        )
+    }
+
     return nil
 }
 
+/*
+    Attempts to serialize specified struct into binary array
+    @param  structure   specified struct
+    @return binary array with serialized data and error if serialization failed
+ */
 func Serialize(structure interface{}) ([]byte, error) {
-    var buffer = bytes.NewBuffer(make([]uint8, 2048))
-
-    if err := binary.Write(buffer, binary.LittleEndian, &structure); err != nil {
-        return nil, err
+    var buffer = new(bytes.Buffer)
+    if err := binary.Write(buffer, binary.LittleEndian, structure); err != nil {
+        return nil, errors.New("Error serializing packet: " + err.Error())
     }
 
-    return buffer.Bytes(), nil
-}
+    // update packet length
+    // since Golang adds padding to struct's,
+    // we need to update data manually
+    var data = buffer.Bytes()
+    var len  = len(data)
 
+    if len >= 4 {
+        data[2] = uint8(len)
+        data[3] = uint8(len >> 18)
+    }
 
-func ChangeLen(data *[]byte) {
-    var len = len(*data)
-    (*data)[2] = uint8(len)
-    (*data)[3] = uint8(len >> 18)
+    return data, nil
 }

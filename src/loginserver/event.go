@@ -25,7 +25,7 @@ func OnClientConnect(event event.Event) {
         return
     }
 
-    log.Infof("Client %s connected to the LoginServer", session.GetEndPnt())
+    log.Infof("Client `%s` connected to the LoginServer", session.GetEndPnt())
 }
 
 /*
@@ -40,9 +40,13 @@ func OnClientDisconnect(event event.Event) {
         return
     }
 
-    log.Infof("Client %s disconnected from the LoginServer", session.GetEndPnt())
+    log.Infof("Client `%s` disconnected from the LoginServer", session.GetEndPnt())
 }
 
+/*
+    OnPacketReceive event, informs server about received packet
+    @param  event   Event interface, which is later parsed into PacketArgs struct
+ */
 func OnPacketReceive(event event.Event) {
     var args, err = event.(*network.PacketArgs)
 
@@ -63,6 +67,11 @@ func OnPacketReceive(event event.Event) {
     g_PacketHandler.Handle(args)
 }
 
+/*
+    OnPacketSend event, informs server about sent packet
+    @param  event   Event interface, which is later parsed into PacketArgs struct,
+    however Data field is nil, since we don't need packet's data anymore
+ */
 func OnPacketSend(event event.Event) {
     var args, err = event.(*network.PacketArgs)
 

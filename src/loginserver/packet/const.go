@@ -1,6 +1,11 @@
 package packet
 
-type Packet int
+import "share/encryption"
+
+const (
+    // get magic key from encryption package
+    MAGIC_KEY               = encryption.MagicKey
+)
 
 const (
     CONNECT2SVR             = 101

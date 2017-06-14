@@ -16,6 +16,10 @@ type Session struct {
     UserIdx     uint16
 }
 
+/*
+    Starts session goroutine
+    @param  key encryption XorKeyTable
+ */
 func (s *Session) Start(key *encryption.XorKeyTable) {
     // create new receiving buffer
     s.buffer    = make([]byte, MAX_RECV_BUFFER_SIZE)
@@ -56,15 +60,21 @@ func (s *Session) Start(key *encryption.XorKeyTable) {
     }
 }
 
+/*
+    Sends specified data to the client
+    @param  data binary array, which will be sent to the client
+ */
 func (s *Session) Send(data []uint8) {
     var length = 0
 
+    // encrypt data
     var encrypt, err = s.Encryption.Encrypt(data)
     if err != nil {
         log.Error("Error encrypting packet: " + err.Error())
         return
     }
 
+    // send it...
     length, err = s.socket.Write(encrypt)
     if err != nil {
         log.Error("Error sending packet: " + err.Error())
@@ -79,10 +89,14 @@ func (s *Session) Send(data []uint8) {
         nil,
     }
 
-    // trigger packet received event
+    // trigger packet sent event
     event.Trigger(event.PacketSendEvent, arg)
 }
 
+/*
+    Returns session's remote endpoint
+    @return remote endpoint
+ */
 func (s *Session) GetEndPnt() string {
     return s.socket.RemoteAddr().String()
 }

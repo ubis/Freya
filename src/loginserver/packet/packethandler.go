@@ -11,6 +11,7 @@ type PacketHandler struct {
     packets network.PacketInfo
 }
 
+// Initializes PacketHandler, registers packets
 func (pk *PacketHandler) Init() {
     pk.packets = make(network.PacketInfo)
 
@@ -26,14 +27,30 @@ func (pk *PacketHandler) Init() {
     pk.Register(PRE_SERVER_ENV_REQUEST, "PreServerEnvRequest", nil)
 
     for code := range pk.packets {
-        log.Debugf("Registered packet: %s(%d)", pk.packets[code].Name, code)
+        var pType = "packet"
+
+        if pk.packets[code].Method == nil {
+            pType = "procedure"
+        }
+
+        log.Debugf("Registered %s: %s(%d)", pType, pk.packets[code].Name, code)
     }
 }
 
+/*
+    Registers network packet
+    @param  code    packet type
+    @param  name    packet name
+    @param  method  packet processing method
+ */
 func (pk *PacketHandler) Register(code int, name string, method interface{}) {
     pk.packets[code] = &network.PacketData{name, method}
 }
 
+/*
+    Handles specified network packet
+    @param  args    packet args
+ */
 func (pk *PacketHandler) Handle(args *network.PacketArgs) {
     if pk.packets[args.Type] == nil {
         // unknown packet received
@@ -47,9 +64,23 @@ func (pk *PacketHandler) Handle(args *network.PacketArgs) {
     }
 
     var invoke = pk.packets[args.Type].Method
+    if invoke == nil {
+        log.Errorf("Trying to access procedure `%s` (Type: %d, Src: %s, UserIdx: %d)",
+            pk.Name(args.Type),
+            args.Type,
+            args.Session.GetEndPnt(),
+            args.Session.UserIdx,
+        )
+        return;
+    }
     invoke.(func(*network.Session, []uint8))(args.Session, *args.Data)
 }
 
+/*
+    Returns packet's name by packet type
+    @param  code    packet type
+    @return packet name and `Unknown` for un-registered packet
+ */
 func (pk *PacketHandler) Name(code int) string {
     if pk.packets[code] != nil {
         return pk.packets[code].Name

@@ -78,6 +78,10 @@ func Init(_settings interface{}) {
     }
 }
 
+/*
+    OnClientDisconnect event, informs server about disconnected client
+    @param  event   Event interface, which is later parsed into Session struct
+ */
 func OnClientDisconnect(event event.Event) {
     var session, err = event.(*Session)
     if err != true {

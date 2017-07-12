@@ -6,6 +6,7 @@ import (
     "share/lib/rpc2"
     "fmt"
     "net"
+    "share/rpc/models/server"
 )
 
 var log = logger.Instance()
@@ -32,7 +33,17 @@ func main() {
         *reply = Reply(args.A + args.B)
         return nil
     })
+    srv.Handle("ServerRegister",
+        func(
+            client *rpc2.Client,
+            request server.RegisterRequest,
+            reply *server.RegisterResponse) error {
 
-    lis, _ := net.Listen("tcp", "127.0.0.1:5000")
+            log.Info(request)
+        *reply = server.RegisterResponse{true}
+        return nil
+    })
+
+    lis, _ := net.Listen("tcp", "127.0.0.1:9001")
     srv.Accept(lis)
 }

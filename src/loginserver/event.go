@@ -3,6 +3,7 @@ package main
 import (
     "share/event"
     "share/network"
+    "share/rpc/models/server"
 )
 
 // Registers server events
@@ -11,6 +12,9 @@ func RegisterEvents() {
     event.Register(event.ClientDisconnectEvent, event.Handler(OnClientDisconnect))
     event.Register(event.PacketReceiveEvent, event.Handler(OnPacketReceive))
     event.Register(event.PacketSendEvent, event.Handler(OnPacketSend))
+
+    event.Register(event.SyncConnectEvent, event.Handler(OnSyncConnect))
+    event.Register(event.SyncDisconnectEvent, event.Handler(OnSyncDisconnect))
 }
 
 /*
@@ -87,4 +91,27 @@ func OnPacketSend(event event.Event) {
         args.Session.GetEndPnt(),
         args.Session.UserIdx,
     )
+}
+
+/*
+    OnSyncConnect event, informs server about succesfull connection with the Master Server
+    @param  event   Event interface which is nil
+ */
+func OnSyncConnect(event event.Event) {
+    log.Info("Established connection with the Master Server!")
+
+    // register this server
+    var req  = server.RegisterRequest{Type: server.LOGIN_SERVER_TYPE}
+    var resp = server.RegisterResponse{}
+
+    g_RPCHandler.Call("ServerRegister", req, &resp)
+    log.Info(resp)
+}
+
+/*
+    OnSyncDisconnect event, informs server about lost connection with the Master Server
+    @param  event   Event interface which is nil
+ */
+func OnSyncDisconnect(event event.Event) {
+    log.Info("Lost connection with the Master Server! Reconnecting...")
 }

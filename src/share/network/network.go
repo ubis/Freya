@@ -3,9 +3,10 @@ package network
 import (
     "net"
     "fmt"
+    "sync"
     "share/logger"
     "share/event"
-    "sync"
+    "share/encryption"
 )
 
 var log     = logger.Instance()
@@ -18,7 +19,7 @@ var userIdx uint16 = 0
     Network initialization
     @param  port    Server port to listen on
  */
-func Init(port int) {
+func Init(port int, table encryption.XorKeyTable) {
     log.Info("Configuring network...")
 
     // register client disconnect event
@@ -45,7 +46,7 @@ func Init(port int) {
         }
 
         // create user session
-        var session = Session{socket:socket}
+        var session = Session{socket: socket}
 
         lock.RLock()
         // in case its used already...
@@ -67,10 +68,14 @@ func Init(port int) {
         event.Trigger(event.ClientConnectEvent, &session)
 
         // handle new client session
-        go session.Start()
+        go session.Start(table)
     }
 }
 
+/*
+    OnClientDisconnect event, informs server about disconnected client
+    @param  event   Event interface, which is later parsed into Session struct
+ */
 func OnClientDisconnect(event event.Event) {
     var session, err = event.(*Session)
     if err != true {

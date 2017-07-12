@@ -4,17 +4,19 @@ import (
     "encoding/binary"
     "errors"
     "fmt"
+    "math/rand"
 )
 
 var MASK = []uint32 { 0xFFFFFFFF, 0xFFFFFF00, 0xFFFF0000, 0xFF000000 };
 
 // Encryption structure
 type Encryption struct {
-    key                     *XorKeyTable
     recvXorKey              uint32
-    recvXorKeyIdx           uint32
     isFirstPacket           bool
     xorKeyTableBaseMultiple uint32
+
+    Key                     *XorKeyTable
+    RecvXorKeyIdx           uint32
 }
 
 /*
@@ -22,9 +24,10 @@ type Encryption struct {
     @param  key     or key table
  */
 func (e *Encryption) Init(key *XorKeyTable) {
-    e.key                     = key
     e.isFirstPacket           = true
     e.xorKeyTableBaseMultiple = 1
+    e.Key                     = key
+    e.RecvXorKeyIdx           = uint32(rand.Intn(RecvXorKeyNum))
 }
 
 /*
@@ -53,7 +56,7 @@ func (e *Encryption) Encrypt(data []uint8) ([]uint8, error) {
     // header
     xorNum  = binary.LittleEndian.Uint32(data) ^ SendXorKey
     binary.LittleEndian.PutUint32(pPayload, xorNum)
-    xorKey = e.key.KeyTable[xorNum & RecvXorKeyNumMask]
+    xorKey = e.Key.KeyTable[xorNum & RecvXorKeyNumMask]
 
     var payloadLen = iLen - (S2CHeaderSize - MainCMDSize);
     var j int32    = 4
@@ -61,7 +64,7 @@ func (e *Encryption) Encrypt(data []uint8) ([]uint8, error) {
     for i := 0; i < payloadLen / 4; i++ {
         xorNum = binary.LittleEndian.Uint32(data[j:j + 4]) ^ xorKey;
         binary.LittleEndian.PutUint32(pPayload[j:j + 4], xorNum)
-        xorKey = e.key.KeyTable[xorNum & RecvXorKeyNumMask]
+        xorKey = e.Key.KeyTable[xorNum & RecvXorKeyNumMask]
         j += 4
     }
 
@@ -137,7 +140,7 @@ func (e *Encryption) Decrypt(data []uint8) ([]uint8, error) {
     // decrypt header
     xorNum  = pHeader;
     pHeader = xorNum ^ xorKey;
-    xorKey  = e.key.KeyTable[(xorNum & RecvXorKeyNumMask) * e.xorKeyTableBaseMultiple];
+    xorKey  = e.Key.KeyTable[(xorNum & RecvXorKeyNumMask) * e.xorKeyTableBaseMultiple];
     binary.LittleEndian.PutUint32(pPayload, pHeader)
 
     // decrypt body
@@ -147,7 +150,7 @@ func (e *Encryption) Decrypt(data []uint8) ([]uint8, error) {
     for i := 0; i < payloadLen / 4; i++ {
         xorNum = binary.LittleEndian.Uint32(data[j:j + 4]);
         binary.LittleEndian.PutUint32(pPayload[j:j + 4], xorNum ^ xorKey)
-        xorKey = e.key.KeyTable[(xorNum & RecvXorKeyNumMask) * e.xorKeyTableBaseMultiple];
+        xorKey = e.Key.KeyTable[(xorNum & RecvXorKeyNumMask) * e.xorKeyTableBaseMultiple];
         j += 4
     }
 
@@ -169,11 +172,11 @@ func (e *Encryption) Decrypt(data []uint8) ([]uint8, error) {
         e.xorKeyTableBaseMultiple = 2;
     }
 
-    e.recvXorKey = e.key.KeyTable[(e.recvXorKeyIdx) * e.xorKeyTableBaseMultiple]
-    e.recvXorKeyIdx++
+    e.recvXorKey = e.Key.KeyTable[(e.RecvXorKeyIdx) * e.xorKeyTableBaseMultiple]
+    e.RecvXorKeyIdx++
 
-    if e.recvXorKeyIdx >= RecvXorKeyNum {
-        e.recvXorKeyIdx = 0
+    if e.RecvXorKeyIdx >= RecvXorKeyNum {
+        e.RecvXorKeyIdx = 0
     }
 
     return pPayload, nil

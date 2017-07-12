@@ -71,7 +71,7 @@ func (s *Session) Start(table encryption.XorKeyTable) {
 
 /*
     Sends specified data to the client
-    @param  data binary array, which will be sent to the client
+    @param  writer  a pointer to Writer so that byte array of data could be received from it
  */
 func (s *Session) Send(writer *Writer) {
     var _ = 0

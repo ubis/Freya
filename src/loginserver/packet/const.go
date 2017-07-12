@@ -1,12 +1,6 @@
 package packet
 
-import "share/encryption"
-
-const (
-    // get magic key from encryption package
-    MAGIC_KEY               = encryption.MagicKey
-)
-
+// Packet Type ID's
 const (
     CONNECT2SVR             = 101
     VERIFYLINKS             = 102

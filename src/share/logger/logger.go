@@ -6,7 +6,7 @@ import (
     "share/directory"
 )
 
-var logPath = directory.Root() + "log/"
+var logPath = directory.Root() + "/log/"
 var log     = logging.MustGetLogger("example")
 var format  = logging.MustStringFormatter(
     `%{time:2006-01-02 15:04:05.000} [%{level}] %{message}`,

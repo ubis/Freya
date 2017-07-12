@@ -4,5 +4,5 @@ type PacketArgs struct {
     Session *Session
     Length  int
     Type    int
-    Data    *[]uint8
+    Packet  *Reader
 }

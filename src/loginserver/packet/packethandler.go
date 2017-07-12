@@ -1,39 +1,43 @@
 package packet
 
 import (
-    "share/logger"
     "share/network"
+    "share/logger"
+    "loginserver/def"
 )
 
 var log = logger.Instance()
+
+var g_ServerConfig   = def.ServerConfig
+var g_ServerSettings = def.ServerSettings
 
 type PacketHandler struct {
     packets network.PacketInfo
 }
 
-// Initializes PacketHandler, registers packets
+// Initializes PacketHandler which registers packets
 func (pk *PacketHandler) Init() {
     pk.packets = make(network.PacketInfo)
 
     // registering packets
     pk.Register(CONNECT2SVR, "Connect2Svr", Connect2Svr)
     pk.Register(VERIFYLINKS, "VerifyLinks", nil)
-    pk.Register(AUTHACCOUNT, "AuthAccount", nil)
+    pk.Register(AUTHACCOUNT, "AuthAccount", AuthAccount)
     pk.Register(SYSTEMMESSG, "SystemMessg", nil)
     pk.Register(SERVERSTATE, "ServerState", nil)
-    pk.Register(CHECKVERSION, "CheckVersion", nil)
+    pk.Register(CHECKVERSION, "CheckVersion", CheckVersion)
     pk.Register(URLTOCLIENT, "URLToClient", nil)
-    pk.Register(PUBLIC_KEY, "PublicKey", nil)
-    pk.Register(PRE_SERVER_ENV_REQUEST, "PreServerEnvRequest", nil)
+    pk.Register(PUBLIC_KEY, "PublicKey", PublicKey)
+    pk.Register(PRE_SERVER_ENV_REQUEST, "PreServerEnvRequest", PreServerEnvRequest)
 
     for code := range pk.packets {
-        var pType = "packet"
+        var pType = "CSC"
 
         if pk.packets[code].Method == nil {
-            pType = "procedure"
+            pType = "NFY"
         }
 
-        log.Debugf("Registered %s: %s(%d)", pType, pk.packets[code].Name, code)
+        log.Debugf("Registered %s packet: %s(%d)", pType, pk.packets[code].Name, code)
     }
 }
 
@@ -43,7 +47,7 @@ func (pk *PacketHandler) Init() {
     @param  name    packet name
     @param  method  packet processing method
  */
-func (pk *PacketHandler) Register(code int, name string, method interface{}) {
+func (pk *PacketHandler) Register(code uint16, name string, method interface{}) {
     pk.packets[code] = &network.PacketData{name, method}
 }
 
@@ -52,18 +56,24 @@ func (pk *PacketHandler) Register(code int, name string, method interface{}) {
     @param  args    packet args
  */
 func (pk *PacketHandler) Handle(args *network.PacketArgs) {
-    if pk.packets[args.Type] == nil {
+    // recover on panic
+    /*defer func() {
+        recover()
+        log.Warning("Recovered from:", pk.Name(args.Type))
+    }()*/
+
+    if pk.packets[args.Packet.Type] == nil {
         // unknown packet received
         log.Errorf("Unknown packet received (Len: %d, Type: %d, Src: %s, UserIdx: %d)",
-            args.Length,
-            args.Type,
+            args.Packet.Size,
+            args.Packet.Type,
             args.Session.GetEndPnt(),
             args.Session.UserIdx,
         )
         return
     }
 
-    var invoke = pk.packets[args.Type].Method
+    var invoke = pk.packets[args.Packet.Type].Method
     if invoke == nil {
         log.Errorf("Trying to access procedure `%s` (Type: %d, Src: %s, UserIdx: %d)",
             pk.Name(args.Type),
@@ -73,7 +83,8 @@ func (pk *PacketHandler) Handle(args *network.PacketArgs) {
         )
         return;
     }
-    invoke.(func(*network.Session, []uint8))(args.Session, *args.Data)
+
+    invoke.(func(*network.Session, *network.Reader))(args.Session, args.Packet)
 }
 
 /*
@@ -82,8 +93,8 @@ func (pk *PacketHandler) Handle(args *network.PacketArgs) {
     @return packet name and `Unknown` for un-registered packet
  */
 func (pk *PacketHandler) Name(code int) string {
-    if pk.packets[code] != nil {
-        return pk.packets[code].Name
+    if pk.packets[uint16(code)] != nil {
+        return pk.packets[uint16(code)].Name
     }
 
     return "Unknown"

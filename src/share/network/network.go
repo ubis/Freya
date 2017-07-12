@@ -6,7 +6,7 @@ import (
     "sync"
     "share/logger"
     "share/event"
-    "share/models/server"
+    "share/encryption"
 )
 
 var log     = logger.Instance()
@@ -19,21 +19,15 @@ var userIdx uint16 = 0
     Network initialization
     @param  port    Server port to listen on
  */
-func Init(_settings interface{}) {
+func Init(port int, table encryption.XorKeyTable) {
     log.Info("Configuring network...")
-
-    var settings, ok = _settings.(models.Settings);
-    if !ok {
-        log.Fatal("Cannot parse server settings!")
-        return
-    }
 
     // register client disconnect event
     event.Register(event.ClientDisconnectEvent, event.Handler(OnClientDisconnect))
 
     // prepare to listen for incoming connections
     // listening on Ip.Any
-    var l, err = net.Listen("tcp", fmt.Sprintf(":%d", settings.ListenPort))
+    var l, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
 
     if err != nil {
         log.Fatal(err.Error())
@@ -74,7 +68,7 @@ func Init(_settings interface{}) {
         event.Trigger(event.ClientConnectEvent, &session)
 
         // handle new client session
-        go session.Start(settings)
+        go session.Start(table)
     }
 }
 

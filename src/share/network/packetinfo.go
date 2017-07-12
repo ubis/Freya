@@ -5,4 +5,4 @@ type PacketData struct {
     Method  interface{}
 }
 
-type PacketInfo map[int]*PacketData
+type PacketInfo map[uint16]*PacketData

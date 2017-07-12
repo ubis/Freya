@@ -1,39 +1,44 @@
 package packet
 
 import (
-    "share/network"
     "time"
+    "share/network"
 )
 
 // Connect2Svr Packet
-func Connect2Svr(session *network.Session, data []uint8) {
-    var c2s = C2S_CONNECT2SVR{}
-
-    if err := network.Deserialize(data, &c2s); err != nil {
-        log.Errorf("%s; Src: %s, UserIdx: %d",
-            err.Error(),
-            session.GetEndPnt(),
-            session.UserIdx,
-        )
-        return
-    }
-
+func Connect2Svr(session *network.Session, reader *network.Reader) {
     session.AuthKey = uint32(time.Now().Unix())
 
-    var s2c = S2C_CONNECT2SVR{
-        S2C_HEADER{MAGIC_KEY, 0, CONNECT2SVR},
-        session.Encryption.Key.Seed2nd,
-        session.AuthKey,
-        session.UserIdx,
-        uint16(session.Encryption.RecvXorKeyIdx),
+    var packet = network.NewWriter(CONNECT2SVR)
+    packet.WriteUint32(session.Encryption.Key.Seed2nd)
+    packet.WriteUint32(session.AuthKey)
+    packet.WriteUint16(session.UserIdx)
+    packet.WriteUint16(session.Encryption.RecvXorKeyIdx)
+
+    session.Send(packet)
+}
+
+// CheckVersion Packet
+func CheckVersion(session *network.Session, reader *network.Reader) {
+    var version1 = reader.ReadInt32()
+
+    var sessionData      = session.Data
+    sessionData.Verified = true
+
+    if version1 != int32(g_ServerConfig.Version) {
+        log.Errorf("Client version mismatch (Client: %d, Server: %d)",
+            version1,
+            g_ServerConfig.Version,
+        )
+
+        sessionData.Verified = false
     }
 
-    var recvData, err = network.Serialize(&s2c)
+    var packet = network.NewWriter(CHECKVERSION)
+    packet.WriteInt32(g_ServerConfig.Version)
+    packet.WriteInt32(0x00)
+    packet.WriteInt32(0x00)
+    packet.WriteInt32(0x00)
 
-    if err != nil {
-        log.Error(err.Error())
-        return
-    }
-
-    session.Send(recvData)
+    session.Send(packet)
 }

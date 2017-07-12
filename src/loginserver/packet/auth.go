@@ -1,8 +1,8 @@
 package packet
 
 import (
-    "share/network"
     "bytes"
+    "share/network"
     "share/models/account"
     "loginserver/rsa"
 )

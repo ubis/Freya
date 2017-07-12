@@ -1,6 +1,8 @@
 package event
 
-import "sync"
+import (
+    "sync"
+)
 
 // Event type
 type Type string
@@ -18,8 +20,8 @@ var lock sync.Mutex
 
 /*
     Registers server event
-    @param  t   event type, which is string, defined in const file
-    @param  h   event handler, an func which will be called
+    @param  t   Event Type, which is string, defined in const file
+    @param  h   Event Handler, an func which will be called
  */
 func Register(t Type, h Handler) {
     lock.Lock()
@@ -29,8 +31,8 @@ func Register(t Type, h Handler) {
 
 /*
     Triggers server event
-    @param  t   event type, which is string, defined in const file
-    @param  e   event interface, which is later parsed into some struct
+    @param  t   Event Type, which is string, defined in const file
+    @param  e   Event Interface, which is later parsed into some struct
  */
 func Trigger(t Type, e Event) {
     lock.Lock()

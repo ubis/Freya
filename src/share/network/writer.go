@@ -1,8 +1,8 @@
 package network
 
 import (
-    "share/encryption"
     "reflect"
+    "share/encryption"
 )
 
 const DEFAULT_BUFFER_SIZE = 1024

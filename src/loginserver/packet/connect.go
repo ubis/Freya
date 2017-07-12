@@ -36,9 +36,9 @@ func CheckVersion(session *network.Session, reader *network.Reader) {
 
     var packet = network.NewWriter(CHECKVERSION)
     packet.WriteInt32(g_ServerConfig.Version)
-    packet.WriteInt32(0x00)
-    packet.WriteInt32(0x00)
-    packet.WriteInt32(0x00)
+    packet.WriteInt32(0x00) // debug
+    packet.WriteInt32(0x00) // reserved
+    packet.WriteInt32(0x00) // reserved
 
     session.Send(packet)
 }

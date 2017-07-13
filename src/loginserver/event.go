@@ -4,7 +4,7 @@ import (
     "share/event"
     "share/network"
     "share/rpc"
-    "share/rpc/models/server"
+    "share/models/server"
 )
 
 // Registers server events

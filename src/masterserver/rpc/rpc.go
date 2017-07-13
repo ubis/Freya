@@ -13,5 +13,6 @@ var g_ServerSettings = def.ServerSettings
 var g_RPCHandler     = def.RPCHandler
 
 func RegisterPackets() {
+    log.Info("Registering RPC packets...")
     g_RPCHandler.Register(rpc.ServerRegister, ServerRegister)
 }

@@ -17,6 +17,7 @@ type PacketHandler struct {
 
 // Initializes PacketHandler which registers packets
 func (pk *PacketHandler) Init() {
+    log.Info("Registering packets...")
     pk.packets = make(network.PacketInfo)
 
     // registering packets

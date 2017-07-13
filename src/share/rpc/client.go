@@ -322,7 +322,7 @@ func (c *Client) send(call *Call) {
 
     // Register this call.
     c.mutex.Lock()
-    if c.shutdown || c.closing {
+    if c.shutdown || c.closing || !c.connected {
         call.Error = ErrShutdown
         c.mutex.Unlock()
         call.done()

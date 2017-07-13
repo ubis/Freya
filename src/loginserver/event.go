@@ -3,6 +3,7 @@ package main
 import (
     "share/event"
     "share/network"
+    "share/rpc"
     "share/rpc/models/server"
 )
 
@@ -101,11 +102,10 @@ func OnSyncConnect(event event.Event) {
     log.Info("Established connection with the Master Server!")
 
     // register this server
-    var req  = server.RegisterRequest{Type: server.LOGIN_SERVER_TYPE}
-    var resp = server.RegisterResponse{}
+    var req  = server.RegRequest{Type: server.LOGIN_SERVER_TYPE}
+    var resp = server.RegResponse{}
 
-    g_RPCHandler.Call("ServerRegister", req, &resp)
-    log.Info(resp)
+    g_RPCHandler.Call(rpc.ServerRegister, req, &resp)
 }
 
 /*

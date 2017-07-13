@@ -4,10 +4,10 @@ const (
     LOGIN_SERVER_TYPE = 1
 )
 
-type RegisterRequest struct {
+type RegRequest struct {
     Type byte
 }
 
-type RegisterResponse struct {
+type RegResponse struct {
     Registered bool
 }

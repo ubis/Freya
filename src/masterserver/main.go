@@ -3,36 +3,32 @@ package main
 import (
     "share/logger"
     "masterserver/def"
-    "share/lib/rpc2"
-    "fmt"
-    "net"
+    "masterserver/rpc"
 )
 
 var log = logger.Instance()
 
 var g_ServerConfig   = def.ServerConfig
 var g_ServerSettings = def.ServerSettings
+var g_RPCHandler     = def.RPCHandler
 
-type Args struct{ A, B int }
-type Reply int
 
 func main() {
     log.Info("MasterServer init")
 
     // read config
-    //g_ServerConfig.Read()
+    g_ServerConfig.Read()
 
-    srv := rpc2.NewServer()
-    srv.Handle("add", func(client *rpc2.Client, args *Args, reply *Reply) error {
-        // Reversed call (server to client)
-        var rep Reply
-        client.Call("mult", Args{2, 3}, &rep)
-        fmt.Println("mult result:", rep)
+    // register events
+    RegisterEvents()
 
-        *reply = Reply(args.A + args.B)
-        return nil
-    })
+    // init RPC handler
+    g_RPCHandler.Init()
+    g_RPCHandler.Port = g_ServerConfig.Port
 
-    lis, _ := net.Listen("tcp", "127.0.0.1:5000")
-    srv.Accept(lis)
+    // register RPC packets
+    rpc.RegisterPackets()
+
+    // start RPC Server
+    g_RPCHandler.Run()
 }

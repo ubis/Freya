@@ -11,3 +11,9 @@ const (
     PacketReceiveEvent      = "onPacketReceive"
     PacketSendEvent         = "onPacketSent"
 )
+
+// Server events for RPC
+const (
+    SyncConnectEvent        = "onSyncConnect"
+    SyncDisconnectEvent     = "onSyncDisconnect"
+)

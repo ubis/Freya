@@ -1,4 +1,6 @@
-package rpc2
+// Based on https://github.com/cenkalti/rpc2
+// Package rpc provides bi-directional RPC client and server
+package rpc
 
 import (
 	"bufio"

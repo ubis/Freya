@@ -9,6 +9,7 @@ import (
 
 // Registers server events
 func RegisterEvents() {
+    log.Info("Registering events...")
     event.Register(event.ClientConnectEvent, event.Handler(OnClientConnect))
     event.Register(event.ClientDisconnectEvent, event.Handler(OnClientDisconnect))
     event.Register(event.PacketReceiveEvent, event.Handler(OnPacketReceive))

@@ -7,6 +7,7 @@ import (
 
 // Registers RPC Server events
 func RegisterEvents() {
+    log.Info("Registering events...")
     event.Register(event.SyncConnectEvent, event.Handler(OnSyncConnect))
     event.Register(event.SyncDisconnectEvent, event.Handler(OnSyncDisconnect))
 }

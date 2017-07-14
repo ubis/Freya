@@ -2,8 +2,8 @@ package logger
 
 import (
     "os"
-    "share/lib/go-logging"
     "share/directory"
+    "github.com/op/go-logging"
 )
 
 var logPath = directory.Root() + "/log/"

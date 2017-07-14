@@ -28,5 +28,5 @@ func (c *Config) Read() {
     }
 
     // read values from configuration...
-    c.Port     = conf.GetInt("network", "port", C_Port)
+    c.Port = conf.GetInt("network", "port", C_Port)
 }

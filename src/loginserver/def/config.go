@@ -8,10 +8,10 @@ import (
 // Default values
 const (
     C_Port          = 38101
-    C_Version       = 374
+    C_Version       = 0
 
     C_MasterIp      = "127.0.0.1"
-    C_MasterPort    = 4200
+    C_MasterPort    = 9001
 )
 
 // Configuration struct

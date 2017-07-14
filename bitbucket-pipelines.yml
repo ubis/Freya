@@ -14,6 +14,9 @@ pipelines:
           - tar -cO --exclude-vcs --exclude=bitbucket-pipelines.yml . | tar -xv -C "${PACKAGE_PATH}"
           - cd "${PACKAGE_PATH}"
           - export GOPATH=${PACKAGE_PATH}
+          - go get -v loginserver
+          - go get -v gameserver
+          - go get -v masterserver
           - go install -v loginserver
           - go install -v gameserver
           - go install -v masterserver

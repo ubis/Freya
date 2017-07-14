@@ -8,11 +8,11 @@ import (
 
 var log = logger.Instance()
 
-var g_ServerConfig   = def.ServerConfig
-var g_ServerSettings = def.ServerSettings
 var g_RPCHandler     = def.RPCHandler
+var g_LoginDatabase  = def.LoginDatabase
 
 func RegisterPackets() {
     log.Info("Registering RPC packets...")
     g_RPCHandler.Register(rpc.ServerRegister, ServerRegister)
+    g_RPCHandler.Register(rpc.AuthCheck, AuthCheck)
 }

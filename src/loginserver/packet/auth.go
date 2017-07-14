@@ -3,6 +3,7 @@ package packet
 import (
     "bytes"
     "share/network"
+    "share/rpc"
     "share/models/account"
     "loginserver/rsa"
 )
@@ -57,28 +58,34 @@ func AuthAccount(session *network.Session, reader *network.Reader) {
     var userId = string(bytes.Trim(data[:32], "\x00"))
     var userPw = string(bytes.Trim(data[32:], "\x00"))
 
-    var packet = network.NewWriter(AUTHACCOUNT)
+    log.Infof("AuthRequest with id `%s`", userId)
 
-    if userId == "root" && userPw == "root" {
-        packet.WriteByte(account.Normal)
-    } else {
-        packet.WriteByte(account.Incorrect)
+    var r = account.AuthResponse{Status: account.None}
+    err = g_RPCHandler.Call(rpc.AuthCheck,
+        account.AuthRequest{userId, userPw}, &r)
+
+    if err != nil {
+        r.Status = account.OutOfService
     }
 
-    packet.WriteInt32(0x00)   // account id
-    packet.WriteByte(0x00)
-    packet.WriteByte(0x00)
-    packet.WriteByte(0x00)    // server count
-    packet.WriteInt32(0x00); packet.WriteInt32(0x00)
-    packet.WriteInt32(0x00)   // premium service id
-    packet.WriteInt32(0x00)   // premium service expire date
-    packet.WriteByte(0x00)
-    packet.WriteByte(0x00)
-    packet.WriteInt32(0x00); packet.WriteInt16(0x00); packet.WriteByte(0x00)
-    packet.WriteInt32(0x00)   // language
-    packet.WriteString("ASDASDDADSSADSAASDASASD")
+    var packet = network.NewWriter(AUTHACCOUNT)
 
+    packet.WriteByte(r.Status)
+    packet.WriteInt32(r.Id)
+    packet.WriteInt16(0x00)
+    packet.WriteByte(0x00)  // server count
+    packet.WriteInt64(0x00)
+    packet.WriteInt32(0x00) // premium service id
+    packet.WriteInt32(0x00) // premium service expire date
+    packet.WriteByte(0x00)
+    packet.WriteByte(0x00)  // subpw exist
+    packet.WriteBytes(make([]byte, 7))
+    packet.WriteInt32(0x00) // language
+    packet.WriteString(r.AuthKey + "\x00")
 
-    log.Infof("Logging in with: %s and %s", userId, userPw)
+    if r.Status == account.Normal {
+        log.Infof("User `%s` succesfully logged in.", userId)
+    }
+
     session.Send(packet)
 }

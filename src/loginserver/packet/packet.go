@@ -12,6 +12,7 @@ var g_ServerSettings = def.ServerSettings
 var g_PacketHandler  = def.PacketHandler
 var g_RPCHandler     = def.RPCHandler
 
+// Registers network packets
 func RegisterPackets() {
     log.Info("Registering packets...")
     var pk = g_PacketHandler

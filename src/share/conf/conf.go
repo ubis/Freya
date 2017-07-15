@@ -57,9 +57,10 @@ func Open(path string) error {
 
         } else {
             // value and key
-            var data  = strings.Split(strings.Split(line, ";")[0], "=")
-            var key   = strings.TrimSpace(data[0])
-            var value = strings.TrimSpace(data[1])
+            var data  = strings.Split(line, ";")[0]
+            var split = strings.Index(line, "=")
+            var key   = strings.TrimSpace(data[:split])
+            var value = strings.TrimSpace(data[split + 1:])
 
             // create section if it wasn't
             if sections[section] == nil {

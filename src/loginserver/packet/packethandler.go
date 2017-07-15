@@ -83,7 +83,7 @@ func (pk *PacketHandler) Handle(args *network.PacketArgs) {
             args.Session.GetEndPnt(),
             args.Session.UserIdx,
         )
-        return;
+        return
     }
 
     invoke.(func(*network.Session, *network.Reader))(args.Session, args.Packet)

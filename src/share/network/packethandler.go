@@ -1,46 +1,19 @@
-package packet
+package network
 
-import (
-    "share/network"
-    "share/logger"
-    "loginserver/def"
-)
-
-var log = logger.Instance()
-
-var g_ServerConfig   = def.ServerConfig
-var g_ServerSettings = def.ServerSettings
-var g_RPCHandler     = def.RPCHandler
-
-type PacketHandler struct {
-    packets network.PacketInfo
+type PacketData struct {
+    Name    string
+    Method  interface{}
 }
 
-// Initializes PacketHandler which registers packets
+type PacketInfo map[uint16]*PacketData
+
+type PacketHandler struct {
+    packets PacketInfo
+}
+
+// Initializes PacketHandler
 func (pk *PacketHandler) Init() {
-    log.Info("Registering packets...")
-    pk.packets = make(network.PacketInfo)
-
-    // registering packets
-    pk.Register(CONNECT2SVR, "Connect2Svr", Connect2Svr)
-    pk.Register(VERIFYLINKS, "VerifyLinks", nil)
-    pk.Register(AUTHACCOUNT, "AuthAccount", AuthAccount)
-    pk.Register(SYSTEMMESSG, "SystemMessg", nil)
-    pk.Register(SERVERSTATE, "ServerState", nil)
-    pk.Register(CHECKVERSION, "CheckVersion", CheckVersion)
-    pk.Register(URLTOCLIENT, "URLToClient", nil)
-    pk.Register(PUBLIC_KEY, "PublicKey", PublicKey)
-    pk.Register(PRE_SERVER_ENV_REQUEST, "PreServerEnvRequest", PreServerEnvRequest)
-
-    for code := range pk.packets {
-        var pType = "CSC"
-
-        if pk.packets[code].Method == nil {
-            pType = "NFY"
-        }
-
-        log.Debugf("Registered %s packet: %s(%d)", pType, pk.packets[code].Name, code)
-    }
+    pk.packets = make(PacketInfo)
 }
 
 /*
@@ -50,14 +23,22 @@ func (pk *PacketHandler) Init() {
     @param  method  packet processing method
  */
 func (pk *PacketHandler) Register(code uint16, name string, method interface{}) {
-    pk.packets[code] = &network.PacketData{name, method}
+    pk.packets[code] = &PacketData{name, method}
+
+    var pType = "CSC"
+
+    if pk.packets[code].Method == nil {
+        pType = "NFY"
+    }
+
+    log.Debugf("Registered %s packet: %s(%d)", pType, pk.packets[code].Name, code)
 }
 
 /*
     Handles specified network packet
     @param  args    packet args
  */
-func (pk *PacketHandler) Handle(args *network.PacketArgs) {
+func (pk *PacketHandler) Handle(args *PacketArgs) {
     // recover on panic
     /*defer func() {
         recover()
@@ -86,7 +67,7 @@ func (pk *PacketHandler) Handle(args *network.PacketArgs) {
         return
     }
 
-    invoke.(func(*network.Session, *network.Reader))(args.Session, args.Packet)
+    invoke.(func(*Session, *Reader))(args.Session, args.Packet)
 }
 
 /*

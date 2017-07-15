@@ -11,7 +11,7 @@ var log = logger.Instance()
 
 var g_ServerConfig   = def.ServerConfig
 var g_ServerSettings = def.ServerSettings
-var g_PacketHandler  = packet.PacketHandler{}
+var g_PacketHandler  = def.PacketHandler
 var g_RPCHandler     = def.RPCHandler
 
 func main() {
@@ -29,6 +29,9 @@ func main() {
 
     // init packet handler
     g_PacketHandler.Init()
+
+    // register packets
+    packet.RegisterPackets()
 
     // init RPC handler
     g_RPCHandler.IpAddress = g_ServerConfig.MasterIp

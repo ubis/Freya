@@ -40,10 +40,12 @@ func (pk *PacketHandler) Register(code uint16, name string, method interface{}) 
  */
 func (pk *PacketHandler) Handle(args *PacketArgs) {
     // recover on panic
-    /*defer func() {
-        recover()
-        log.Warning("Recovered from:", pk.Name(args.Type))
-    }()*/
+    defer func() {
+        if err := recover(); err != nil {
+            log.Warning("Panic! Recovered from:", pk.Name(args.Type))
+            args.Session.Close()
+        }
+    }()
 
     if pk.packets[args.Packet.Type] == nil {
         // unknown packet received

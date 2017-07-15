@@ -107,3 +107,8 @@ func (s *Session) Send(writer *Writer) {
 func (s *Session) GetEndPnt() string {
     return s.socket.RemoteAddr().String()
 }
+
+// Closes session socket
+func (s *Session) Close() {
+    s.socket.Close()
+}

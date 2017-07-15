@@ -6,6 +6,7 @@ import (
     "golang.org/x/crypto/bcrypt"
 )
 
+// AuthCheck RPC Call
 func AuthCheck(c *rpc.Client, r account.AuthRequest, s *account.AuthResponse) error {
     var res = account.AuthResponse{Status: account.Incorrect}
     var passHash string

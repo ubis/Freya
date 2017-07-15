@@ -39,5 +39,6 @@ func OnSyncDisconnect(event event.Event) {
         return
     }
 
+    g_ServerManager.RemoveServer(c.GetEndPnt())
     log.Infof("Client %s disconnected from the Master Server", c.GetEndPnt())
 }

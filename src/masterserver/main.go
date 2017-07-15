@@ -13,6 +13,7 @@ var log = logger.Instance()
 var g_ServerConfig  = def.ServerConfig
 var g_RPCHandler    = def.RPCHandler
 var g_LoginDatabase = def.LoginDatabase
+var g_ServerManager = def.ServerManager
 
 func main() {
     log.Info("MasterServer init")
@@ -29,6 +30,9 @@ func main() {
 
     // register RPC packets
     rpc.RegisterPackets()
+
+    // init ServerManager
+    g_ServerManager.Init()
 
     // connect to login database
     log.Info("Attempting to connect to the Login database...")

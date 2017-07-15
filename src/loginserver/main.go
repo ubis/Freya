@@ -39,5 +39,5 @@ func main() {
     g_RPCHandler.Init()
 
     // create network and start listening for connections
-    network.Init(g_ServerConfig.Port, g_ServerSettings.XorKeyTable)
+    network.Init(g_ServerConfig.Port, &g_ServerSettings.Settings)
 }

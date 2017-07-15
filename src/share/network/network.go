@@ -6,20 +6,21 @@ import (
     "sync"
     "share/logger"
     "share/event"
-    "share/encryption"
+    "share/models/server"
 )
 
 var log     = logger.Instance()
 var lock    = sync.RWMutex{}
 var clients = make(map[uint16]*Session)
 
-var userIdx uint16 = 0
-
+var userIdx  uint16 = 0
+var settings *server.Settings
 /*
     Network initialization
     @param  port    Server port to listen on
  */
-func Init(port int, table encryption.XorKeyTable) {
+func Init(port int, s *server.Settings) {
+    settings = s
     log.Info("Configuring network...")
 
     // register client disconnect event
@@ -57,18 +58,19 @@ func Init(port int, table encryption.XorKeyTable) {
             }
         } else {
             clients[userIdx] = &session
-            userIdx++
         }
 
         // set client session's user index
-        session.UserIdx = userIdx
+        session.UserIdx       = userIdx
+        settings.CurrentUsers = len(clients)
+        userIdx++
         lock.RUnlock()
 
         // trigger client connect event
         event.Trigger(event.ClientConnectEvent, &session)
 
         // handle new client session
-        go session.Start(table)
+        go session.Start(settings.XorKeyTable)
     }
 }
 
@@ -86,5 +88,6 @@ func OnClientDisconnect(event event.Event) {
     lock.Lock()
     delete(clients, session.UserIdx)
     session = nil
+    settings.CurrentUsers = len(clients)
     lock.Unlock()
 }

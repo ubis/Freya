@@ -1,11 +1,11 @@
 package def
 
 import (
+    "share/models/server"
     "loginserver/rsa"
-    "share/encryption"
 )
 
 type Settings struct {
-    XorKeyTable encryption.XorKeyTable
+    server.Settings
     RSA         rsa.RSA
 }

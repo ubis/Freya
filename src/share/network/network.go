@@ -52,19 +52,35 @@ func Init(port int, s *server.Settings) {
         lock.RLock()
         // in case its used already...
         if clients[userIdx] != nil {
+            lock.RUnlock()
+            lock.Lock()
+            // warning: blocked till loop is ended
             // loop till find free one
             for clients[userIdx] != nil {
                 userIdx++
             }
+            lock.Unlock()
+
+            lock.RLock()
+            // if still didn't find... ops shouldn't happen at all
+            if clients[userIdx] != nil {
+                lock.RUnlock()
+                log.Error("Can't find any available user indexes!")
+                session.Close()
+                continue
+            } else {
+                lock.RUnlock()
+            }
         } else {
-            clients[userIdx] = &session
+            lock.RUnlock()
         }
 
-        // set client session's user index
-        session.UserIdx       = userIdx
-        settings.CurrentUsers = len(clients)
+        lock.Lock()
+        clients[userIdx]      = &session        // add new session
+        session.UserIdx       = userIdx         // update session user index
+        settings.CurrentUsers = len(clients)    // update current users
         userIdx++
-        lock.RUnlock()
+        lock.Unlock()
 
         // trigger client connect event
         event.Trigger(event.ClientConnectEvent, &session)

@@ -6,6 +6,7 @@ import (
     "share/rpc"
     "share/models/account"
     "loginserver/rsa"
+    "share/models/message"
 )
 
 // PreServerEnvRequest Packet
@@ -81,16 +82,22 @@ func AuthAccount(session *network.Session, reader *network.Reader) {
     packet.WriteInt32(0x00) // language
     packet.WriteString(r.AuthKey + "\x00")
 
+    session.Send(packet)
+
     if r.Status == account.Normal {
         log.Infof("User `%s` succesfully logged in.", userId)
 
+        session.Data.AccountId = r.Id
+        session.Data.LoggedIn  = true
+
         // send url's
         URLToClient(session)
+
+        // send normal system message
+        SystemMessg(session, message.Normal)
     } else {
         log.Infof("User `%s` failed to log in.", userId)
     }
-
-    session.Send(packet)
 }
 
 // URLToClient Packet which is NFY
@@ -122,5 +129,14 @@ func URLToClient(session *network.Session) {
     packet.WriteInt32(len(sns_url))
     packet.WriteString(sns_url)
 
+    session.Send(packet)
+}
+
+// SystemMessg Packet which is NFY
+func SystemMessg(session *network.Session, message byte) {
+    var packet = network.NewWriter(SYSTEMMESSG)
+    packet.WriteByte(message)
+    packet.WriteByte(0x00)  // DataLength
+    packet.WriteByte(0x00)  // Data
     session.Send(packet)
 }

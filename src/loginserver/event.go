@@ -46,6 +46,10 @@ func OnClientDisconnect(event event.Event) {
         return
     }
 
+    session.Data.AccountId = 0
+    session.Data.Verified  = false
+    session.Data.LoggedIn  = false
+
     log.Infof("Client `%s` disconnected from the LoginServer", session.GetEndPnt())
 }
 

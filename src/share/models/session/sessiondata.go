@@ -1,5 +1,7 @@
 package session
 
 type Data struct {
-    Verified bool
+    AccountId int
+    Verified  bool
+    LoggedIn  bool
 }

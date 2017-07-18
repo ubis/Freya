@@ -18,6 +18,7 @@ type Session struct {
     UserIdx     uint16
     AuthKey     uint32
     Data        *session.Data
+    Connected   bool
 }
 
 /*
@@ -32,7 +33,8 @@ func (s *Session) Start(table encryption.XorKeyTable) {
     s.Encryption = encryption.Encryption{}
     s.Encryption.Init(&table)
 
-    s.Data = &session.Data{}
+    s.Data      = &session.Data{}
+    s.Connected = true
 
     for {
         // read data
@@ -40,6 +42,7 @@ func (s *Session) Start(table encryption.XorKeyTable) {
 
         if err != nil {
             log.Error("Error reading: " + err.Error())
+            s.Connected = false
             event.Trigger(event.ClientDisconnectEvent, s)
             break
         }
@@ -49,6 +52,7 @@ func (s *Session) Start(table encryption.XorKeyTable) {
 
         if error != nil {
             log.Error("Error decrypting: " + error.Error())
+            s.Connected = false
             event.Trigger(event.ClientDisconnectEvent, s)
             break
         }
@@ -110,5 +114,6 @@ func (s *Session) GetEndPnt() string {
 
 // Closes session socket
 func (s *Session) Close() {
+    s.Connected = false
     s.socket.Close()
 }

@@ -8,7 +8,9 @@ import (
 // Default values
 const (
     C_Port          = 38101
+
     C_Version       = 0
+    C_MagicKey      = 0
 
     C_MasterIp      = "127.0.0.1"
     C_MasterPort    = 9001
@@ -19,6 +21,7 @@ type Config struct {
     Port               int
 
     Version            int
+    MagicKey           int
     CashWeb_URL        string
     CashWeb_Odc_URL    string
     CashWeb_Charge_URL string
@@ -45,6 +48,7 @@ func (c *Config) Read() {
     c.Port = conf.GetInt("network", "port", C_Port)
 
     c.Version            = conf.GetInt("client", "client_version", C_Version)
+    c.MagicKey           = conf.GetInt("client", "magic_key", C_MagicKey)
     c.CashWeb_URL        = conf.GetString("client", "cashweb_url", "")
     c.CashWeb_Odc_URL    = conf.GetString("client", "cashweb_odc_url", "")
     c.CashWeb_Charge_URL = conf.GetString("client", "cashweb_charge_url", "")

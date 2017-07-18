@@ -109,7 +109,14 @@ func VerifyLinks(session *network.Session, reader *network.Reader) {
     var count     = reader.ReadUint16();
     var channel   = reader.ReadByte();
     var server    = reader.ReadByte();
-    var _         = reader.ReadUint32(); // magic key
+    var magickey  = reader.ReadInt32();
+
+    if magickey != int32(g_ServerConfig.MagicKey) {
+        log.Errorf(
+            "Invalid Client MagicKey (Required: %d, detected: %d, id: %d, src: %s",
+        g_ServerConfig.MagicKey, magickey, session.Data.AccountId, session.GetEndPnt())
+        return
+    }
 
     var send = account.UserVerify{timestamp, count, server, channel}
     var recv = account.UserVerifyRecv{}

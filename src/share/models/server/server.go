@@ -8,7 +8,7 @@ const (
 )
 
 type Server struct {
-    ServerData
+    *ServerData
     Client      *rpc.Client
 }
 

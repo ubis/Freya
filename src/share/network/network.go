@@ -43,12 +43,12 @@ func (n *Network) Start(port int) {
     // listening on Ip.Any
     var l, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
 
-    // close the listener when the application closes
-    defer l.Close()
-
     if err != nil {
         log.Fatal(err.Error())
     }
+
+    // close the listener when the application closes
+    defer l.Close()
 
     log.Info("Listening on " + l.Addr().String() + "...")
 

@@ -2,9 +2,9 @@ package server
 
 import (
     "sync"
+    "sort"
     "share/logger"
     "share/models/server"
-    "sort"
 )
 
 type ServerManager struct {

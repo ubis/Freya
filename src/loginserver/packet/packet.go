@@ -15,6 +15,7 @@ var g_RPCHandler     = def.RPCHandler
 // Registers network packets
 func RegisterPackets() {
     log.Info("Registering packets...")
+
     var pk = g_PacketHandler
     pk.Register(CONNECT2SVR, "Connect2Svr", Connect2Svr)
     pk.Register(VERIFYLINKS, "VerifyLinks", nil)

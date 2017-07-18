@@ -1,9 +1,9 @@
 package def
 
 import (
+    "strconv"
     "share/directory"
     "share/conf"
-    "strconv"
 )
 
 // Default values

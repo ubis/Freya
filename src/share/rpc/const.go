@@ -9,4 +9,5 @@ const (
 // Account related RPC's
 const (
     AuthCheck  = "AuthCheck"
+    UserVerify = "UserVerify"
 )

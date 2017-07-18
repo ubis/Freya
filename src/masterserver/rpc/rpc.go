@@ -17,4 +17,5 @@ func RegisterPackets() {
     g_RPCHandler.Register(rpc.ServerRegister, ServerRegister)
     g_RPCHandler.Register(rpc.ServerList, ServerList)
     g_RPCHandler.Register(rpc.AuthCheck, AuthCheck)
+    g_RPCHandler.Register(rpc.UserVerify, UserVerify)
 }

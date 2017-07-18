@@ -118,3 +118,26 @@ func (sm *ServerManager) GetGameServerList() []server.ServerItem {
 
     return serverList
 }
+
+/*
+    Attempts to find GameServer with server and channel id's and send RPC call
+    @param  s   server index
+    @param  c   channel index
+    @param  m   call method name
+    @param  a   call arguments
+    @param  r   call reply
+    @return error on fail
+ */
+func (sm *ServerManager) SendToGS(s byte, c byte, m string, a interface{}, r interface{}) error {
+    sm.lock.RLock()
+    for _, value := range sm.servers {
+        if value.ServerId == s && value.ChannelId == c {
+            var c = value.Client
+            sm.lock.RUnlock()
+            return c.Call(m, a, r)
+        }
+    }
+    sm.lock.RUnlock()
+
+    return nil
+}

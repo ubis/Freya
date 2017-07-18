@@ -6,6 +6,7 @@ import (
     "share/network"
     "share/rpc"
     "share/models/server"
+    "share/models/account"
 )
 
 // PreServerEnvRequest Packet
@@ -97,6 +98,32 @@ func ServerSate(session *network.Session) {
             packet.WriteUint16(channel.Port);
             packet.WriteUint32(channel.Type);
         }
+    }
+
+    session.Send(packet)
+}
+
+// VerifyLinks
+func VerifyLinks(session *network.Session, reader *network.Reader) {
+    var timestamp = reader.ReadUint32();
+    var count     = reader.ReadUint16();
+    var channel   = reader.ReadByte();
+    var server    = reader.ReadByte();
+    var _         = reader.ReadUint32(); // magic key
+
+    var send = account.UserVerify{timestamp, count, server, channel}
+    var recv = account.UserVerifyRecv{}
+
+    g_RPCHandler.Call(rpc.UserVerify, send, &recv)
+
+    var packet = network.NewWriter(VERIFYLINKS)
+    packet.WriteByte(server)
+    packet.WriteByte(channel)
+
+    if recv.Verified {
+        packet.WriteByte(0x01)
+    } else{
+        packet.WriteByte(0x00)
     }
 
     session.Send(packet)

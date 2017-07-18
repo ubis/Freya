@@ -165,9 +165,10 @@ func (s *Server) serveConn(conn io.ReadWriteCloser, endpnt string) {
     // client also handles the incoming connections
     var client = NewClientWithCodec(codec)
 
-    client.server   = true
-    client.handlers = s.handlers
-    client.endpnt   = endpnt
+    client.server    = true
+    client.handlers  = s.handlers
+    client.endpnt    = endpnt
+    client.connected = true
 
     event.Trigger(event.SyncConnectEvent, client)
     client.Run()

@@ -9,33 +9,46 @@ import (
     "share/models/server"
 )
 
-var log     = logger.Instance()
-var lock    = sync.RWMutex{}
-var clients = make(map[uint16]*Session)
+type Network struct {
+    lock     sync.RWMutex
+    clients  map[uint16]*Session
+    userIdx  uint16
+    settings *server.Settings
+}
 
-var userIdx  uint16 = 0
-var settings *server.Settings
+var log = logger.Instance()
+
 /*
     Network initialization
-    @param  port    Server port to listen on
+    @param  s   Server settings
  */
-func Init(port int, s *server.Settings) {
-    settings = s
+func (n *Network) Init(s *server.Settings) {
     log.Info("Configuring network...")
 
-    // register client disconnect event
-    event.Register(event.ClientDisconnectEvent, event.Handler(OnClientDisconnect))
+    n.lock     = sync.RWMutex{}
+    n.clients  = make(map[uint16]*Session)
+    n.userIdx  = 0
+    n.settings = s
 
+    // register client disconnect event
+    event.Register(event.ClientDisconnectEvent, event.Handler(n.onClientDisconnect))
+}
+
+/*
+    Attempts to start to listen for incoming connections
+    @param  port    network port to listen on
+ */
+func (n *Network) Start(port int) {
     // prepare to listen for incoming connections
     // listening on Ip.Any
     var l, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
 
+    // close the listener when the application closes
+    defer l.Close()
+
     if err != nil {
         log.Fatal(err.Error())
     }
-
-    // close the listener when the application closes
-    defer l.Close()
 
     log.Info("Listening on " + l.Addr().String() + "...")
 
@@ -49,61 +62,85 @@ func Init(port int, s *server.Settings) {
         // create user session
         var session = Session{socket: socket}
 
-        lock.RLock()
+        n.lock.RLock()
         // in case its used already...
-        if clients[userIdx] != nil {
-            lock.RUnlock()
-            lock.Lock()
+        if n.clients[n.userIdx] != nil {
+            n.lock.RUnlock()
+            n.lock.Lock()
             // warning: blocked till loop is ended
             // loop till find free one
-            for clients[userIdx] != nil {
-                userIdx++
+            for n.clients[n.userIdx] != nil {
+                n.userIdx++
             }
-            lock.Unlock()
+            n.lock.Unlock()
 
-            lock.RLock()
+            n.lock.RLock()
             // if still didn't find... ops shouldn't happen at all
-            if clients[userIdx] != nil {
-                lock.RUnlock()
+            if n.clients[n.userIdx] != nil {
+                n.lock.RUnlock()
                 log.Error("Can't find any available user indexes!")
                 session.Close()
                 continue
             } else {
-                lock.RUnlock()
+                n.lock.RUnlock()
             }
         } else {
-            lock.RUnlock()
+            n.lock.RUnlock()
         }
 
-        lock.Lock()
-        clients[userIdx]      = &session        // add new session
-        session.UserIdx       = userIdx         // update session user index
-        settings.CurrentUsers = len(clients)    // update current users
-        userIdx++
-        lock.Unlock()
+        n.lock.Lock()
+        n.clients[n.userIdx] = &session  // add new session
+        session.UserIdx      = n.userIdx // update session user index
+        n.userIdx ++
+        n.lock.Unlock()
 
         // trigger client connect event
         event.Trigger(event.ClientConnectEvent, &session)
 
         // handle new client session
-        go session.Start(settings.XorKeyTable)
+        go session.Start(n.settings.XorKeyTable)
     }
 }
 
+// Returns current online user count
+func (n *Network) GetOnlineUsers() int {
+    n.lock.RLock()
+    var users = len(n.clients)
+    n.lock.RUnlock()
+
+    return users
+}
+
 /*
-    OnClientDisconnect event, informs server about disconnected client
+    Verifies user specified by index and key
+    @param  idx     User index
+    @param  key     User key
+    @return bool, true if user exists, otherwise false
+ */
+func (n *Network) VerifyUser(idx uint16, key uint32) bool {
+    n.lock.RLock()
+    if n.clients[idx] != nil && n.clients[idx].AuthKey == key {
+        n.lock.RUnlock()
+        return true
+    }
+
+    n.lock.RUnlock()
+    return false
+}
+
+/*
+    onClientDisconnect event, informs server about disconnected client
     @param  event   Event interface, which is later parsed into Session struct
  */
-func OnClientDisconnect(event event.Event) {
+func (n *Network) onClientDisconnect(event event.Event) {
     var session, err = event.(*Session)
     if err != true {
         log.Error("Couldn't parse onClientDisconnect event!")
         return
     }
 
-    lock.Lock()
-    delete(clients, session.UserIdx)
+    n.lock.Lock()
+    delete(n.clients, session.UserIdx)
     session = nil
-    settings.CurrentUsers = len(clients)
-    lock.Unlock()
+    n.lock.Unlock()
 }

@@ -1,6 +1,7 @@
 package network
 
 import (
+    "io"
     "net"
     "share/event"
     "share/encryption"
@@ -41,7 +42,9 @@ func (s *Session) Start(table encryption.XorKeyTable) {
         var _, err = s.socket.Read(s.buffer)
 
         if err != nil {
-            log.Error("Error reading: " + err.Error())
+            if err != io.EOF {
+                log.Error("Error reading: " + err.Error())
+            }
             s.Connected = false
             event.Trigger(event.ClientDisconnectEvent, s)
             break

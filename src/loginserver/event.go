@@ -107,7 +107,7 @@ func OnSyncConnect(event event.Event) {
     log.Info("Established connection with the Master Server!")
 
     // register this server
-    var req  = server.RegRequest{Type: server.LOGIN_SERVER_TYPE}
+    var req  = server.ServerData{Type: server.LOGIN_SERVER_TYPE}
     var resp = server.RegResponse{}
 
     g_RPCHandler.Call(rpc.ServerRegister, req, &resp)

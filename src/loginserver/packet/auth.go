@@ -2,11 +2,15 @@ package packet
 
 import (
     "bytes"
+    "time"
+    "encoding/binary"
     "share/network"
     "share/rpc"
     "share/models/account"
-    "loginserver/rsa"
     "share/models/message"
+    "share/models/server"
+    "loginserver/rsa"
+    "net"
 )
 
 // PreServerEnvRequest Packet
@@ -95,6 +99,19 @@ func AuthAccount(session *network.Session, reader *network.Reader) {
 
         // send normal system message
         SystemMessg(session, message.Normal)
+
+        // send server list periodically
+        t := time.NewTicker(time.Second * 5)
+        go func() {
+            for {
+                if !session.Connected {
+                    break
+                }
+
+                ServerSate(session)
+                <-t.C
+            }
+        }()
     } else {
         log.Infof("User `%s` failed to log in.", userId)
     }
@@ -138,5 +155,49 @@ func SystemMessg(session *network.Session, message byte) {
     packet.WriteByte(message)
     packet.WriteByte(0x00)  // DataLength
     packet.WriteByte(0x00)  // Data
+    session.Send(packet)
+}
+
+// ServerState Packet which is NFY
+func ServerSate(session *network.Session) {
+    var serverList = server.SvrListResponse{}
+    g_RPCHandler.Call(rpc.ServerList, server.SvrListRequest{}, &serverList)
+
+    var svr = serverList.Servers
+
+    var packet = network.NewWriter(SERVERSTATE)
+    packet.WriteByte(len(svr))
+
+    for i := 0; i < len(svr); i ++ {
+        packet.WriteByte(svr[i].Id)
+        packet.WriteByte(svr[i].Hot)  // 0x10 = HOT! Flag; or bit_set(5)
+        packet.WriteInt32(0x00)
+        packet.WriteByte(len(svr[i].Channels))
+
+        for j := 0; j < len(svr[i].Channels); j ++ {
+            var channel = svr[i].Channels[j]
+            var ip = binary.LittleEndian.Uint32(net.ParseIP(channel.Ip)[12:16])
+
+            packet.WriteByte(channel.Id);
+            packet.WriteUint16(channel.CurrentUsers);
+            packet.WriteUint16(0x00);
+            packet.WriteUint16(0xFFFF);
+            packet.WriteUint16(0x00);
+            packet.WriteUint16(0x00);
+            packet.WriteUint32(0x00);
+            packet.WriteUint16(0x00);
+            packet.WriteUint16(0x00);
+            packet.WriteUint16(0x00);
+            packet.WriteByte(0x00);
+            packet.WriteByte(0x00);
+            packet.WriteByte(0x00);
+            packet.WriteByte(0xFF);
+            packet.WriteUint16(channel.MaxUsers);
+            packet.WriteUint32(ip);
+            packet.WriteUint16(channel.Port);
+            packet.WriteUint32(channel.Type);
+        }
+    }
+
     session.Send(packet)
 }

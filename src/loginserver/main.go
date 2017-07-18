@@ -34,9 +34,12 @@ func main() {
     packet.RegisterPackets()
 
     // init RPC handler
+    g_RPCHandler.Init()
     g_RPCHandler.IpAddress = g_ServerConfig.MasterIp
     g_RPCHandler.Port      = g_ServerConfig.MasterPort
-    g_RPCHandler.Init()
+
+    // start RPC handler
+    g_RPCHandler.Start()
 
     // create network and start listening for connections
     g_NetworkManager.Init(&g_ServerSettings.Settings)

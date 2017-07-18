@@ -40,7 +40,14 @@ type Client struct {
 func (c *Client) Init() {
     log.Info("Attempting to connect to the Master Server...")
 
+    c.pending   = make(map[uint64]*Call)
+    c.handlers  = make(map[string]*handler)
+    c.seq       = 1
     c.connected = false
+}
+
+// Starts up RPC client
+func (c *Client) Start() {
     go c.run()
 }
 
@@ -54,9 +61,6 @@ func (c *Client) run() {
             var conn, err = net.Dial("tcp", c.IpAddress + ":" + strconv.Itoa(c.Port))
             if err == nil {
                 c.codec     = newGobCodec(conn)
-                c.pending   = make(map[uint64]*Call)
-                c.handlers  = make(map[string]*handler)
-                c.seq       = 1
                 c.connected = true
                 c.shutdown  = false
                 c.closing   = false
@@ -95,7 +99,7 @@ func (c *Client) Run() {
 
 // Handle registers the handler function for the given method.
 // If a handler already exists for method, Handle panics.
-func (c *Client) Handle(method string, handlerFunc interface{}) {
+func (c *Client) Register(method string, handlerFunc interface{}) {
     addHandler(c.handlers, method, handlerFunc)
 }
 

@@ -2,7 +2,6 @@ package main
 
 import (
     "share/logger"
-    "share/network"
     "loginserver/def"
     "loginserver/packet"
 )
@@ -11,6 +10,7 @@ var log = logger.Instance()
 
 var g_ServerConfig   = def.ServerConfig
 var g_ServerSettings = def.ServerSettings
+var g_NetworkManager = def.NetworkManager
 var g_PacketHandler  = def.PacketHandler
 var g_RPCHandler     = def.RPCHandler
 
@@ -39,5 +39,6 @@ func main() {
     g_RPCHandler.Init()
 
     // create network and start listening for connections
-    network.Init(g_ServerConfig.Port, &g_ServerSettings.Settings)
+    g_NetworkManager.Init(&g_ServerSettings.Settings)
+    g_NetworkManager.Start(g_ServerConfig.Port)
 }

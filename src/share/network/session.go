@@ -39,7 +39,7 @@ func (s *Session) Start(table encryption.XorKeyTable) {
 
     for {
         // read data
-        var _, err = s.socket.Read(s.buffer)
+        var length, err = s.socket.Read(s.buffer)
 
         if err != nil {
             if err != io.EOF {
@@ -47,32 +47,42 @@ func (s *Session) Start(table encryption.XorKeyTable) {
             }
             s.Connected = false
             event.Trigger(event.ClientDisconnectEvent, s)
+            s.Close()
             break
         }
 
-        // attempt to decrypt packet
-        var data, error = s.Encryption.Decrypt(s.buffer)
+        var i = 0
 
-        if error != nil {
-            log.Error("Error decrypting: " + error.Error())
-            s.Connected = false
-            event.Trigger(event.ClientDisconnectEvent, s)
-            break
+        for i < length {
+            var packetLength = s.Encryption.GetPacketSize(s.buffer[i:])
+
+            // attempt to decrypt packet
+            var data, error = s.Encryption.Decrypt(s.buffer[i:i + packetLength])
+
+            if error != nil {
+                log.Error("Error decrypting: " + error.Error())
+                s.Connected = false
+                event.Trigger(event.ClientDisconnectEvent, s)
+                s.Close()
+                break
+            }
+
+            // create new packet reader
+            var reader = NewReader(data)
+
+            // create new packet event argument
+            var arg = &PacketArgs{
+                s,
+                int(reader.Size),
+                int(reader.Type),
+                reader,
+            }
+
+            // trigger packet received event
+            event.Trigger(event.PacketReceiveEvent, arg)
+
+            i += packetLength
         }
-
-        // create new packet reader
-        var reader = NewReader(data)
-
-        // create new packet event argument
-        var arg = &PacketArgs{
-            s,
-            int(reader.Size),
-            int(reader.Type),
-            reader,
-        }
-
-        // trigger packet received event
-        event.Trigger(event.PacketReceiveEvent, arg)
     }
 }
 

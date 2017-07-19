@@ -27,7 +27,7 @@ func AuthCheck(c *rpc.Client, r *account.AuthRequest, s *account.AuthResponse) e
         var exist int32 = 0
 
         g_LoginDatabase.Get(&exist,
-            "SELECT account FROM accounts_subpassword WHERE account = ?", res.Id)
+            "SELECT account FROM sub_password WHERE account = ?", res.Id)
 
         if exist == res.Id {
             res.SubPassChar = 1

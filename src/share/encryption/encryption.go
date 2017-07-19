@@ -31,6 +31,20 @@ func (e *Encryption) Init(key *XorKeyTable) {
 }
 
 /*
+    Returns packet size
+    @param  data    data array from which size will be taken
+    @return packet size
+ */
+func (e *Encryption) GetPacketSize(data []uint8) int {
+    if !e.isFirstPacket {
+        var header = binary.LittleEndian.Uint32(data) ^ e.recvXorKey
+        return int(header >> 16)
+    }
+
+    return Connect2SvrSize
+}
+
+/*
     Encrypts data
     @param  data    data array to be encrypted
     @return encrypted data or error, if any

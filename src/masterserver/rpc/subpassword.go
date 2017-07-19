@@ -11,7 +11,7 @@ func FetchSubPassword(c *rpc.Client, r *account.SubPasswordReq, s *account.SubPa
 
     g_LoginDatabase.Get(&res,
         "SELECT password, answer, question, expires " +
-            "FROM accounts_subpassword " +
+            "FROM sub_password " +
             "WHERE account = ?", r.Account)
 
     *s = res
@@ -24,18 +24,18 @@ func SetSubPassword(c *rpc.Client, r *account.SetSubPass, s *account.SubPassResp
     var exist = 0
 
     g_LoginDatabase.Get(&exist,
-        "SELECT account FROM accounts_subpassword WHERE account = ?", r.Account)
+        "SELECT account FROM sub_password WHERE account = ?", r.Account)
 
     if exist == 1 {
         // changing subpassword
         g_LoginDatabase.MustExec(
-            "UPDATE accounts_subpassword " +
+            "UPDATE sub_password " +
                 "SET password = ?, answer = ?, question = ?, expires = ? WHERE account = ?",
             r.Password, r.Answer, r.Question, r.Expires, r.Account)
     } else {
         // creating subpassword
         g_LoginDatabase.MustExec(
-            "INSERT INTO accounts_subpassword " +
+            "INSERT INTO sub_password " +
                 "(account, password, answer, question, expires)" +
                 "VALUES (?, ?, ?, ?, ?)",
             r.Account, r.Password, r.Answer, r.Question, r.Expires)
@@ -50,7 +50,7 @@ func RemoveSubPassword(c *rpc.Client, r *account.SubPasswordReq, s *account.SubP
     var res = account.SubPassResp{true}
 
     g_LoginDatabase.MustExec(
-        "DELETE FROM accounts_subpassword WHERE account = ?", r.Account)
+        "DELETE FROM sub_password WHERE account = ?", r.Account)
 
     *s = res
     return nil

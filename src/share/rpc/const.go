@@ -11,3 +11,10 @@ const (
     AuthCheck  = "AuthCheck"
     UserVerify = "UserVerify"
 )
+
+// SubPassword related RPC's
+const (
+    FetchSubPassword  = "FetchSubPassword"
+    SetSubPassword    = "SetSubPassword"
+    RemoveSubPassword = "RemoveSubPassword"
+)

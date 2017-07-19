@@ -6,7 +6,8 @@ type AuthRequest struct {
 }
 
 type AuthResponse struct {
-    Id       int32
-    Status   byte
-    AuthKey  string `db:"auth_key"`
+    Id          int32
+    Status      byte
+    AuthKey     string `db:"auth_key"`
+    SubPassChar byte
 }

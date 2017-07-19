@@ -51,6 +51,6 @@ func (c *Config) Read() {
 func (c *Config) LoginDB() string {
     str := c.LoginUser + ":" + c.LoginPass
     str += "@tcp(" + c.LoginIp + ":" + strconv.Itoa(c.LoginPort) + ")"
-    str += "/" + c.LoginName
+    str += "/" + c.LoginName + "?parseTime=true"
     return str
 }

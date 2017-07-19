@@ -115,16 +115,20 @@ func (n *Network) GetOnlineUsers() int {
     Verifies user specified by index and key
     @param  idx     User index
     @param  key     User key
+    @param  db_idx  User account id
     @return bool, true if user exists, otherwise false
  */
-func (n *Network) VerifyUser(idx uint16, key uint32) bool {
-    n.lock.RLock()
+func (n *Network) VerifyUser(idx uint16, key uint32, db_idx int32) bool {
+    n.lock.Lock()
     if n.clients[idx] != nil && n.clients[idx].AuthKey == key {
-        n.lock.RUnlock()
+        n.clients[idx].Data.Verified  = true
+        n.clients[idx].Data.LoggedIn  = true
+        n.clients[idx].Data.AccountId = db_idx
+        n.lock.Unlock()
         return true
     }
 
-    n.lock.RUnlock()
+    n.lock.Unlock()
     return false
 }
 

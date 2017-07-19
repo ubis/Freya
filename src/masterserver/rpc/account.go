@@ -23,6 +23,15 @@ func AuthCheck(c *rpc.Client, r *account.AuthRequest, s *account.AuthResponse) e
     if err == nil {
         g_LoginDatabase.Get(&res,
             "SELECT id, status, auth_key FROM accounts WHERE username = ?", r.UserId)
+
+        var exist int32 = 0
+
+        g_LoginDatabase.Get(&exist,
+            "SELECT account FROM accounts_subpassword WHERE account = ?", res.Id)
+
+        if exist == res.Id {
+            res.SubPassChar = 1
+        }
     }
 
     *s = res

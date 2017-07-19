@@ -16,6 +16,11 @@ func RegisterPackets() {
     log.Info("Registering RPC packets...")
     g_RPCHandler.Register(rpc.ServerRegister, ServerRegister)
     g_RPCHandler.Register(rpc.ServerList, ServerList)
+
     g_RPCHandler.Register(rpc.AuthCheck, AuthCheck)
     g_RPCHandler.Register(rpc.UserVerify, UserVerify)
+
+    g_RPCHandler.Register(rpc.FetchSubPassword, FetchSubPassword)
+    g_RPCHandler.Register(rpc.SetSubPassword, SetSubPassword)
+    g_RPCHandler.Register(rpc.RemoveSubPassword, RemoveSubPassword)
 }

@@ -69,7 +69,7 @@ func AuthAccount(session *network.Session, reader *network.Reader) {
     packet.WriteInt32(0x00) // premium service id
     packet.WriteInt32(0x00) // premium service expire date
     packet.WriteByte(0x00)
-    packet.WriteByte(0x00)  // subpw exist
+    packet.WriteByte(r.SubPassChar)  // subpassword exists for character
     packet.WriteBytes(make([]byte, 7))
     packet.WriteInt32(0x00) // language
     packet.WriteString(r.AuthKey + "\x00")

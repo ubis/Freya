@@ -10,10 +10,11 @@ import (
 
 var log = logger.Instance()
 
-var g_ServerConfig  = def.ServerConfig
-var g_RPCHandler    = def.RPCHandler
-var g_LoginDatabase = def.LoginDatabase
-var g_ServerManager = def.ServerManager
+var g_ServerConfig    = def.ServerConfig
+var g_RPCHandler      = def.RPCHandler
+var g_LoginDatabase   = def.LoginDatabase
+var g_ServerManager   = def.ServerManager
+var g_DatabaseManager = def.DatabaseManager
 
 func main() {
     log.Info("MasterServer init")
@@ -46,6 +47,9 @@ func main() {
         db.Select(&version, "SELECT VERSION()")
         log.Debugf("[DATABASE] Version: %s", version[0])
     }
+
+    // init DatabaseManager
+    g_DatabaseManager.Init(g_ServerConfig.GameDB)
 
     // start RPC Server
     g_RPCHandler.Run()

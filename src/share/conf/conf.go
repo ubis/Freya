@@ -83,6 +83,19 @@ func Open(path string) error {
 }
 
 /*
+    Attempts to check if given section exists
+    @param  section conf section
+    @return true if section exists, otherwise false
+ */
+func SectionExist(section string) bool {
+    if sections[section] == nil {
+        return false
+    }
+
+    return true
+}
+
+/*
     Gets value from configuration file, if section or key isn't found,
     default value will be returned
     @param  section conf section

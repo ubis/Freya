@@ -5,6 +5,7 @@ import (
     "net"
     "share/event"
     "share/encryption"
+    "share/models/account"
 )
 
 // max buffer size
@@ -22,6 +23,7 @@ type Session struct {
         AccountId int32
         Verified  bool
         LoggedIn  bool
+        SubPassword *account.SubPassword
     }
 }
 

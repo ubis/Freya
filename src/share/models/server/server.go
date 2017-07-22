@@ -3,51 +3,51 @@ package server
 import "share/rpc"
 
 const (
-    LOGIN_SERVER_TYPE = 1
-    GAME_SERVER_TYPE  = 2
+    LOGIN_SERVER = 1
+    GAME_SERVER  = 2
 )
 
-type Server struct {
-    *ServerData
-    Client      *rpc.Client
-}
-
-type ServerData struct {
+type RegisterReq struct {
     Type            byte
     ServerType      byte
     ServerId        byte
     ChannelId       byte
-    PublicIp        string
+    PublicIp        uint32
     PublicPort      uint16
-    CurrentUsers    int16
-    MaxUsers        int16
+    CurrentUsers    uint16
+    MaxUsers        uint16
 }
 
-type RegResponse struct {
+type RegisterResp struct {
     Registered bool
 }
 
-type SvrListRequest struct {
+type Server struct {
+    *RegisterReq
+    Client       *rpc.Client
+}
+
+type ListReq struct {
 
 }
 
-type SvrListResponse struct {
-    Servers []ServerItem
+type ListResp struct {
+    List []ServerItem
 }
 
 type ServerItem struct {
     Id  byte
     Hot byte
-    Channels []ChannelItem
+    List []ChannelItem
 }
 
 type ChannelItem struct {
     Id           byte
     Type         byte
-    Ip           string
+    Ip           uint32
     Port         uint16
-    CurrentUsers int16
-    MaxUsers     int16
+    CurrentUsers uint16
+    MaxUsers     uint16
 }
 
 // for sorting

@@ -15,19 +15,14 @@ var log = logger.Instance()
 
 var sections = make(section)
 
-/*
-    Attempts to open and read configuration file, error is returned on fail
-    @param  path    configuration file path
-    @return error on fail
- */
+// Attempts to open and read configuration file. Error is returned on fail
 func Open(path string) error {
-    var file, err = ioutil.ReadFile(path)
-
+    var f, err = ioutil.ReadFile(path)
     if err != nil {
         return err
     }
 
-    var lines   = strings.Split(string(file), "\n")
+    var lines   = strings.Split(string(f), "\n")
     var section = ""
 
     for i := 0; i < len(lines); i++ {
@@ -52,9 +47,8 @@ func Open(path string) error {
             section = strings.TrimSpace(section)
 
             if len(section) == 0 {
-                return errors.New("Error parsing configuration file, section: " + section)
+                return errors.New("Error parsing configuration file!")
             }
-
         } else {
             // value and key
             var data  = strings.Split(line, ";")[0]
@@ -74,22 +68,14 @@ func Open(path string) error {
             if strings.ToLower(key) == "password" {
                 value = "******"
             }
-
-            log.Debugf("%s::%s=%s", section, key, value)
         }
     }
 
     return nil
 }
 
-/*
-    Gets value from configuration file, if section or key isn't found,
-    default value will be returned
-    @param  section conf section
-    @param  key     conf key
-    @param  def     default value
-    @return string value, either from conf or default
- */
+// Returns string value from configuration file. If section or key isn't found,
+// default value will be returned
 func GetString(section string, key string, def string) string {
     if value, err := get(section, key); err == nil {
         return value
@@ -98,14 +84,8 @@ func GetString(section string, key string, def string) string {
     return def
 }
 
-/*
-    Gets value from configuration file, if section or key isn't found,
-    default value will be returned
-    @param  section conf section
-    @param  key     conf key
-    @param  def     default value
-    @return int value, either from conf or default
- */
+// Returns int value from configuration file. If section or key isn't found,
+// default value will be returned
 func GetInt(section string, key string, def int) int {
     if value, err := get(section, key); err == nil {
         var tmp, _ = strconv.Atoi(value)
@@ -115,14 +95,8 @@ func GetInt(section string, key string, def int) int {
     return def
 }
 
-/*
-    Gets value from configuration file, if section or key isn't found,
-    default value will be returned
-    @param  section conf section
-    @param  key     conf key
-    @param  def     default value
-    @return bool value, either from conf or default
- */
+// Returns bool value from configuration file. If section or key isn't found,
+// default value will be returned
 func GetBool(section string, key string, def bool) bool {
     if value, err := get(section, key); err == nil {
         var tmp, _ = strconv.ParseBool(value)
@@ -132,13 +106,8 @@ func GetBool(section string, key string, def bool) bool {
     return def
 }
 
-/*
-    Reads KeyValue from section defined in configuration,
-    error is returned on fail
-    @param  section conf section
-    @param  key     conf key
-    @return string value, either from conf or default; and error, if any
- */
+// Attempts to find and return given value from section and it's key,
+// if section and key wasn't found, an error will be returned
 func get(section string, key string) (string, error) {
     if sections[section] == nil {
         return "", errors.New("Cannot find section: " + section)
@@ -150,5 +119,6 @@ func get(section string, key string) (string, error) {
         return "", errors.New("Cannot find " + section + "::" + key)
     }
 
+    log.Debugf("%s::%s=%s", section, key, data[key])
     return data[key], nil
 }

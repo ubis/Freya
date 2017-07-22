@@ -7,9 +7,9 @@ import (
     "math/rand"
 )
 
-var MASK = []uint32 { 0xFFFFFFFF, 0xFFFFFF00, 0xFFFF0000, 0xFF000000 };
+// global mask
+var mask = []uint32 { 0xFFFFFFFF, 0xFFFFFF00, 0xFFFF0000, 0xFF000000 };
 
-// Encryption structure
 type Encryption struct {
     recvXorKey              uint32
     isFirstPacket           bool
@@ -19,10 +19,7 @@ type Encryption struct {
     RecvXorKeyIdx           uint32
 }
 
-/*
-    Initializes encryption
-    @param  key     or key table
- */
+// Initializes encryption
 func (e *Encryption) Init(key *XorKeyTable) {
     e.isFirstPacket           = true
     e.xorKeyTableBaseMultiple = 1
@@ -30,12 +27,8 @@ func (e *Encryption) Init(key *XorKeyTable) {
     e.RecvXorKeyIdx           = uint32(rand.Intn(RecvXorKeyNum))
 }
 
-/*
-    Returns packet size
-    @param  data    data array from which size will be taken
-    @return packet size
- */
-func (e *Encryption) GetPacketSize(data []uint8) int {
+// Returns packet size
+func (e *Encryption) GetPacketSize(data []byte) int {
     if !e.isFirstPacket {
         var header = binary.LittleEndian.Uint32(data) ^ e.recvXorKey
         return int(header >> 16)
@@ -44,12 +37,8 @@ func (e *Encryption) GetPacketSize(data []uint8) int {
     return Connect2SvrSize
 }
 
-/*
-    Encrypts data
-    @param  data    data array to be encrypted
-    @return encrypted data or error, if any
- */
-func (e *Encryption) Encrypt(data []uint8) ([]uint8, error) {
+// Attempts to encrypt and return data. An error is returned on fail
+func (e *Encryption) Encrypt(data []byte) ([]byte, error) {
     var iLen = len(data)
 
     if iLen < S2CHeaderSize {
@@ -62,7 +51,7 @@ func (e *Encryption) Encrypt(data []uint8) ([]uint8, error) {
         )
     }
 
-    var pPayload = make([]uint8, iLen)
+    var pPayload = make([]byte, iLen)
 
     var xorKey uint32
     var xorNum uint32
@@ -83,11 +72,11 @@ func (e *Encryption) Encrypt(data []uint8) ([]uint8, error) {
     }
 
     var remainLen  = int32(iLen % 4)
-    var remainData = make([]uint8, 4)
+    var remainData = make([]byte, 4)
 
     copy(remainData, data[j:j + remainLen])
     var r = binary.LittleEndian.Uint32(remainData)
-    var m = MASK[remainLen];
+    var m = mask[remainLen];
 
     xorNum = r ^ xorKey;
     r      = xorNum ^ (xorKey & m);
@@ -98,12 +87,8 @@ func (e *Encryption) Encrypt(data []uint8) ([]uint8, error) {
     return pPayload, nil
 }
 
-/*
-    Decrypts data
-    @param  data    data array to be decrypted
-    @return decrypted data or error, if any
- */
-func (e *Encryption) Decrypt(data []uint8) ([]uint8, error) {
+// Attempts to decrypt and return data. An error is returned on fail
+func (e *Encryption) Decrypt(data []byte) ([]byte, error) {
     var packetLen int
     var header    uint32
 
@@ -147,7 +132,7 @@ func (e *Encryption) Decrypt(data []uint8) ([]uint8, error) {
 
     var pHeader  = binary.LittleEndian.Uint32(data)
     //var pCheckSum = binary.LittleEndian.Uint32(data[4:8])
-    var pPayload = make([]uint8, packetLen)
+    var pPayload = make([]byte, packetLen)
     var xorKey   = e.recvXorKey
     var xorNum uint32
 
@@ -169,11 +154,11 @@ func (e *Encryption) Decrypt(data []uint8) ([]uint8, error) {
     }
 
     var remainLen  = int32(packetLen % 4)
-    var remainData = make([]uint8, 4)
+    var remainData = make([]byte, 4)
 
     copy(remainData, data[j:j + remainLen])
     var r = binary.LittleEndian.Uint32(remainData)
-    var m = MASK[remainLen];
+    var m = mask[remainLen];
 
     xorNum = r;
     r      = (xorNum ^ xorKey) ^ (xorKey & m);

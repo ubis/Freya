@@ -18,11 +18,7 @@ type Network struct {
 
 var log = logger.Instance()
 
-/*
-    Network initialization
-    @param  port    network port to listen on
-    @param  s       Server settings
- */
+// Network initialization
 func (n *Network) Init(port int, s *server.Settings) {
     log.Info("Configuring network...")
 
@@ -106,13 +102,7 @@ func (n *Network) GetOnlineUsers() int {
     return users
 }
 
-/*
-    Verifies user specified by index and key
-    @param  idx     User index
-    @param  key     User key
-    @param  db_idx  User account id
-    @return bool, true if user exists, otherwise false
- */
+// Verifies user specified by index, key and sets it's database index
 func (n *Network) VerifyUser(idx uint16, key uint32, db_idx int32) bool {
     n.lock.Lock()
     if n.clients[idx] != nil && n.clients[idx].AuthKey == key {
@@ -127,10 +117,7 @@ func (n *Network) VerifyUser(idx uint16, key uint32, db_idx int32) bool {
     return false
 }
 
-/*
-    onClientDisconnect event, informs server about disconnected client
-    @param  event   Event interface, which is later parsed into Session struct
- */
+// onClientDisconnect event informs server about disconnected client
 func (n *Network) onClientDisconnect(event event.Event) {
     var session, err = event.(*Session)
     if err != true {

@@ -17,14 +17,12 @@ import (
 var typeOfError = reflect.TypeOf((*error)(nil)).Elem()
 var typeOfClient = reflect.TypeOf((*Client)(nil))
 
-// RPC Server struct
 type Server struct {
 	handlers map[string]*handler
 
     Port     int
 }
 
-// RPC handler struct
 type handler struct {
 	fn        reflect.Value
 	argType   reflect.Type
@@ -37,11 +35,7 @@ func (s *Server) Init() {
     s.handlers = make(map[string]*handler)
 }
 
-/*
-    Registers RPC call function
-    @param  method      function name
-    @param  handlerFunc function method
- */
+// Registers a new RPC call function
 func (s *Server) Register(method string, handlerFunc interface{}) {
     log.Infof("Registered RPC packet `%s`", method)
 	addHandler(s.handlers, method, handlerFunc)
@@ -60,15 +54,10 @@ func (s *Server) Run() {
     s.accept(listen)
 }
 
-/*
-    Adds RPC call function handler
-    @param  handler     a map of handlers, to store it there
-    @param  mname       function name
-    @param  handlerFunc function method
- */
+// Adds a new RPC call function handler
 func addHandler(handlers map[string]*handler, mname string, handlerFunc interface{}) {
 	if _, ok := handlers[mname]; ok {
-		panic("rpc2: multiple registrations for " + mname)
+		panic("rpc: multiple registrations for " + mname)
 	}
 
 	method := reflect.ValueOf(handlerFunc)
@@ -114,11 +103,7 @@ func addHandler(handlers map[string]*handler, mname string, handlerFunc interfac
 	}
 }
 
-/*
-    Checks if this type is exported or a builtin
-    @param  t   type to be checked
-    @return true if exported, false if builtin
- */
+// Checks if this type is exported or a builtin
 func isExportedOrBuiltinType(t reflect.Type) bool {
 	for t.Kind() == reflect.Ptr {
 		t = t.Elem()
@@ -128,21 +113,14 @@ func isExportedOrBuiltinType(t reflect.Type) bool {
 	return isExported(t.Name()) || t.PkgPath() == ""
 }
 
-/*
-    Checks if name starts up with uppercase
-    @param  name    name to be checked
-    @return true if starts with uppercase, otherwise false
- */
+// Checks if name starts up with uppercase
 func isExported(name string) bool {
 	rune, _ := utf8.DecodeRuneInString(name)
 	return unicode.IsUpper(rune)
 }
 
-/*
-    Accept accepts connections on the listener and serves requests
-     for each incoming connection. Invokes it in a go statement.
-    @param  lis server socket listener
- */
+// Accept accepts connections on the listener and serves requests
+// for each incoming connection. Invokes it in a go statement.
 func (s *Server) accept(lis net.Listener) {
 	for {
 		conn, err := lis.Accept()
@@ -153,11 +131,7 @@ func (s *Server) accept(lis net.Listener) {
 	}
 }
 
-/*
-    Runs the server on a single connection. Triggers SyncConnectEvent.
-    @param conn     client's connection I/O interface
-    @param endpnt   client's connection remote endpoint
- */
+// Runs the server on a single connection. Triggers SyncConnectEvent
 func (s *Server) serveConn(conn io.ReadWriteCloser, endpnt string) {
     var codec = newGobCodec(conn)
     defer codec.Close()

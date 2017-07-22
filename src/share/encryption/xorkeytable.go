@@ -4,10 +4,9 @@ import "share/logger"
 
 var log = logger.Instance()
 
-// XorKeyTable structure
 type XorKeyTable struct {
     KeyTable []uint32
-    Seed2nd     uint32
+    Seed2nd  uint32
 }
 
 // Initializes XorKeyTable
@@ -32,10 +31,7 @@ func (x *XorKeyTable) XorKeyTable() {
     }
 }
 
-/*
-    Generates 2nd XorKeyTable
-    @param  seed    seed value to set and use
- */
+// Generates 2nd XorKeyTable
 func (x *XorKeyTable) Generate2ndXorKeyTable(seed uint32) {
     var keyRand = KeyRand{}
     keyRand.Seed(seed)

@@ -12,12 +12,8 @@ var format  = logging.MustStringFormatter(
     `%{time:2006-01-02 15:04:05.000} [%{level}] %{message}`,
 )
 
-/*
-    Initializes logging system, creates log file for writing logs
-    and returns Logger instance
-    @param  name    Server name, which will be used to create log file
-    @return Logger instance
- */
+// Initializes logging system, creates log file for writing logs
+// and returns Logger instance
 func Init(name string) *logging.Logger {
     var backend2 = logging.NewLogBackend(os.Stderr, "", 0)
     logging.SetBackend(logging.NewBackendFormatter(backend2, format))

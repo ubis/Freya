@@ -10,3 +10,15 @@ type AuthResponse struct {
     Status   byte
     AuthKey  string `db:"auth_key"`
 }
+
+type VerifyReq struct {
+    AuthKey   uint32
+    UserIdx   uint16
+    ServerId  byte
+    ChannelId byte
+    DBIdx     int32
+}
+
+type VerifyResp struct {
+    Verified bool
+}

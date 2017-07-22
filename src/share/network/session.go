@@ -5,7 +5,6 @@ import (
     "net"
     "share/event"
     "share/encryption"
-    "share/models/session"
 )
 
 // max buffer size
@@ -18,24 +17,24 @@ type Session struct {
     Encryption  encryption.Encryption
     UserIdx     uint16
     AuthKey     uint32
-    Data        *session.Data
     Connected   bool
+    Data        struct {
+        AccountId int32
+        Verified  bool
+        LoggedIn  bool
+    }
 }
 
-/*
-    Starts session goroutine
-    @param  key encryption XorKeyTable
- */
+// Starts session goroutine
 func (s *Session) Start(table encryption.XorKeyTable) {
     // create new receiving buffer
     s.buffer = make([]byte, MAX_RECV_BUFFER_SIZE)
 
+    s.Connected = true
+
     // init encryption
     s.Encryption = encryption.Encryption{}
     s.Encryption.Init(&table)
-
-    s.Data      = &session.Data{}
-    s.Connected = true
 
     for {
         // read data
@@ -45,15 +44,13 @@ func (s *Session) Start(table encryption.XorKeyTable) {
             if err != io.EOF {
                 log.Error("Error reading: " + err.Error())
             }
-            s.Connected = false
-            event.Trigger(event.ClientDisconnectEvent, s)
             s.Close()
             break
         }
 
         var i = 0
-
         for i < length {
+            // get packet length
             var packetLength = s.Encryption.GetPacketSize(s.buffer[i:])
 
             // attempt to decrypt packet
@@ -61,8 +58,6 @@ func (s *Session) Start(table encryption.XorKeyTable) {
 
             if error != nil {
                 log.Error("Error decrypting: " + error.Error())
-                s.Connected = false
-                event.Trigger(event.ClientDisconnectEvent, s)
                 s.Close()
                 break
             }
@@ -71,12 +66,7 @@ func (s *Session) Start(table encryption.XorKeyTable) {
             var reader = NewReader(data)
 
             // create new packet event argument
-            var arg = &PacketArgs{
-                s,
-                int(reader.Size),
-                int(reader.Type),
-                reader,
-            }
+            var arg = &PacketArgs{s, int(reader.Size), int(reader.Type), reader}
 
             // trigger packet received event
             event.Trigger(event.PacketReceiveEvent, arg)
@@ -86,10 +76,7 @@ func (s *Session) Start(table encryption.XorKeyTable) {
     }
 }
 
-/*
-    Sends specified data to the client
-    @param  writer  a pointer to Writer so that byte array of data could be received from it
- */
+// Sends specified data to the client
 func (s *Session) Send(writer *Writer) {
     // encrypt data
     var encrypt, err = s.Encryption.Encrypt(writer.Finalize())
@@ -106,21 +93,13 @@ func (s *Session) Send(writer *Writer) {
     }
 
     // create new packet event argument
-    var arg = &PacketArgs{
-        s,
-        length,
-        writer.Type,
-        nil,
-    }
+    var arg = &PacketArgs{s, length, writer.Type, nil}
 
     // trigger packet sent event
     event.Trigger(event.PacketSendEvent, arg)
 }
 
-/*
-    Returns session's remote endpoint
-    @return remote endpoint
- */
+// Returns session's remote endpoint
 func (s *Session) GetEndPnt() string {
     return s.socket.RemoteAddr().String()
 }
@@ -129,4 +108,5 @@ func (s *Session) GetEndPnt() string {
 func (s *Session) Close() {
     s.Connected = false
     s.socket.Close()
+    event.Trigger(event.ClientDisconnectEvent, s)
 }

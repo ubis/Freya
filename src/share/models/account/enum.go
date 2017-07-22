@@ -14,11 +14,9 @@ const (
     Unverified          = 41   // account is unverified
     AccountDeleted      = 42   // inexistent or deleted account from whitelist
     AccountLocked       = 43   // too many wrong passwd attempts
-
     OutOfService2       = 47   // cannot connect at the moment
     AccountLockedSub    = 49   // account locked due sub pass fail
     TMS                 = 50   // [EP16+] time limit system; cannot start chatting
-
     EmailVerify         = 113  // please complete email verification first
     OGPTransfer         = 114  // transfer OGP information to EST accounts first
     AccountInactive     = 115  // logged out for a long time, activate first

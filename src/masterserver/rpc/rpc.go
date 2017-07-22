@@ -14,6 +14,7 @@ var g_ServerManager = def.ServerManager
 
 func RegisterPackets() {
     log.Info("Registering RPC packets...")
+
     g_RPCHandler.Register(rpc.ServerRegister, ServerRegister)
     g_RPCHandler.Register(rpc.ServerList, ServerList)
 

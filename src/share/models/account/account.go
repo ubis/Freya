@@ -6,8 +6,20 @@ type AuthRequest struct {
 }
 
 type AuthResponse struct {
-    Id          int32
-    Status      byte
-    AuthKey     string `db:"auth_key"`
+    Id       int32
+    Status   byte
+    AuthKey  string `db:"auth_key"`
     SubPassChar byte
+}
+
+type VerifyReq struct {
+    AuthKey   uint32
+    UserIdx   uint16
+    ServerId  byte
+    ChannelId byte
+    DBIdx     int32
+}
+
+type VerifyResp struct {
+    Verified bool
 }

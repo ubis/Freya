@@ -7,7 +7,6 @@ import (
 
 const DEFAULT_BUFFER_SIZE = 1024
 
-// Packet Writer struct
 type Writer struct {
     buffer   []byte
     index    int
@@ -15,16 +14,11 @@ type Writer struct {
     Type     int
 }
 
-/*
-    Attempts to create a new packet writer and write initial packet header
-    @param  code    packet type
-    @param  magic   magic key, if not used then it's taken from encryption package
-    @return pointer to the Writer
- */
+// Attempts to create a new packet writer and write initial packet header
 func NewWriter(code uint16, magic ...uint16) *Writer {
     var w = &Writer{}
 
-    w.buffer = make([]byte, 1)
+    w.buffer = make([]byte, DEFAULT_BUFFER_SIZE)
     w.index = 0
 
     if magic == nil {
@@ -43,10 +37,7 @@ func NewWriter(code uint16, magic ...uint16) *Writer {
     return w
 }
 
-/*
-    Checks buffer length and if it's too small, it will resize it
-    @param  length  new length, in bytes
- */
+// Checks buffer length and if it's too small, it will resize it
 func (w *Writer) checkLength(length int) {
     if len(w.buffer) < w.index + length {
         // resize...
@@ -59,15 +50,10 @@ func (w *Writer) checkLength(length int) {
     }
 }
 
-/*
-    Attempts to read specified interface type and serializes it into byte array.
-     It has a length parameter, which tells the required size of interface type.
-     If interface type length is smaller or higher than required, the correct
-     length will be returned
-    @param  interface   source interface
-    @param  length      required interface type length
-    @return byte array of interface with required length
- */
+// Attempts to read specified interface type and serializes it into byte array.
+// It has a length parameter, which tells the required size of interface type.
+// If interface type length is smaller or higher than required, the correct
+// length will be returned
 func (w *Writer) getType(obj interface{}, length int) []byte {
     // check length
     w.checkLength(length)

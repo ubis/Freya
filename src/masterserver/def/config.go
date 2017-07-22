@@ -8,17 +8,6 @@ import (
     "masterserver/database"
 )
 
-// Default values
-const (
-    C_Port    = 9001
-    C_DB_IP   = "127.0.0.1"
-    C_DB_PORT = 3306
-    C_DB_NAME = "database"
-    C_DB_USER = "root"
-    C_DB_PASS = ""
-)
-
-// Configuration struct
 type Config struct {
     Port      int
 
@@ -39,19 +28,19 @@ func (c *Config) Read() {
 
     // parse configuration file...
     if err := conf.Open(location); err != nil {
-        log.Fatalf("Couldn't read configuration file %s. %s", location, err.Error())
+        log.Fatal(err.Error())
         return
     }
 
     // read values from configuration...
-    c.Port = conf.GetInt("network", "port", C_Port)
+    c.Port = conf.GetInt("network", "port", 9001)
 
     // login db
-    c.LoginIp   = conf.GetString("login", "ip", C_DB_IP)
-    c.LoginPort = conf.GetInt("login", "port", C_DB_PORT)
-    c.LoginName = conf.GetString("login", "database", C_DB_NAME)
-    c.LoginUser = conf.GetString("login", "username", C_DB_USER)
-    c.LoginPass = conf.GetString("login", "password", C_DB_PASS)
+    c.LoginIp   = conf.GetString("login", "ip", "127.0.0.1")
+    c.LoginPort = conf.GetInt("login", "port", 3306)
+    c.LoginName = conf.GetString("login", "database", "database")
+    c.LoginUser = conf.GetString("login", "username", "root")
+    c.LoginPass = conf.GetString("login", "password", "")
 
     // load all game databases
     c.LoadGameDB()
@@ -73,11 +62,11 @@ func (c *Config) LoadGameDB() {
         var section = fmt.Sprintf("game_%d", i)
         if conf.SectionExist(section) {
             c.GameDB[i] = &database.Database{
-                conf.GetString(section, "ip", C_DB_IP),
-                conf.GetInt(section, "port", C_DB_PORT),
-                conf.GetString(section, "database", C_DB_NAME),
-                conf.GetString(section, "username", C_DB_USER),
-                conf.GetString(section, "password", C_DB_PASS),
+                conf.GetString(section, "ip", "127.0.0.1"),
+                conf.GetInt(section, "port", 3306),
+                conf.GetString(section, "database", "database"),
+                conf.GetString(section, "username", "root"),
+                conf.GetString(section, "password", ""),
                 i,
                 nil,
                 "",

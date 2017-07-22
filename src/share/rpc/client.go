@@ -9,8 +9,8 @@ import (
     "sync"
     "net"
     "strconv"
-    "share/event"
     "time"
+    "share/event"
 )
 
 // Client represents an RPC Client.
@@ -51,10 +51,8 @@ func (c *Client) Start() {
     go c.run()
 }
 
-/*
-    RPC Client run function, an infinite loop with 3 second delay.
-    It will attempt to reconnect
- */
+// RPC Client run function, an infinite loop with 3 second delay.
+// It will attempt to reconnect
 func (c *Client) run() {
     for {
         if !c.connected {

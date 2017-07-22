@@ -16,12 +16,7 @@ func (pk *PacketHandler) Init() {
     pk.packets = make(PacketInfo)
 }
 
-/*
-    Registers network packet
-    @param  code    packet type
-    @param  name    packet name
-    @param  method  packet processing method
- */
+// Registers a new network packet
 func (pk *PacketHandler) Register(code uint16, name string, method interface{}) {
     pk.packets[code] = &PacketData{name, method}
 
@@ -34,49 +29,42 @@ func (pk *PacketHandler) Register(code uint16, name string, method interface{}) 
     log.Debugf("Registered %s packet: %s(%d)", pType, pk.packets[code].Name, code)
 }
 
-/*
-    Handles specified network packet
-    @param  args    packet args
- */
+// Handles specified network packet
 func (pk *PacketHandler) Handle(args *PacketArgs) {
     // recover on panic
     defer func() {
         if err := recover(); err != nil {
-            log.Warning("Panic! Recovered from:", pk.Name(args.Type))
+            log.Warningf("Panic! Recovered from: %s, src: %s, id: %d",
+                pk.Name(args.Type), args.Session.GetEndPnt(), args.Session.Data.AccountId,
+            )
+
             args.Session.Close()
         }
     }()
 
     if pk.packets[args.Packet.Type] == nil {
         // unknown packet received
-        log.Errorf("Unknown packet received (Len: %d, Type: %d, Src: %s, UserIdx: %d)",
-            args.Packet.Size,
-            args.Packet.Type,
-            args.Session.GetEndPnt(),
-            args.Session.UserIdx,
+        log.Errorf("Unknown packet received (Len: %d, type: %d, src: %s)",
+            args.Packet.Size, args.Packet.Type, args.Session.GetEndPnt(),
         )
+
         return
     }
 
     var invoke = pk.packets[args.Packet.Type].Method
     if invoke == nil {
-        log.Errorf("Trying to access procedure `%s` (Type: %d, Src: %s, UserIdx: %d)",
-            pk.Name(args.Type),
-            args.Type,
-            args.Session.GetEndPnt(),
-            args.Session.UserIdx,
+        log.Errorf("Trying to access procedure `%s` (Type: %d, src: %s, id: %d)",
+            pk.Name(args.Type), args.Type, args.Session.GetEndPnt(), args.Session.Data.AccountId,
         )
+
         return
     }
 
+    // invoke packets function
     invoke.(func(*Session, *Reader))(args.Session, args.Packet)
 }
 
-/*
-    Returns packet's name by packet type
-    @param  code    packet type
-    @return packet name and `Unknown` for un-registered packet
- */
+// Returns packet's name by packet type
 func (pk *PacketHandler) Name(code int) string {
     if pk.packets[uint16(code)] != nil {
         return pk.packets[uint16(code)].Name

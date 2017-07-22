@@ -5,10 +5,7 @@ import (
     "fmt"
 )
 
-/*
-    DumpPacket function dumps packet into console
-    @param  packet  interface, which can be Writer, Reader or []byte
- */
+// DumpPacket function dumps packet into console
 func DumpPacket(packet interface{}) {
     if writer, ok := packet.(*Writer); ok {
         dump(writer.buffer, writer.index)
@@ -21,11 +18,7 @@ func DumpPacket(packet interface{}) {
     }
 }
 
-/*
-    Dumps byte array into console
-    @param  packet  byte array of data
-    @param  length  length of data
- */
+// Dumps byte array into console
 func dump(packet []byte, length int) {
     var buffer bytes.Buffer
 
@@ -39,7 +32,6 @@ func dump(packet []byte, length int) {
     for i := 0; i < length; i++ {
         if newLine == 16 {
             newLine = 0
-
             if i > 0 {
                 buffer.WriteString("\n")
             }

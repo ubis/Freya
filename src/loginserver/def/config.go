@@ -5,18 +5,6 @@ import (
     "share/conf"
 )
 
-// Default values
-const (
-    C_Port          = 38101
-
-    C_Version       = 0
-    C_MagicKey      = 0
-
-    C_MasterIp      = "127.0.0.1"
-    C_MasterPort    = 9001
-)
-
-// Configuration struct
 type Config struct {
     Port               int
 
@@ -40,21 +28,20 @@ func (c *Config) Read() {
 
     // parse configuration file...
     if err := conf.Open(location); err != nil {
-        log.Fatalf("Couldn't read configuration file %s. %s", location, err.Error())
-        return
+        log.Fatal(err.Error())
     }
 
     // read values from configuration...
-    c.Port = conf.GetInt("network", "port", C_Port)
+    c.Port = conf.GetInt("network", "port", 38101)
 
-    c.Version            = conf.GetInt("client", "client_version", C_Version)
-    c.MagicKey           = conf.GetInt("client", "magic_key", C_MagicKey)
+    c.Version            = conf.GetInt("client", "client_version", 0)
+    c.MagicKey           = conf.GetInt("client", "magic_key", 0)
     c.CashWeb_URL        = conf.GetString("client", "cashweb_url", "")
     c.CashWeb_Odc_URL    = conf.GetString("client", "cashweb_odc_url", "")
     c.CashWeb_Charge_URL = conf.GetString("client", "cashweb_charge_url", "")
     c.GuildWeb_URL       = conf.GetString("client", "guildweb_url", "")
     c.Sns_URL            = conf.GetString("client", "sns_url", "")
 
-    c.MasterIp   = conf.GetString("master", "ip", C_MasterIp)
-    c.MasterPort = conf.GetInt("master", "port", C_MasterPort)
+    c.MasterIp   = conf.GetString("master", "ip", "1270.0.1")
+    c.MasterPort = conf.GetInt("master", "port", 9001)
 }

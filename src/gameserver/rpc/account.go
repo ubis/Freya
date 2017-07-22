@@ -6,7 +6,7 @@ import (
 )
 
 // UserVerify RPC Call
-func UserVerify(c *rpc.Client, r *account.UserVerify, s *account.UserVerifyRecv) error {
-    *s = account.UserVerifyRecv{g_NetworkManager.VerifyUser(r.UserIdx, r.AuthKey, r.DBIdx)}
+func UserVerify(c *rpc.Client, r *account.VerifyReq, s *account.VerifyResp) error {
+    *s = account.VerifyResp{g_NetworkManager.VerifyUser(r.UserIdx, r.AuthKey, r.DBIdx)}
     return nil
 }

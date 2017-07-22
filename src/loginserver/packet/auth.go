@@ -26,41 +26,36 @@ func PublicKey(session *network.Session, reader *network.Reader) {
 // AuthAccount Packet
 func AuthAccount(session *network.Session, reader *network.Reader) {
     if session.Data.Verified != true {
-        log.Errorf("Session version is not verified! Src: %s, UserIdx: %d",
-            session.GetEndPnt(),
-            session.UserIdx,
-        )
+        log.Errorf("Session version is not verified! Src: %s", session.GetEndPnt())
+        session.Close()
         return
     }
 
+    // skip 2 bytes
     reader.ReadUint16()
 
+    // read and decrypt RSA block
     var loginData = reader.ReadBytes(rsa.RSA_LOGIN_LENGTH)
-
-    var rsa = g_ServerSettings.RSA
-    var data, err = rsa.Decrypt(loginData[:])
+    var data, err = g_ServerSettings.RSA.Decrypt(loginData[:])
     if err != nil {
-        log.Errorf("%s; Src: %s, UserIdx: %d",
-            err.Error(),
-            session.GetEndPnt(),
-            session.UserIdx,
-        )
+        log.Errorf("%s; Src: %s", err.Error(), session.GetEndPnt())
+        session.Close()
         return
     }
 
-    var userId = string(bytes.Trim(data[:32], "\x00"))
-    var userPw = string(bytes.Trim(data[32:], "\x00"))
+    // extract name and pass
+    var name = string(bytes.Trim(data[:32], "\x00"))
+    var pass = string(bytes.Trim(data[32:], "\x00"))
 
     var r = account.AuthResponse{Status: account.None}
-    err = g_RPCHandler.Call(rpc.AuthCheck,
-        account.AuthRequest{userId, userPw}, &r)
+    err = g_RPCHandler.Call(rpc.AuthCheck, account.AuthRequest{name, pass}, &r)
 
+    // if server is down...
     if err != nil {
         r.Status = account.OutOfService
     }
 
     var packet = network.NewWriter(AUTHACCOUNT)
-
     packet.WriteByte(r.Status)
     packet.WriteInt32(r.Id)
     packet.WriteInt16(0x00)
@@ -77,7 +72,7 @@ func AuthAccount(session *network.Session, reader *network.Reader) {
     session.Send(packet)
 
     if r.Status == account.Normal {
-        log.Infof("User `%s` succesfully logged in.", userId)
+        log.Infof("User `%s` succesfully logged in.", name)
 
         session.Data.AccountId = r.Id
         session.Data.LoggedIn  = true
@@ -89,18 +84,18 @@ func AuthAccount(session *network.Session, reader *network.Reader) {
         SystemMessg(session, message.Normal)
 
         // send server list periodically
-        t := time.NewTicker(time.Second * 5)
-        go func() {
+        var t = time.NewTicker(time.Second * 5)
+        go func(s *network.Session) {
             for {
-                if !session.Connected {
+                if !s.Connected {
                     break
                 }
 
-                ServerSate(session)
+                ServerSate(s)
                 <-t.C
             }
-        }()
+        }(session)
     } else {
-        log.Infof("User `%s` failed to log in.", userId)
+        log.Infof("User `%s` failed to log in.", name)
     }
 }

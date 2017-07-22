@@ -8,6 +8,7 @@ import (
 
 var log = logger.Instance()
 
+// globals
 var g_ServerConfig   = def.ServerConfig
 var g_ServerSettings = def.ServerSettings
 var g_NetworkManager = def.NetworkManager

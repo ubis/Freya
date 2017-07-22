@@ -1,8 +1,6 @@
 package packet
 
 import (
-    "net"
-    "encoding/binary"
     "share/network"
     "share/rpc"
     "share/models/server"
@@ -12,9 +10,7 @@ import (
 // PreServerEnvRequest Packet
 func PreServerEnvRequest(session *network.Session, reader *network.Reader) {
     var packet = network.NewWriter(PRE_SERVER_ENV_REQUEST)
-
     packet.WriteBytes(make([]byte, 4113))
-
     session.Send(packet)
 }
 
@@ -35,7 +31,6 @@ func URLToClient(session *network.Session) {
     var packet = network.NewWriter(URLTOCLIENT)
     packet.WriteInt16(dataLen + 2)
     packet.WriteInt16(dataLen)
-
     packet.WriteInt32(len(cash_url))
     packet.WriteString(cash_url)
     packet.WriteInt32(len(cash_odc_url))
@@ -61,26 +56,24 @@ func SystemMessg(session *network.Session, message byte) {
 
 // ServerState Packet which is NFY
 func ServerSate(session *network.Session) {
-    var serverList = server.SvrListResponse{}
-    g_RPCHandler.Call(rpc.ServerList, server.SvrListRequest{}, &serverList)
-
-    var svr = serverList.Servers
+    // request server list
+    var r = server.ListResp{}
+    g_RPCHandler.Call(rpc.ServerList, server.ListReq{}, &r)
+    var s = r.List
 
     var packet = network.NewWriter(SERVERSTATE)
-    packet.WriteByte(len(svr))
+    packet.WriteByte(len(s))
 
-    for i := 0; i < len(svr); i ++ {
-        packet.WriteByte(svr[i].Id)
-        packet.WriteByte(svr[i].Hot)  // 0x10 = HOT! Flag; or bit_set(5)
+    for i := 0; i < len(s); i ++ {
+        packet.WriteByte(s[i].Id)
+        packet.WriteByte(s[i].Hot)  // 0x10 = HOT! Flag; or bit_set(5)
         packet.WriteInt32(0x00)
-        packet.WriteByte(len(svr[i].Channels))
+        packet.WriteByte(len(s[i].List))
 
-        for j := 0; j < len(svr[i].Channels); j ++ {
-            var channel = svr[i].Channels[j]
-            var ip = binary.LittleEndian.Uint32(net.ParseIP(channel.Ip)[12:16])
-
-            packet.WriteByte(channel.Id);
-            packet.WriteUint16(channel.CurrentUsers);
+        for j := 0; j < len(s[i].List); j ++ {
+            var c = s[i].List[j]
+            packet.WriteByte(c.Id);
+            packet.WriteUint16(c.CurrentUsers);
             packet.WriteUint16(0x00);
             packet.WriteUint16(0xFFFF);
             packet.WriteUint16(0x00);
@@ -93,10 +86,10 @@ func ServerSate(session *network.Session) {
             packet.WriteByte(0x00);
             packet.WriteByte(0x00);
             packet.WriteByte(0xFF);
-            packet.WriteUint16(channel.MaxUsers);
-            packet.WriteUint32(ip);
-            packet.WriteUint16(channel.Port);
-            packet.WriteUint32(channel.Type);
+            packet.WriteUint16(c.MaxUsers);
+            packet.WriteUint32(c.Ip);
+            packet.WriteUint16(c.Port);
+            packet.WriteUint32(c.Type);
         }
     }
 
@@ -112,15 +105,14 @@ func VerifyLinks(session *network.Session, reader *network.Reader) {
     var magickey  = reader.ReadInt32();
 
     if magickey != int32(g_ServerConfig.MagicKey) {
-        log.Errorf(
-            "Invalid Client MagicKey (Required: %d, detected: %d, id: %d, src: %s",
-        g_ServerConfig.MagicKey, magickey, session.Data.AccountId, session.GetEndPnt())
+        log.Errorf("Invalid MagicKey (Required: %d, detected: %d, id: %d, src: %s",
+            g_ServerConfig.MagicKey, magickey, session.Data.AccountId, session.GetEndPnt(),
+        )
         return
     }
 
-    var send = account.UserVerify{timestamp, count, server, channel, session.Data.AccountId}
-    var recv = account.UserVerifyRecv{}
-
+    var send = account.VerifyReq{timestamp, count, server, channel, session.Data.AccountId}
+    var recv = account.VerifyResp{}
     g_RPCHandler.Call(rpc.UserVerify, send, &recv)
 
     var packet = network.NewWriter(VERIFYLINKS)

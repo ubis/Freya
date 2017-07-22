@@ -20,9 +20,10 @@ var log = logger.Instance()
 
 /*
     Network initialization
-    @param  s   Server settings
+    @param  port    network port to listen on
+    @param  s       Server settings
  */
-func (n *Network) Init(s *server.Settings) {
+func (n *Network) Init(port int, s *server.Settings) {
     log.Info("Configuring network...")
 
     n.lock     = sync.RWMutex{}
@@ -32,13 +33,7 @@ func (n *Network) Init(s *server.Settings) {
 
     // register client disconnect event
     event.Register(event.ClientDisconnectEvent, event.Handler(n.onClientDisconnect))
-}
 
-/*
-    Attempts to start to listen for incoming connections
-    @param  port    network port to listen on
- */
-func (n *Network) Start(port int) {
     // prepare to listen for incoming connections
     // listening on Ip.Any
     var l, err = net.Listen("tcp", fmt.Sprintf(":%d", port))

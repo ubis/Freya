@@ -10,6 +10,7 @@ import (
 
 var log = logger.Instance()
 
+// globals
 var g_ServerConfig  = def.ServerConfig
 var g_RPCHandler    = def.RPCHandler
 var g_LoginDatabase = def.LoginDatabase

@@ -30,8 +30,8 @@ func AuthCheck(c *rpc.Client, r *account.AuthRequest, s *account.AuthResponse) e
 }
 
 // UserVerify RPC Call
-func UserVerify(c *rpc.Client, r *account.UserVerify, s *account.UserVerifyRecv) error {
-    var t = account.UserVerifyRecv{}
+func UserVerify(c *rpc.Client, r *account.VerifyReq, s *account.VerifyResp) error {
+    var t = account.VerifyResp{}
     g_ServerManager.SendToGS(r.ServerId, r.ChannelId, rpc.UserVerify, r, &t)
     *s = t
     return nil

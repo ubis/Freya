@@ -6,15 +6,6 @@ import (
     "share/conf"
 )
 
-// Default values
-const (
-    C_Port    = 9001
-    C_DB_IP   = "127.0.0.1"
-    C_DB_PORT = 3306
-    C_DB_NAME = "database"
-)
-
-// Configuration struct
 type Config struct {
     Port      int
 
@@ -33,21 +24,22 @@ func (c *Config) Read() {
 
     // parse configuration file...
     if err := conf.Open(location); err != nil {
-        log.Fatalf("Couldn't read configuration file %s. %s", location, err.Error())
+        log.Fatal(err.Error())
         return
     }
 
     // read values from configuration...
-    c.Port = conf.GetInt("network", "port", C_Port)
+    c.Port = conf.GetInt("network", "port", 9001)
 
     // login db
-    c.LoginIp   = conf.GetString("login", "ip", C_DB_IP)
-    c.LoginPort = conf.GetInt("login", "port", C_DB_PORT)
-    c.LoginName = conf.GetString("login", "database", C_DB_NAME)
+    c.LoginIp   = conf.GetString("login", "ip", "127.0.0.1")
+    c.LoginPort = conf.GetInt("login", "port", 3306)
+    c.LoginName = conf.GetString("login", "database", "database")
     c.LoginUser = conf.GetString("login", "username", "root")
     c.LoginPass = conf.GetString("login", "password", "")
 }
 
+// Returns LoginDatabase configuration string
 func (c *Config) LoginDB() string {
     str := c.LoginUser + ":" + c.LoginPass
     str += "@tcp(" + c.LoginIp + ":" + strconv.Itoa(c.LoginPort) + ")"

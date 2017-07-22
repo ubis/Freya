@@ -12,33 +12,21 @@ func RegisterEvents() {
     event.Register(event.SyncDisconnectEvent, event.Handler(OnSyncDisconnect))
 }
 
-/*
-    OnSyncConnect event, informs server about new connection
-    @param  event   Event interface which is later parsed into RPC Client
- */
+// OnSyncConnect event informs server about new connection
 func OnSyncConnect(event event.Event) {
-    var c, err = event.(*rpc.Client)
-
-    if err != true {
+    if c, ok := event.(*rpc.Client); !ok {
         log.Error("Cannot parse onSyncConnect event!")
-        return
+    } else {
+        log.Infof("Client %s connected to the Master Server", c.GetEndPnt())
     }
-
-    log.Infof("Client %s connected to the Master Server", c.GetEndPnt())
 }
 
-/*
-    OnSyncDisconnect event, informs server about connection close
-    @param  event   Event interface which is later parsed into RPC Client
- */
+// OnSyncDisconnect event informs server about connection close
 func OnSyncDisconnect(event event.Event) {
-    var c, err = event.(*rpc.Client)
-
-    if err != true {
+    if c, ok := event.(*rpc.Client); !ok {
         log.Error("Cannot parse onSyncDisconnect event!")
-        return
+    } else {
+        g_ServerManager.RemoveServer(c.GetEndPnt())
+        log.Infof("Client %s disconnected from the Master Server", c.GetEndPnt())
     }
-
-    g_ServerManager.RemoveServer(c.GetEndPnt())
-    log.Infof("Client %s disconnected from the Master Server", c.GetEndPnt())
 }

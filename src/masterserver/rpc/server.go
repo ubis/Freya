@@ -6,15 +6,15 @@ import (
 )
 
 // ServerRegister RPC Call
-func ServerRegister(c *rpc.Client, r *server.ServerData, s *server.RegResponse) error {
-    var response = server.RegResponse{false}
+func ServerRegister(c *rpc.Client, r *server.RegisterReq, s *server.RegisterResp) error {
+    var response = server.RegisterResp{}
 
     switch r.Type {
-    case server.LOGIN_SERVER_TYPE:
+    case server.LOGIN_SERVER:
         response.Registered = true
         g_ServerManager.NewServer(server.Server{r, c})
         log.Infof("Server type: LoginServer (src: %s)", c.GetEndPnt())
-    case server.GAME_SERVER_TYPE:
+    case server.GAME_SERVER:
         response.Registered = true
         g_ServerManager.NewServer(server.Server{r, c})
         log.Infof("Server type: GameServer (type: %d, server: %d, channel: %d, src: %s)",
@@ -28,8 +28,7 @@ func ServerRegister(c *rpc.Client, r *server.ServerData, s *server.RegResponse) 
 }
 
 // ServerList RPC Call
-func ServerList(c *rpc.Client, r *server.SvrListRequest, s *server.SvrListResponse) error {
-    var list = g_ServerManager.GetGameServerList()
-    *s = server.SvrListResponse{list}
+func ServerList(c *rpc.Client, r *server.ListReq, s *server.ListResp) error {
+    *s = server.ListResp{g_ServerManager.GetGameServerList()}
     return nil
 }

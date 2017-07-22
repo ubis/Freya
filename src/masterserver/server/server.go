@@ -20,10 +20,7 @@ func (sm *ServerManager) Init() {
     sm.lock    = sync.RWMutex{}
 }
 
-/*
-    Adds a new server to the server list
-    @param  server  a server to add
- */
+// Adds a new server to the server list
 func (sm *ServerManager) NewServer(server server.Server) {
     var endpnt = server.Client.GetEndPnt()
 
@@ -41,21 +38,14 @@ func (sm *ServerManager) NewServer(server server.Server) {
     sm.lock.Unlock()
 }
 
-/*
-    Removes the server from the server list by server's endpoint
-    @param  endpnt  server's endpoint
- */
+// Removes the server from the server list by server's endpoint
 func (sm *ServerManager) RemoveServer(endpnt string) {
     sm.lock.Lock()
     delete(sm.servers, endpnt)
     sm.lock.Unlock()
 }
 
-/*
-    Retrieves the server from the server list by server's endpoint
-    @param  endpnt  server's endpoint
-    @return server struct or nil if not found
- */
+// Retrieves the server from the server list by server's endpoint
 func (sm *ServerManager) GetServer(endpnt string) *server.Server {
     sm.lock.RLock()
     var server = sm.servers[endpnt]
@@ -100,7 +90,7 @@ func (sm *ServerManager) GetGameServerList() []server.ServerItem {
             }
         }
 
-        svr.Channels = append(svr.Channels, chn)
+        svr.List = append(svr.List, chn)
 
         if !found {
             serverList = append(serverList, *svr)
@@ -113,21 +103,13 @@ func (sm *ServerManager) GetGameServerList() []server.ServerItem {
 
     // sort each server channels by id
     for i := 0; i < len(serverList); i ++ {
-        sort.Sort(server.ByChannel(serverList[i].Channels))
+        sort.Sort(server.ByChannel(serverList[i].List))
     }
 
     return serverList
 }
 
-/*
-    Attempts to find GameServer with server and channel id's and send RPC call
-    @param  s   server index
-    @param  c   channel index
-    @param  m   call method name
-    @param  a   call arguments
-    @param  r   call reply
-    @return error on fail
- */
+// Attempts to find GameServer with server and channel id's and send RPC call
 func (sm *ServerManager) SendToGS(s byte, c byte, m string, a interface{}, r interface{}) error {
     sm.lock.RLock()
     for _, value := range sm.servers {
@@ -138,6 +120,6 @@ func (sm *ServerManager) SendToGS(s byte, c byte, m string, a interface{}, r int
         }
     }
     sm.lock.RUnlock()
-
+    
     return nil
 }

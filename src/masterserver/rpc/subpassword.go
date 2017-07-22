@@ -2,25 +2,24 @@ package rpc
 
 import (
     "share/rpc"
-    "share/models/account"
+    "share/models/subpasswd"
 )
 
 // FetchSubPassword RPC Call
-func FetchSubPassword(c *rpc.Client, r *account.SubPasswordReq, s *account.SubPassword) error {
-    var res = account.SubPassword{}
+func FetchSubPassword(c *rpc.Client, r *subpasswd.FetchReq, s *subpasswd.FetchRes) error {
+    var res = subpasswd.Details{}
 
     g_LoginDatabase.Get(&res,
         "SELECT password, answer, question, expires " +
-            "FROM sub_password " +
-            "WHERE account = ?", r.Account)
+        "FROM sub_password WHERE account = ?", r.Account)
 
-    *s = res
+    *s = subpasswd.FetchRes{res}
     return nil
 }
 
 // SetSubPassword RPC Call
-func SetSubPassword(c *rpc.Client, r *account.SetSubPass, s *account.SubPassResp) error {
-    var res = account.SubPassResp{true}
+func SetSubPassword(c *rpc.Client, r *subpasswd.SetReq, s *subpasswd.SetRes) error {
+    var res   = subpasswd.SetRes{true}
     var exist = 0
 
     g_LoginDatabase.Get(&exist,
@@ -30,14 +29,14 @@ func SetSubPassword(c *rpc.Client, r *account.SetSubPass, s *account.SubPassResp
         // changing subpassword
         g_LoginDatabase.MustExec(
             "UPDATE sub_password " +
-                "SET password = ?, answer = ?, question = ?, expires = ? WHERE account = ?",
+            "SET password = ?, answer = ?, question = ?, expires = ? WHERE account = ?",
             r.Password, r.Answer, r.Question, r.Expires, r.Account)
     } else {
         // creating subpassword
         g_LoginDatabase.MustExec(
             "INSERT INTO sub_password " +
-                "(account, password, answer, question, expires)" +
-                "VALUES (?, ?, ?, ?, ?)",
+            "(account, password, answer, question, expires)" +
+            "VALUES (?, ?, ?, ?, ?)",
             r.Account, r.Password, r.Answer, r.Question, r.Expires)
     }
 
@@ -46,11 +45,10 @@ func SetSubPassword(c *rpc.Client, r *account.SetSubPass, s *account.SubPassResp
 }
 
 // RemoveSubPassword RPC Call
-func RemoveSubPassword(c *rpc.Client, r *account.SubPasswordReq, s *account.SubPassResp) error {
-    var res = account.SubPassResp{true}
+func RemoveSubPassword(c *rpc.Client, r *subpasswd.SetReq, s *subpasswd.SetRes) error {
+    var res = subpasswd.SetRes{true}
 
-    g_LoginDatabase.MustExec(
-        "DELETE FROM sub_password WHERE account = ?", r.Account)
+    g_LoginDatabase.MustExec("DELETE FROM sub_password WHERE account = ?", r.Account)
 
     *s = res
     return nil

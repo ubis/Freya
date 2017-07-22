@@ -2,8 +2,8 @@ package packet
 
 import (
     "share/network"
-    "share/models/account"
     "share/rpc"
+    "share/models/subpasswd"
 )
 
 // GetMyChartr Packet
@@ -15,11 +15,11 @@ func GetMyChartr(session *network.Session, reader *network.Reader) {
     }
 
     // fetch subpassword
-    var req = account.SubPasswordReq{session.Data.AccountId}
-    var res = account.SubPassword{}
+    var req = subpasswd.FetchReq{session.Data.AccountId}
+    var res = subpasswd.FetchRes{}
     g_RPCHandler.Call(rpc.FetchSubPassword, req, &res)
 
-    session.Data.SubPassword = &res
+    session.Data.SubPassword = &res.Details
 
     var subpasswdExist = 0
     if res.Password != "" {

@@ -4,8 +4,8 @@ import (
     "time"
     "bytes"
     "share/network"
-    "share/models/account"
     "share/rpc"
+    "share/models/subpasswd"
     "golang.org/x/crypto/bcrypt"
 )
 
@@ -59,8 +59,8 @@ func SubPasswordSet(session *network.Session, reader *network.Reader) {
     sub.Password = string(hash)
 
     // update to db
-    var req = account.SetSubPass{session.Data.AccountId, *sub}
-    var res = account.SubPassResp{}
+    var req = subpasswd.SetReq{session.Data.AccountId, *sub}
+    var res = subpasswd.SetRes{}
     var err = g_RPCHandler.Call(rpc.SetSubPassword, req, &res)
 
     if err == nil && res.Success {
@@ -129,8 +129,8 @@ func SubPasswordCheck(session *network.Session, reader *network.Reader) {
         sub.FailTimes ++
     } else {
         sub.Expires = sub.Expires.Add(time.Hour * time.Duration(hours))
-        var req = account.SetSubPass{session.Data.AccountId, *sub}
-        var res = account.SubPassResp{}
+        var req = subpasswd.SetReq{session.Data.AccountId, *sub}
+        var res = subpasswd.SetRes{}
         err = g_RPCHandler.Call(rpc.SetSubPassword, req, &res)
 
         if err != nil || !res.Success {
@@ -227,12 +227,12 @@ func SubPasswordDel(session *network.Session, reader *network.Reader) {
     }
 
     // update to db
-    var req = account.SubPasswordReq{session.Data.AccountId}
-    var res = account.SubPassResp{}
+    var req = subpasswd.SetReq{Account: session.Data.AccountId}
+    var res = subpasswd.SetRes{}
     var err = g_RPCHandler.Call(rpc.RemoveSubPassword, req, &res)
 
     if err == nil && res.Success {
-        *sub = account.SubPassword{}
+        *sub = subpasswd.Details{}
         packet.WriteInt32(0x01) // success
     } else {
         packet.WriteInt32(0x00) // failed
@@ -291,8 +291,8 @@ func SubPasswordChangeQA(session *network.Session, reader *network.Reader) {
     sub.Question = byte(question)
 
     // update to db
-    var req = account.SetSubPass{session.Data.AccountId, *sub}
-    var res = account.SubPassResp{}
+    var req = subpasswd.SetReq{session.Data.AccountId, *sub}
+    var res = subpasswd.SetRes{}
     var err = g_RPCHandler.Call(rpc.SetSubPassword, req, &res)
 
     if err == nil && res.Success {

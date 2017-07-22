@@ -118,7 +118,7 @@ func VerifyLinks(session *network.Session, reader *network.Reader) {
         return
     }
 
-    var send = account.UserVerify{timestamp, count, server, channel}
+    var send = account.UserVerify{timestamp, count, server, channel, session.Data.AccountId}
     var recv = account.UserVerifyRecv{}
 
     g_RPCHandler.Call(rpc.UserVerify, send, &recv)

@@ -20,9 +20,10 @@ var log = logger.Instance()
 
 /*
     Network initialization
-    @param  s   Server settings
+    @param  port    network port to listen on
+    @param  s       Server settings
  */
-func (n *Network) Init(s *server.Settings) {
+func (n *Network) Init(port int, s *server.Settings) {
     log.Info("Configuring network...")
 
     n.lock     = sync.RWMutex{}
@@ -32,13 +33,7 @@ func (n *Network) Init(s *server.Settings) {
 
     // register client disconnect event
     event.Register(event.ClientDisconnectEvent, event.Handler(n.onClientDisconnect))
-}
 
-/*
-    Attempts to start to listen for incoming connections
-    @param  port    network port to listen on
- */
-func (n *Network) Start(port int) {
     // prepare to listen for incoming connections
     // listening on Ip.Any
     var l, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
@@ -115,16 +110,20 @@ func (n *Network) GetOnlineUsers() int {
     Verifies user specified by index and key
     @param  idx     User index
     @param  key     User key
+    @param  db_idx  User account id
     @return bool, true if user exists, otherwise false
  */
-func (n *Network) VerifyUser(idx uint16, key uint32) bool {
-    n.lock.RLock()
+func (n *Network) VerifyUser(idx uint16, key uint32, db_idx int32) bool {
+    n.lock.Lock()
     if n.clients[idx] != nil && n.clients[idx].AuthKey == key {
-        n.lock.RUnlock()
+        n.clients[idx].Data.Verified  = true
+        n.clients[idx].Data.LoggedIn  = true
+        n.clients[idx].Data.AccountId = db_idx
+        n.lock.Unlock()
         return true
     }
 
-    n.lock.RUnlock()
+    n.lock.Unlock()
     return false
 }
 

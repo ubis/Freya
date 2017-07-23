@@ -18,7 +18,7 @@ type RegisterReq struct {
     MaxUsers        uint16
 }
 
-type RegisterResp struct {
+type RegisterRes struct {
     Registered bool
 }
 
@@ -31,7 +31,7 @@ type ListReq struct {
 
 }
 
-type ListResp struct {
+type ListRes struct {
     List []ServerItem
 }
 

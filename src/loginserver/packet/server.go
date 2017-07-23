@@ -57,7 +57,7 @@ func SystemMessg(session *network.Session, message byte) {
 // ServerState Packet which is NFY
 func ServerSate(session *network.Session) {
     // request server list
-    var r = server.ListResp{}
+    var r = server.ListRes{}
     g_RPCHandler.Call(rpc.ServerList, server.ListReq{}, &r)
     var s = r.List
 
@@ -112,7 +112,7 @@ func VerifyLinks(session *network.Session, reader *network.Reader) {
     }
 
     var send = account.VerifyReq{timestamp, count, server, channel, session.Data.AccountId}
-    var recv = account.VerifyResp{}
+    var recv = account.VerifyRes{}
     g_RPCHandler.Call(rpc.UserVerify, send, &recv)
 
     var packet = network.NewWriter(VERIFYLINKS)

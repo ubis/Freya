@@ -20,6 +20,6 @@ type VerifyReq struct {
     DBIdx     int32
 }
 
-type VerifyResp struct {
+type VerifyRes struct {
     Verified bool
 }

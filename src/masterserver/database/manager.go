@@ -11,11 +11,7 @@ type DatabaseManager struct {
     DBList map[int]*Database
 }
 
-/*
-    Initializes Database Manager which will attempt to connect
-     to all GameDatabases
-    @param  db  map of game databases
- */
+// Initializes Database Manager which will attempt to connect
 func (dm *DatabaseManager) Init(db map[int]*Database) {
     dm.DBList = db
 
@@ -26,11 +22,7 @@ func (dm *DatabaseManager) Init(db map[int]*Database) {
     }
 }
 
-/*
-    Returns game database instance of index
-    @param  index   game database index
-    @return pointer to sqlx.DB or nil if not found
- */
+// Returns game database instance of index
 func (dm *DatabaseManager) Get(index int) *sqlx.DB {
     if dm.DBList[index] == nil {
         log.Error("Game #%d database doesn't exist!", index)
@@ -40,10 +32,7 @@ func (dm *DatabaseManager) Get(index int) *sqlx.DB {
     return dm.DBList[index].DB
 }
 
-/*
-    Attempts to connect to specified database
-    @param  dba pointer to database structure
- */
+// Attempts to connect to specified database
 func (dm *DatabaseManager) connect(dba *Database) {
     log.Infof("Attempting to connect to the #%d Game database...", dba.Index)
     if db, err := sqlx.Connect("mysql", dba.Config); err != nil {

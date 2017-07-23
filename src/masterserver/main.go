@@ -38,7 +38,8 @@ func main() {
 
     // connect to login database
     log.Info("Attempting to connect to the Login database...")
-    if db, err := sqlx.Connect("mysql", g_ServerConfig.LoginDB()); err != nil {
+    var cfg = g_ServerConfig.GetDBConfig(g_ServerConfig.LoginDB)
+    if db, err := sqlx.Connect("mysql", cfg); err != nil {
         log.Fatalf("[DATABASE] %s", err.Error())
     } else {
         log.Info("Successfully connected to the Login database!")

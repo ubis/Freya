@@ -55,6 +55,13 @@ func (s *Session) Start(table encryption.XorKeyTable) {
             // get packet length
             var packetLength = s.Encryption.GetPacketSize(s.buffer[i:])
 
+            // check length
+            if i < 0 || i > len(s.buffer) || i + packetLength > len(s.buffer) {
+                log.Error("Error parsing packet: slice bounds out of range!")
+                s.Close()
+                break
+            }
+
             // attempt to decrypt packet
             var data, error = s.Encryption.Decrypt(s.buffer[i:i + packetLength])
 

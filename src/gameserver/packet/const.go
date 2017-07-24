@@ -3,6 +3,7 @@ package packet
 // Packet Type ID's
 const (
     GETMYCHARTR         = 133
+    NEWMYCHARTR         = 134
     CONNECT2SVR         = 140
     GETSVRTIME          = 148
     CHARGEINFO          = 324

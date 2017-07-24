@@ -6,6 +6,7 @@ import (
     "share/event"
     "share/encryption"
     "share/models/subpasswd"
+    "share/models/character"
 )
 
 // max buffer size
@@ -21,9 +22,10 @@ type Session struct {
     Connected   bool
     Data        struct {
         AccountId int32
-        Verified    bool
-        LoggedIn    bool
-        SubPassword *subpasswd.Details
+        Verified      bool
+        LoggedIn      bool
+        SubPassword   *subpasswd.Details
+        CharacterList []character.Character
     }
 }
 

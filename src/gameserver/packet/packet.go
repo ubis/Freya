@@ -18,6 +18,7 @@ func RegisterPackets() {
     
     var pk = g_PacketHandler
     pk.Register(GETMYCHARTR, "GetMyChartr", GetMyChartr)
+    pk.Register(NEWMYCHARTR, "NewMyChartr", NewMyChartr)
     pk.Register(CONNECT2SVR, "Connect2Svr", Connect2Svr)
     pk.Register(GETSVRTIME, "GetSvrTime", GetSvrTime)
     pk.Register(CHARGEINFO, "ChargeInfo", ChargeInfo)

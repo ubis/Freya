@@ -16,6 +16,7 @@ var g_RPCHandler      = def.RPCHandler
 var g_LoginDatabase   = def.LoginDatabase
 var g_ServerManager   = def.ServerManager
 var g_DatabaseManager = def.DatabaseManager
+var g_DataLoader      = def.DataLoader
 
 func main() {
     log.Info("MasterServer init")
@@ -52,6 +53,9 @@ func main() {
 
     // init DatabaseManager
     g_DatabaseManager.Init(g_ServerConfig.GameDB)
+
+    // init DataLoader
+    g_DataLoader.Init()
 
     // start RPC Server
     g_RPCHandler.Run()

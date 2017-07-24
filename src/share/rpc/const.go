@@ -18,3 +18,9 @@ const (
     SetSubPassword    = "SetSubPassword"
     RemoveSubPassword = "RemoveSubPassword"
 )
+
+// Character related RPC's
+const (
+    LoadCharacters  = "LoadCharacters"
+    CreateCharacter = "CreateCharacter"
+)

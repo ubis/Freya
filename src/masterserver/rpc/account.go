@@ -57,7 +57,14 @@ func AuthCheck(c *rpc.Client, r *account.AuthRequest, s *account.AuthResponse) e
 // UserVerify RPC Call
 func UserVerify(c *rpc.Client, r *account.VerifyReq, s *account.VerifyRes) error {
     var t = account.VerifyRes{}
-    g_ServerManager.SendToGS(r.ServerId, r.ChannelId, rpc.UserVerify, r, &t)
+
+    if r.ServerId == 128 {
+        // logging into loginserver
+        g_ServerManager.SendToLS(rpc.UserVerify, r, &t)
+    } else {
+        // logging into gameserver
+        g_ServerManager.SendToGS(r.ServerId, r.ChannelId, rpc.UserVerify, r, &t)
+    }
     *s = t
     return nil
 }

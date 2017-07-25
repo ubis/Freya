@@ -1,8 +1,10 @@
 package packet
 
 import (
-    "share/network"
     "time"
+    "share/network"
+    "share/rpc"
+    "share/models/account"
 )
 
 // GetSvrTime Packet
@@ -51,6 +53,31 @@ func ServerEnv(session *network.Session, reader *network.Reader) {
     packet.WriteInt32(0x64);         // Max DP Limit
     packet.WriteInt32(0x00);         // unk1
     packet.WriteInt16(0x07);         // unk2
+
+    session.Send(packet)
+}
+
+// VerifyLinks
+func VerifyLinks(session *network.Session, reader *network.Reader) {
+    var timestamp = reader.ReadUint32();
+    var count     = reader.ReadUint16();
+    var channel   = reader.ReadByte();
+    var server    = reader.ReadByte();
+
+    var send = account.VerifyReq{
+        timestamp, count, server, channel, session.GetIp(), session.Data.AccountId}
+    var recv = account.VerifyRes{}
+    g_RPCHandler.Call(rpc.UserVerify, send, &recv)
+
+    var packet = network.NewWriter(VERIFYLINKS)
+    packet.WriteByte(channel)
+    packet.WriteByte(server)
+
+    if recv.Verified {
+        packet.WriteByte(0x01)
+    } else{
+        packet.WriteByte(0x00)
+    }
 
     session.Send(packet)
 }

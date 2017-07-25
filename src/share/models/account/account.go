@@ -18,6 +18,7 @@ type VerifyReq struct {
     UserIdx   uint16
     ServerId  byte
     ChannelId byte
+    IP        string
     DBIdx     int32
 }
 

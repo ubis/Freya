@@ -4,6 +4,7 @@ import (
     "share/logger"
     "loginserver/def"
     "loginserver/packet"
+    "loginserver/rpc"
 )
 
 var log = logger.Instance()
@@ -38,6 +39,9 @@ func main() {
     g_RPCHandler.Init()
     g_RPCHandler.IpAddress = g_ServerConfig.MasterIp
     g_RPCHandler.Port      = g_ServerConfig.MasterPort
+
+    // register RPC calls
+    rpc.RegisterCalls()
 
     // start RPC handler
     g_RPCHandler.Start()

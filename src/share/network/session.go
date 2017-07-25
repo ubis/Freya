@@ -7,6 +7,7 @@ import (
     "share/encryption"
     "share/models/subpasswd"
     "share/models/character"
+    "strings"
 )
 
 // max buffer size
@@ -114,6 +115,12 @@ func (s *Session) Send(writer *Writer) {
 // Returns session's remote endpoint
 func (s *Session) GetEndPnt() string {
     return s.socket.RemoteAddr().String()
+}
+
+// Returns session's ip address
+func (s *Session) GetIp() string {
+    var ip = strings.Split(s.GetEndPnt(), ":")
+    return ip[0]
 }
 
 // Closes session socket

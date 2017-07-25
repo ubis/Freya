@@ -6,8 +6,8 @@ import (
 )
 
 // ServerRegister RPC Call
-func ServerRegister(c *rpc.Client, r *server.RegisterReq, s *server.RegisterResp) error {
-    var response = server.RegisterResp{}
+func ServerRegister(c *rpc.Client, r *server.RegisterReq, s *server.RegisterRes) error {
+    var response = server.RegisterRes{}
 
     switch r.Type {
     case server.LOGIN_SERVER:
@@ -28,7 +28,7 @@ func ServerRegister(c *rpc.Client, r *server.RegisterReq, s *server.RegisterResp
 }
 
 // ServerList RPC Call
-func ServerList(c *rpc.Client, r *server.ListReq, s *server.ListResp) error {
-    *s = server.ListResp{g_ServerManager.GetGameServerList()}
+func ServerList(c *rpc.Client, r *server.ListReq, s *server.ListRes) error {
+    *s = server.ListRes{g_ServerManager.GetGameServerList()}
     return nil
 }

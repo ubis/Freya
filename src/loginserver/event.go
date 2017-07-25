@@ -67,7 +67,7 @@ func OnSyncConnect(e event.Event) {
 
     // register this server
     var q = server.RegisterReq{Type: server.LOGIN_SERVER}
-    g_RPCHandler.Call(rpc.ServerRegister, q, &server.RegisterResp{})
+    g_RPCHandler.Call(rpc.ServerRegister, q, &server.RegisterRes{})
 }
 
 // OnSyncDisconnect event informs server about lost connection with the Master Server

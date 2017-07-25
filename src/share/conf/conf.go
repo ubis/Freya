@@ -74,6 +74,15 @@ func Open(path string) error {
     return nil
 }
 
+// Attempts to check if given section exists
+func SectionExist(section string) bool {
+    if sections[section] == nil {
+        return false
+    }
+
+    return true
+}
+
 // Returns string value from configuration file. If section or key isn't found,
 // default value will be returned
 func GetString(section string, key string, def string) string {

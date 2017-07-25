@@ -78,7 +78,7 @@ func OnSyncConnect(event event.Event) {
         uint16(g_NetworkManager.GetOnlineUsers()),
         uint16(g_ServerConfig.MaxUsers),
     }
-    var res = server.RegisterResp{}
+    var res = server.RegisterRes{}
 
     g_RPCHandler.Call(rpc.ServerRegister, req, &res)
 }

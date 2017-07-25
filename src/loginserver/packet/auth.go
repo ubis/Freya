@@ -59,15 +59,20 @@ func AuthAccount(session *network.Session, reader *network.Reader) {
     packet.WriteByte(r.Status)
     packet.WriteInt32(r.Id)
     packet.WriteInt16(0x00)
-    packet.WriteByte(0x00)  // server count
+    packet.WriteByte(len(r.CharList))  // server count
     packet.WriteInt64(0x00)
     packet.WriteInt32(0x00) // premium service id
     packet.WriteInt32(0x00) // premium service expire date
     packet.WriteByte(0x00)
-    packet.WriteByte(0x00)  // subpw exist
+    packet.WriteByte(r.SubPassChar)  // subpassword exists for character
     packet.WriteBytes(make([]byte, 7))
     packet.WriteInt32(0x00) // language
     packet.WriteString(r.AuthKey + "\x00")
+
+    for _, value := range r.CharList {
+        packet.WriteByte(value.Server)
+        packet.WriteByte(value.Count)
+    }
 
     session.Send(packet)
 

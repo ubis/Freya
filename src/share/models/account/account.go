@@ -6,9 +6,11 @@ type AuthRequest struct {
 }
 
 type AuthResponse struct {
-    Id       int32
-    Status   byte
-    AuthKey  string `db:"auth_key"`
+    Id          int32
+    Status      byte
+    AuthKey     string `db:"auth_key"`
+    SubPassChar byte
+    CharList    []CharCount
 }
 
 type VerifyReq struct {
@@ -19,6 +21,20 @@ type VerifyReq struct {
     DBIdx     int32
 }
 
-type VerifyResp struct {
+type VerifyRes struct {
     Verified bool
+}
+
+type AuthCheckReq struct {
+    Id       int32
+    Password string
+}
+
+type AuthCheckRes struct {
+    Result bool
+}
+
+type CharCount struct {
+    Server byte
+    Count  byte
 }

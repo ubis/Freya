@@ -11,10 +11,12 @@ import (
 var log = logger.Instance()
 
 // globals
-var g_ServerConfig  = def.ServerConfig
-var g_RPCHandler    = def.RPCHandler
-var g_LoginDatabase = def.LoginDatabase
-var g_ServerManager = def.ServerManager
+var g_ServerConfig    = def.ServerConfig
+var g_RPCHandler      = def.RPCHandler
+var g_LoginDatabase   = def.LoginDatabase
+var g_ServerManager   = def.ServerManager
+var g_DatabaseManager = def.DatabaseManager
+var g_DataLoader      = def.DataLoader
 
 func main() {
     log.Info("MasterServer init")
@@ -37,7 +39,8 @@ func main() {
 
     // connect to login database
     log.Info("Attempting to connect to the Login database...")
-    if db, err := sqlx.Connect("mysql", g_ServerConfig.LoginDB()); err != nil {
+    var cfg = g_ServerConfig.GetDBConfig(g_ServerConfig.LoginDB)
+    if db, err := sqlx.Connect("mysql", cfg); err != nil {
         log.Fatalf("[DATABASE] %s", err.Error())
     } else {
         log.Info("Successfully connected to the Login database!")
@@ -47,6 +50,12 @@ func main() {
         db.Select(&version, "SELECT VERSION()")
         log.Debugf("[DATABASE] Version: %s", version[0])
     }
+
+    // init DatabaseManager
+    g_DatabaseManager.Init(g_ServerConfig.GameDB)
+
+    // init DataLoader
+    g_DataLoader.Init()
 
     // start RPC Server
     g_RPCHandler.Run()

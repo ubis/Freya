@@ -1,0 +1,161 @@
+battlestyles:
+  - id: 1 # warrior
+    location: {world: 1, x: 32, y: 37} # bloody ice
+    stats: {str: 24, int: 3, dex: 8, hp: 50, mp: 20}
+    equipment:
+      suit: {kind: 105}      # training armorsuit
+      gloves: {kind: 150}    # training armorgloves
+      boots: {kind: 195}     # training armorboots
+      right_hand: {kind: 90} # training greatsword
+    inventory: 
+      0: {kind: 3, option: 5}  # hp potion 1 lv
+      1: {kind: 6, option: 20} # mp potion 1 lv
+      2: {kind: 240}           # training armorhelm
+      9: {kind: 12, option: 5} # return stone
+    skills:
+      0: {id: 2, level: 1} # impact stab
+      1: {id: 1, level: 1} # flash draw
+    links:
+      0: {id: 132}  # normal attack
+      1: {id: 0}    # impact stab
+      2: {id: 1}    # flash draw
+      8: {id: 131}  # pick up items
+      9: {id: 237}  # use hp potion 1 lv
+      10: {id: 239} # use mp potion 1 lv
+      11: {id: 130} # use return stone
+
+  - id: 2 # blader
+    location: {world: 2, x: 87, y: 233} # desert scream
+    stats: {str: 16, int: 3, dex: 16, hp: 50, mp: 20}
+    equipment:
+      suit: {kind: 135}      # training martialsuit
+      gloves: {kind: 180}    # training martialgloves
+      boots: {kind: 225}     # training martialboots
+      right_hand: {kind: 45} # training katana
+      left_hand: {kind: 60}  # training blade
+    inventory: 
+      0: {kind: 3, option: 5}  # hp potion 1 lv
+      1: {kind: 6, option: 20} # mp potion 1 lv
+      2: {kind: 270}           # training martialhelm
+      9: {kind: 12, option: 5} # return stone
+    skills:
+      0: {id: 2, level: 1} # impact stab
+      1: {id: 1, level: 1} # flash draw
+    links:
+      0: {id: 132}  # normal attack
+      1: {id: 0}    # impact stab
+      2: {id: 1}    # flash draw
+      8: {id: 131}  # pick up items
+      9: {id: 237}  # use hp potion 1 lv
+      10: {id: 239} # use mp potion 1 lv
+      11: {id: 130} # use return stone
+
+  - id: 3 # wizard
+    location: {world: 2, x: 87, y: 233} # desert scream
+    stats: {str: 3, int: 26, dex: 6, hp: 40, mp: 30}
+    equipment:
+      suit: {kind: 135}      # training martialsuit
+      gloves: {kind: 180}    # training martialgloves
+      boots: {kind: 225}     # training martialboots
+      right_hand: {kind: 15} # training orb
+      left_hand: {kind: 15}  # training orb
+    inventory: 
+      0: {kind: 3, option: 5}  # hp potion 1 lv
+      1: {kind: 6, option: 20} # mp potion 1 lv
+      2: {kind: 270}           # training martialhelm
+      9: {kind: 12, option: 5} # return stone
+    skills:
+      32: {id: 100, level: 1} # magic arrow
+      33: {id: 129, level: 1} # freeze
+    links:
+      0: {id: 132}  # normal attack
+      1: {id: 32}   # magic arrow
+      2: {id: 33}   # freeze
+      8: {id: 131}  # pick up items
+      9: {id: 237}  # use hp potion 1 lv
+      10: {id: 239} # use mp potion 1 lv
+      11: {id: 130} # use return stone
+
+  - id: 4 # force archer
+    location: {world: 3, x: 219, y: 44} # green despair
+    stats: {str: 6, int: 17, dex: 12, hp: 40, mp: 30}
+    equipment:
+      suit: {kind: 120}      # training battlesuit
+      gloves: {kind: 165}    # training battlegloves
+      boots: {kind: 210}     # training battleboots
+      right_hand: {kind: 30} # training crystal
+      left_hand: {kind: 30}  # training crystal
+    inventory: 
+      0: {kind: 3, option: 5}  # hp potion 1 lv
+      1: {kind: 6, option: 20} # mp potion 1 lv
+      2: {kind: 255}           # training battlehelm
+      9: {kind: 12, option: 5} # return stone
+    skills:
+      32: {id: 424, level: 1} # magic arrow
+      33: {id: 148, level: 1} # power shot
+      67: {id: 331, level: 1} # astral bow
+    links:
+      0: {id: 132}  # normal attack
+      1: {id: 32}   # magic arrow
+      2: {id: 33}   # power shot
+      3: {id: 67}   # astral bow
+      8: {id: 131}  # pick up items
+      9: {id: 237}  # use hp potion 1 lv
+      10: {id: 239} # use mp potion 1 lv
+      11: {id: 130} # use return stone
+
+  - id: 5 # force shielder
+    location: {world: 1, x: 32, y: 37} # bloody ice
+    stats: {str: 15, int: 11, dex: 9, hp: 45, mp: 45}
+    equipment:
+      suit: {kind: 105}      # training armorsuit
+      gloves: {kind: 150}    # training armorgloves
+      boots: {kind: 195}     # training armorboots
+      right_hand: {kind: 60} # training blade
+      left_hand: {kind: 30}  # training crystal
+    inventory: 
+      0: {kind: 3, option: 5}  # hp potion 1 lv
+      1: {kind: 6, option: 20} # mp potion 1 lv
+      2: {kind: 240}           # training armorhelm
+      9: {kind: 12, option: 5} # return stone
+    skills:
+      0: {id: 2, level: 1}    # impact stab
+      32: {id: 157, level: 1} # shield shock
+      67: {id: 332, level: 1} # astral shield
+    links:
+      0: {id: 132}  # normal attack
+      1: {id: 0}    # impact stab
+      2: {id: 32}   # shield shock
+      3: {id: 67}   # astral shield
+      8: {id: 131}  # pick up items
+      9: {id: 237}  # use hp potion 1 lv
+      10: {id: 239} # use mp potion 1 lv
+      11: {id: 130} # use return stone
+
+  - id: 6 # force blader
+    location: {world: 3, x: 219, y: 44} # green despair
+    stats: {str: 12, int: 12, dex: 11, hp: 45, mp: 25}
+    equipment:
+      suit: {kind: 120}      # training battlesuit
+      gloves: {kind: 165}    # training battlegloves
+      boots: {kind: 210}     # training battleboots
+      right_hand: {kind: 45} # training crystal
+      left_hand: {kind: 15}  # training crystal
+    inventory: 
+      0: {kind: 3, option: 5}  # hp potion 1 lv
+      1: {kind: 6, option: 20} # mp potion 1 lv
+      2: {kind: 255}           # training battlehelm
+      9: {kind: 12, option: 5} # return stone
+    skills:
+      0: {id: 2, level: 1}    # impact stab
+      32: {id: 100, level: 1} # magic arrow
+      33: {id: 252, level: 1} # enchant
+    links:
+      0: {id: 132}  # normal attack
+      1: {id: 0}    # impact stab
+      2: {id: 32}   # magic arrow
+      3: {id: 33}   # enchant
+      8: {id: 131}  # pick up items
+      9: {id: 237}  # use hp potion 1 lv
+      10: {id: 239} # use mp potion 1 lv
+      11: {id: 130} # use return stone

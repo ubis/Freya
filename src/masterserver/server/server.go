@@ -123,3 +123,18 @@ func (sm *ServerManager) SendToGS(s byte, c byte, m string, a interface{}, r int
     
     return nil
 }
+
+// Attempts to find LoginServer and send RPC call
+func (sm *ServerManager) SendToLS(m string, a interface{}, r interface{}) error  {
+    sm.lock.RLock()
+    for _, value := range sm.servers {
+        if value.ServerId == 0 {
+            var c = value.Client
+            sm.lock.RUnlock()
+            return c.Call(m, a, r)
+        }
+    }
+    sm.lock.RUnlock()
+
+    return nil
+}

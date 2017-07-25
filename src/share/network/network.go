@@ -103,18 +103,19 @@ func (n *Network) GetOnlineUsers() int {
 }
 
 // Verifies user specified by index, key and sets it's database index
-func (n *Network) VerifyUser(idx uint16, key uint32, db_idx int32) bool {
+func (n *Network) VerifyUser(idx uint16, key uint32, db_idx int32) (bool, *Session) {
     n.lock.Lock()
     if n.clients[idx] != nil && n.clients[idx].AuthKey == key {
         n.clients[idx].Data.Verified  = true
         n.clients[idx].Data.LoggedIn  = true
         n.clients[idx].Data.AccountId = db_idx
+        var tmp = n.clients[idx]
         n.lock.Unlock()
-        return true
+        return true, tmp
     }
 
     n.lock.Unlock()
-    return false
+    return false, nil
 }
 
 // onClientDisconnect event informs server about disconnected client

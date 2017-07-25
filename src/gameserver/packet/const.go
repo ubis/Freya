@@ -6,6 +6,7 @@ const (
     NEWMYCHARTR         = 134
     DELMYCHARTR         = 135
     CONNECT2SVR         = 140
+    VERIFYLINKS         = 141
     GETSVRTIME          = 148
     CHARGEINFO          = 324
     SERVERENV           = 464

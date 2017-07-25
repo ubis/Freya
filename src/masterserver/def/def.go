@@ -5,6 +5,7 @@ import (
     "share/rpc"
     "masterserver/server"
     "masterserver/database"
+    "masterserver/data"
     "github.com/jmoiron/sqlx"
 )
 
@@ -16,3 +17,4 @@ var RPCHandler      = &rpc.Server{}
 var LoginDatabase   = &sqlx.DB{}
 var ServerManager   = &server.ServerManager{}
 var DatabaseManager = &database.DatabaseManager{}
+var DataLoader      = &data.Loader{}

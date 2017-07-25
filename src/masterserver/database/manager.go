@@ -15,21 +15,19 @@ type DatabaseManager struct {
 func (dm *DatabaseManager) Init(db map[int]*Database) {
     dm.DBList = db
 
-    for i := 1; i < len(dm.DBList); i ++ {
-        if dm.DBList[i] != nil {
-            dm.connect(dm.DBList[i])
-        }
+    for _, value := range dm.DBList {
+        dm.connect(value)
     }
 }
 
 // Returns game database instance of index
-func (dm *DatabaseManager) Get(index int) *sqlx.DB {
-    if dm.DBList[index] == nil {
+func (dm *DatabaseManager) Get(index byte) *sqlx.DB {
+    if dm.DBList[int(index)] == nil {
         log.Error("Game #%d database doesn't exist!", index)
         return nil
     }
 
-    return dm.DBList[index].DB
+    return dm.DBList[int(index)].DB
 }
 
 // Attempts to connect to specified database

@@ -306,3 +306,26 @@ func SubPasswordChangeQA(session *network.Session, reader *network.Reader) {
 
     session.Send(packet)
 }
+
+// CharacterDeleteCheckSubPassword Packet
+func CharacterDeleteCheckSubPassword(session *network.Session, reader *network.Reader) {
+    var password = string(bytes.Trim(reader.ReadBytes(10), "\x00"))
+
+    var sub = session.Data.SubPassword
+    var err = bcrypt.CompareHashAndPassword([]byte(sub.Password), []byte(password))
+
+    var packet = network.NewWriter(CHAR_DEL_CHK_SUBPW)
+
+    if err != nil {
+        packet.WriteInt32(0x00) // failed
+        sub.FailTimes ++
+    } else {
+        packet.WriteInt32(0x01) // success
+        sub.FailTimes = 0
+        sub.Verified  = true
+    }
+
+    packet.WriteByte(sub.FailTimes)
+
+    session.Send(packet)
+}

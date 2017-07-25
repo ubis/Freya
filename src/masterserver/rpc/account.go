@@ -24,13 +24,29 @@ func AuthCheck(c *rpc.Client, r *account.AuthRequest, s *account.AuthResponse) e
         g_LoginDatabase.Get(&res,
             "SELECT id, status, auth_key FROM accounts WHERE username = ?", r.UserId)
 
+        // if subpasswd exist
         var exist int32 = 0
-
         g_LoginDatabase.Get(&exist,
             "SELECT account FROM sub_password WHERE account = ?", res.Id)
 
         if exist == res.Id {
             res.SubPassChar = 1
+        }
+
+        var count = account.CharCount{}
+
+        // fetch char list on all of servers
+        for _, value := range g_DatabaseManager.DBList {
+            value.DB.Get(&count.Count,
+                    "SELECT COUNT(id) FROM characters WHERE id >= ? AND id <= ?",
+                res.Id * 8, res.Id * 8 + 5,
+            )
+
+            if count.Count > 0 {
+                count.Server = byte(value.Index)
+            }
+
+            res.CharList = append(res.CharList, count)
         }
     }
 

@@ -45,3 +45,25 @@ func UserVerify(c *rpc.Client, r *account.VerifyReq, s *account.VerifyRes) error
     *s = t
     return nil
 }
+
+// PasswdCheck RPC Call
+func PasswdCheck(c *rpc.Client, r *account.AuthCheckReq, s *account.AuthCheckRes) error {
+    var res = account.AuthCheckRes{}
+    var passHash string
+
+    var err = g_LoginDatabase.Get(&passHash,
+        "SELECT password FROM accounts WHERE id = ?", r.Id)
+
+    if err != nil {
+        *s = res
+        return nil
+    }
+
+    err = bcrypt.CompareHashAndPassword([]byte(passHash), []byte(r.Password))
+    if err == nil {
+        res.Result = true
+    }
+
+    *s = res
+    return nil
+}

@@ -23,3 +23,12 @@ type VerifyReq struct {
 type VerifyRes struct {
     Verified bool
 }
+
+type AuthCheckReq struct {
+    Id       int32
+    Password string
+}
+
+type AuthCheckRes struct {
+    Result bool
+}

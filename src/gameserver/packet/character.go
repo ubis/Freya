@@ -119,3 +119,42 @@ func NewMyChartr(session *network.Session, reader *network.Reader) {
 
     session.Send(packet)
 }
+
+// DelMyChartr Packet
+func DelMyChartr(session *network.Session, reader *network.Reader) {
+    var charId = reader.ReadInt32()
+
+    // if password wasn't verified
+    if !session.Data.CharVerified {
+        return
+    }
+
+    // verify character id
+    if charId >> 3 != session.Data.AccountId {
+        return
+    }
+
+    var req = character.DeleteReq{byte(g_ServerSettings.ServerId), charId}
+    var res = character.DeleteRes{}
+    g_RPCHandler.Call(rpc.DeleteCharacter, req, &res)
+
+    if res.Result == character.Success {
+        // reset character delete passwd verification
+        session.Data.CharVerified = false
+        var l = &session.Data.CharacterList
+
+        // remove character from the list
+        for key, value := range *l {
+            if value.Id == charId {
+                *l = append((*l)[:key], (*l)[key + 1:]...)
+                break
+            }
+        }
+    }
+
+    var packet = network.NewWriter(DELMYCHARTR)
+    packet.WriteByte(res.Result + 1)
+    packet.WriteByte(0x00)
+
+    session.Send(packet)
+}

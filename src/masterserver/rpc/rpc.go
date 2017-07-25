@@ -22,6 +22,7 @@ func RegisterPackets() {
 
     g_RPCHandler.Register(rpc.AuthCheck, AuthCheck)
     g_RPCHandler.Register(rpc.UserVerify, UserVerify)
+    g_RPCHandler.Register(rpc.PasswdCheck, PasswdCheck)
 
     g_RPCHandler.Register(rpc.FetchSubPassword, FetchSubPassword)
     g_RPCHandler.Register(rpc.SetSubPassword, SetSubPassword)
@@ -29,4 +30,5 @@ func RegisterPackets() {
 
     g_RPCHandler.Register(rpc.LoadCharacters, LoadCharacters)
     g_RPCHandler.Register(rpc.CreateCharacter, CreateCharacter)
+    g_RPCHandler.Register(rpc.DeleteCharacter, DeleteCharacter)
 }

@@ -19,10 +19,12 @@ func RegisterPackets() {
     var pk = g_PacketHandler
     pk.Register(GETMYCHARTR, "GetMyChartr", GetMyChartr)
     pk.Register(NEWMYCHARTR, "NewMyChartr", NewMyChartr)
+    pk.Register(DELMYCHARTR, "DelMyChartr", DelMyChartr)
     pk.Register(CONNECT2SVR, "Connect2Svr", Connect2Svr)
     pk.Register(GETSVRTIME, "GetSvrTime", GetSvrTime)
     pk.Register(CHARGEINFO, "ChargeInfo", ChargeInfo)
     pk.Register(SERVERENV, "ServerEnv", ServerEnv)
+    pk.Register(CHECK_USR_PDATA, "CheckUserPrivacyData", CheckUserPrivacyData)
     pk.Register(SUBPW_SET, "SubPasswordSet", SubPasswordSet)
     pk.Register(SUBPW_CHECK_REQ, "SubPasswordCheckRequest", SubPasswordCheckRequest)
     pk.Register(SUBPW_CHECK, "SubPasswordCheck", SubPasswordCheck)
@@ -32,5 +34,4 @@ func RegisterPackets() {
     pk.Register(SUBPW_DEL, "SubPasswordDel", SubPasswordDel)
     pk.Register(SUBPW_CHG_QA_REQ, "SubPasswordChangeQARequest", SubPasswordChangeQARequest)
     pk.Register(SUBPW_CHG_QA, "SubPasswordChangeQA", SubPasswordChangeQA)
-
 }

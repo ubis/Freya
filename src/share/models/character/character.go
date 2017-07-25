@@ -24,6 +24,15 @@ type CreateRes struct {
     Character
 }
 
+type DeleteReq struct {
+    Server byte
+    CharId int32
+}
+
+type DeleteRes struct {
+    Result byte
+}
+
 type Character struct {
     Id        int32
     Name      string

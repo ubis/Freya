@@ -194,3 +194,25 @@ func CreateCharacter(_ *rpc.Client, r *character.CreateReq, s *character.CreateR
     *s = res
     return nil
 }
+
+// DeleteCharacter RPC Call
+func DeleteCharacter(_ *rpc.Client, r *character.DeleteReq, s *character.DeleteRes) error {
+    var db  = g_DatabaseManager.Get(r.Server)
+    var res = character.DeleteRes{}
+
+    if db == nil {
+        *s = res
+        return nil
+    }
+
+    db.MustExec("DELETE FROM characters_equipment WHERE id = ?", r.CharId)
+    db.MustExec("DELETE FROM characters_inventory WHERE id = ?", r.CharId)
+    db.MustExec("DELETE FROM characters_quickslots WHERE id = ?", r.CharId)
+    db.MustExec("DELETE FROM characters_skills WHERE id = ?", r.CharId)
+    db.MustExec("DELETE FROM characters WHERE id = ?", r.CharId)
+
+    res.Result = character.Success
+
+    *s = res
+    return nil
+}

@@ -4,10 +4,12 @@ package packet
 const (
     GETMYCHARTR         = 133
     NEWMYCHARTR         = 134
+    DELMYCHARTR         = 135
     CONNECT2SVR         = 140
     GETSVRTIME          = 148
     CHARGEINFO          = 324
     SERVERENV           = 464
+    CHECK_USR_PDATA     = 800
     SUBPW_SET           = 1030
     SUBPW_CHECK_REQ     = 1032
     SUBPW_CHECK         = 1034

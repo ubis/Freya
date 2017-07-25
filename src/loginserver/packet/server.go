@@ -116,8 +116,8 @@ func VerifyLinks(session *network.Session, reader *network.Reader) {
     g_RPCHandler.Call(rpc.UserVerify, send, &recv)
 
     var packet = network.NewWriter(VERIFYLINKS)
-    packet.WriteByte(server)
     packet.WriteByte(channel)
+    packet.WriteByte(server)
 
     if recv.Verified {
         packet.WriteByte(0x01)

@@ -120,7 +120,6 @@ func (s *Session) GetEndPnt() string {
 // Returns session's ip address
 func (s *Session) GetIp() string {
     var ip = strings.Split(s.GetEndPnt(), ":")
-    log.Info(ip)
     return ip[0]
 }
 

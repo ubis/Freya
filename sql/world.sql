@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 25, 2017 at 12:35 PM
+-- Generation Time: Jul 25, 2017 at 01:17 PM
 -- Server version: 10.1.25-MariaDB
 -- PHP Version: 7.1.7
 
@@ -190,6 +190,12 @@ ALTER TABLE `characters_inventory`
 --
 ALTER TABLE `characters_quickslots`
   ADD CONSTRAINT `characters_quickslots_ibfk_1` FOREIGN KEY (`id`) REFERENCES `characters` (`id`);
+
+--
+-- Constraints for table `characters_skills`
+--
+ALTER TABLE `characters_skills`
+  ADD CONSTRAINT `characters_skills_ibfk_1` FOREIGN KEY (`id`) REFERENCES `characters` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

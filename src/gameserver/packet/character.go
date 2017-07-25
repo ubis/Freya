@@ -129,6 +129,11 @@ func DelMyChartr(session *network.Session, reader *network.Reader) {
         return
     }
 
+    // if subpasswd wasn't verified
+    if len(session.Data.SubPassword.Password) > 0 && !session.Data.SubPassword.Verified {
+        return
+    }
+
     // verify character id
     if charId >> 3 != session.Data.AccountId {
         return
@@ -141,6 +146,10 @@ func DelMyChartr(session *network.Session, reader *network.Reader) {
     if res.Result == character.Success {
         // reset character delete passwd verification
         session.Data.CharVerified = false
+
+        // reset character delete subpasswd verification
+        session.Data.SubPassword.Verified = false
+
         var l = &session.Data.CharacterList
 
         // remove character from the list

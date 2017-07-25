@@ -11,7 +11,7 @@ import (
 // LoadCharacters RPC Call
 func LoadCharacters(_ *rpc.Client, r *character.ListReq, s *character.ListRes) error {
     var db  = g_DatabaseManager.Get(r.Server)
-    var res = character.ListRes{make([]character.Character, 0, 6)}
+    var res = character.ListRes{List: make([]character.Character, 0, 6)}
 
     if db == nil {
         *s = res
@@ -46,6 +46,11 @@ func LoadCharacters(_ *rpc.Client, r *character.ListReq, s *character.ListRes) e
             return nil
         }
     }
+
+    // load metadata
+    db.Get(&res.SlotOrder,
+        "SELECT slot_order FROM lobby_metadata WHERE id = ?", r.Account)
+    db.Get(&res.LastId, "SELECT last_char FROM lobby_metadata WHERE id = ?", r.Account)
 
     *s = res
     return nil
@@ -188,6 +193,10 @@ func CreateCharacter(_ *rpc.Client, r *character.CreateReq, s *character.CreateR
         )
     }
 
+    // create lobby metadata if doesn't exist
+    var account = r.Id >> 3
+    db.MustExec("INSERT IGNORE INTO lobby_metadata (id) VALUE (?)", account)
+
     res.Result    = character.Success
     res.Character = c
 
@@ -212,6 +221,25 @@ func DeleteCharacter(_ *rpc.Client, r *character.DeleteReq, s *character.DeleteR
     db.MustExec("DELETE FROM characters WHERE id = ?", r.CharId)
 
     res.Result = character.Success
+
+    *s = res
+    return nil
+}
+
+// SetSlotOrder RPC Call
+func SetSlotOrder(_ *rpc.Client, r *character.SetOrderReq, s *character.SetOrderRes) error {
+    var db  = g_DatabaseManager.Get(r.Server)
+    var res = character.SetOrderRes{}
+
+    if db == nil {
+        *s = res
+        return nil
+    }
+
+    db.MustExec(
+        "UPDATE lobby_metadata SET slot_order = ? WHERE id = ?", r.Order, r.Account)
+
+    res.Result = true
 
     *s = res
     return nil

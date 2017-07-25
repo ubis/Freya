@@ -19,4 +19,5 @@ const (
     SUBPW_DEL           = 1042
     SUBPW_CHG_QA_REQ    = 1044
     SUBPW_CHG_QA        = 1046
+    SET_CHAR_SLOT_ORDER = 2001
 )

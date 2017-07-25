@@ -11,7 +11,9 @@ type ListReq struct {
 }
 
 type ListRes struct {
-    List []Character
+    List      []Character
+    LastId    int32
+    SlotOrder int32
 }
 
 type CreateReq struct {
@@ -31,6 +33,16 @@ type DeleteReq struct {
 
 type DeleteRes struct {
     Result byte
+}
+
+type SetOrderReq struct {
+    Server  byte
+    Account int32
+    Order   int32
+}
+
+type SetOrderRes struct {
+    Result bool
 }
 
 type Character struct {

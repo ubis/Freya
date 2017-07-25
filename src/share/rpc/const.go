@@ -25,4 +25,5 @@ const (
     LoadCharacters  = "LoadCharacters"
     CreateCharacter = "CreateCharacter"
     DeleteCharacter = "DeleteCharacter"
+    SetSlotOrder    = "SetSlotOrder"
 )

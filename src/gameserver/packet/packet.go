@@ -34,4 +34,5 @@ func RegisterPackets() {
     pk.Register(SUBPW_DEL, "SubPasswordDel", SubPasswordDel)
     pk.Register(SUBPW_CHG_QA_REQ, "SubPasswordChangeQARequest", SubPasswordChangeQARequest)
     pk.Register(SUBPW_CHG_QA, "SubPasswordChangeQA", SubPasswordChangeQA)
+    pk.Register(SET_CHAR_SLOT_ORDER, "SetCharacterSlotOrder", SetCharacterSlotOrder)
 }

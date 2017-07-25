@@ -38,8 +38,8 @@ func GetMyChartr(session *network.Session, reader *network.Reader) {
     var packet = network.NewWriter(GETMYCHARTR)
     packet.WriteInt32(subpasswdExist)
     packet.WriteBytes(make([]byte, 10))
-    packet.WriteInt32(0x00) // selected character id
-    packet.WriteInt32(0x00) // slot order
+    packet.WriteInt32(resList.LastId)
+    packet.WriteInt32(resList.SlotOrder)
 
     for i := 0; i < len(resList.List); i ++ {
         var char = resList.List[i]
@@ -155,6 +155,24 @@ func DelMyChartr(session *network.Session, reader *network.Reader) {
     var packet = network.NewWriter(DELMYCHARTR)
     packet.WriteByte(res.Result + 1)
     packet.WriteByte(0x00)
+
+    session.Send(packet)
+}
+
+// SetCharacterSlotOrder Packet
+func SetCharacterSlotOrder(session *network.Session, reader *network.Reader) {
+    var order = reader.ReadInt32()
+
+    var req = character.SetOrderReq{
+        byte(g_ServerSettings.ServerId),
+        session.Data.AccountId,
+        order,
+    }
+    var res = character.SetOrderRes{}
+    g_RPCHandler.Call(rpc.SetSlotOrder, req, &res)
+
+    var packet = network.NewWriter(SET_CHAR_SLOT_ORDER)
+    packet.WriteByte(0x01)
 
     session.Send(packet)
 }

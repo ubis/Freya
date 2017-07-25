@@ -1,13 +1,15 @@
 -- phpMyAdmin SQL Dump
--- version 4.6.5.2
+-- version 4.7.0
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: 2017 m. Lie 24 d. 19:20
--- Server version: 10.1.21-MariaDB
--- PHP Version: 5.6.30
+-- Generation Time: Jul 25, 2017 at 12:35 PM
+-- Server version: 10.1.25-MariaDB
+-- PHP Version: 7.1.7
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET AUTOCOMMIT = 0;
+START TRANSACTION;
 SET time_zone = "+00:00";
 
 
@@ -23,7 +25,7 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Sukurta duomenų struktūra lentelei `characters`
+-- Table structure for table `characters`
 --
 
 CREATE TABLE `characters` (
@@ -63,7 +65,7 @@ CREATE TABLE `characters` (
 -- --------------------------------------------------------
 
 --
--- Sukurta duomenų struktūra lentelei `characters_equipment`
+-- Table structure for table `characters_equipment`
 --
 
 CREATE TABLE `characters_equipment` (
@@ -78,7 +80,7 @@ CREATE TABLE `characters_equipment` (
 -- --------------------------------------------------------
 
 --
--- Sukurta duomenų struktūra lentelei `characters_inventory`
+-- Table structure for table `characters_inventory`
 --
 
 CREATE TABLE `characters_inventory` (
@@ -93,7 +95,7 @@ CREATE TABLE `characters_inventory` (
 -- --------------------------------------------------------
 
 --
--- Sukurta duomenų struktūra lentelei `characters_quickslots`
+-- Table structure for table `characters_quickslots`
 --
 
 CREATE TABLE `characters_quickslots` (
@@ -105,7 +107,7 @@ CREATE TABLE `characters_quickslots` (
 -- --------------------------------------------------------
 
 --
--- Sukurta duomenų struktūra lentelei `characters_skills`
+-- Table structure for table `characters_skills`
 --
 
 CREATE TABLE `characters_skills` (
@@ -114,6 +116,18 @@ CREATE TABLE `characters_skills` (
   `level` tinyint(3) UNSIGNED NOT NULL,
   `slot` smallint(5) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 ROW_FORMAT=COMPACT;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `lobby_metadata`
+--
+
+CREATE TABLE `lobby_metadata` (
+  `id` int(11) NOT NULL,
+  `last_char` int(11) NOT NULL DEFAULT '0',
+  `slot_order` int(11) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
 -- Indexes for dumped tables
@@ -150,26 +164,33 @@ ALTER TABLE `characters_skills`
   ADD PRIMARY KEY (`id`,`slot`);
 
 --
--- Apribojimai eksportuotom lentelėm
+-- Indexes for table `lobby_metadata`
+--
+ALTER TABLE `lobby_metadata`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Constraints for dumped tables
 --
 
 --
--- Apribojimai lentelei `characters_equipment`
+-- Constraints for table `characters_equipment`
 --
 ALTER TABLE `characters_equipment`
   ADD CONSTRAINT `characters_equipment_ibfk_1` FOREIGN KEY (`id`) REFERENCES `characters` (`id`);
 
 --
--- Apribojimai lentelei `characters_inventory`
+-- Constraints for table `characters_inventory`
 --
 ALTER TABLE `characters_inventory`
   ADD CONSTRAINT `characters_inventory_ibfk_1` FOREIGN KEY (`id`) REFERENCES `characters` (`id`);
 
 --
--- Apribojimai lentelei `characters_quickslots`
+-- Constraints for table `characters_quickslots`
 --
 ALTER TABLE `characters_quickslots`
   ADD CONSTRAINT `characters_quickslots_ibfk_1` FOREIGN KEY (`id`) REFERENCES `characters` (`id`);
+COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

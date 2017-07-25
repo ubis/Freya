@@ -103,13 +103,13 @@ func (n *Network) GetOnlineUsers() int {
 }
 
 // Verifies user specified by index, key and sets it's database index
-func (n *Network) VerifyUser(idx uint16, key uint32, db_idx int32) (bool, *Session) {
+func (n *Network) VerifyUser(i uint16, k uint32, ip string, db_idx int32) (bool, *Session) {
     n.lock.Lock()
-    if n.clients[idx] != nil && n.clients[idx].AuthKey == key {
-        n.clients[idx].Data.Verified  = true
-        n.clients[idx].Data.LoggedIn  = true
-        n.clients[idx].Data.AccountId = db_idx
-        var tmp = n.clients[idx]
+    if n.clients[i] != nil && n.clients[i].AuthKey == k && n.clients[i].GetIp() == ip {
+        n.clients[i].Data.Verified  = true
+        n.clients[i].Data.LoggedIn  = true
+        n.clients[i].Data.AccountId = db_idx
+        var tmp = n.clients[i]
         n.lock.Unlock()
         return true, tmp
     }

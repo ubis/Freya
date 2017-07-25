@@ -64,7 +64,8 @@ func VerifyLinks(session *network.Session, reader *network.Reader) {
     var channel   = reader.ReadByte();
     var server    = reader.ReadByte();
 
-    var send = account.VerifyReq{timestamp, count, server, channel, session.Data.AccountId}
+    var send = account.VerifyReq{
+        timestamp, count, server, channel, session.GetIp(), session.Data.AccountId}
     var recv = account.VerifyRes{}
     g_RPCHandler.Call(rpc.UserVerify, send, &recv)
 

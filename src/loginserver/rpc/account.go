@@ -10,7 +10,7 @@ import (
 
 // UserVerify RPC Call
 func UserVerify(c *rpc.Client, r *account.VerifyReq, s *account.VerifyRes) error {
-    var verify, session = g_NetworkManager.VerifyUser(r.UserIdx, r.AuthKey, r.DBIdx)
+    var verify, session = g_NetworkManager.VerifyUser(r.UserIdx, r.AuthKey, r.IP, r.DBIdx)
 
     if verify {
         // send server list periodically

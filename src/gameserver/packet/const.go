@@ -8,6 +8,7 @@ const (
     CONNECT2SVR         = 140
     VERIFYLINKS         = 141
     GETSVRTIME          = 148
+    SYSTEMMESSG         = 241
     CHARGEINFO          = 324
     SERVERENV           = 464
     CHECK_USR_PDATA     = 800

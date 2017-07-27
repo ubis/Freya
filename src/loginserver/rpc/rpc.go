@@ -16,4 +16,5 @@ var g_RPCHandler     = def.RPCHandler
 
 func RegisterCalls() {
     g_RPCHandler.Register(rpc.UserVerify, UserVerify)
+    g_RPCHandler.Register(rpc.OnlineCheck, OnlineCheck)
 }

@@ -39,3 +39,12 @@ type CharCount struct {
     Server byte
     Count  byte
 }
+
+type OnlineReq struct {
+    Account int32
+    Kick    bool
+}
+
+type OnlineRes struct {
+    Result bool
+}

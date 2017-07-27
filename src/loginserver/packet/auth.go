@@ -77,7 +77,7 @@ func AuthAccount(session *network.Session, reader *network.Reader) {
     session.Send(packet)
 
     if r.Status == account.Normal {
-        log.Infof("User `%s` succesfully logged in.", name)
+        log.Infof("User `%s` successfully logged in.", name)
 
         session.Data.AccountId = r.Id
         session.Data.LoggedIn  = true
@@ -100,6 +100,9 @@ func AuthAccount(session *network.Session, reader *network.Reader) {
                 <-t.C
             }
         }(session)
+    } else if r.Status == account.Online {
+        session.Data.AccountId = r.Id
+        log.Infof("User `%s` double login attempt.", name)
     } else {
         log.Infof("User `%s` failed to log in.", name)
     }

@@ -46,16 +46,16 @@ func URLToClient(session *network.Session) {
 }
 
 // SystemMessg Packet which is NFY
-func SystemMessg(session *network.Session, message byte) {
+func SystemMessg(message byte, length uint16) *network.Writer {
     var packet = network.NewWriter(SYSTEMMESSG)
     packet.WriteByte(message)
-    packet.WriteByte(0x00)  // DataLength
-    packet.WriteByte(0x00)  // Data
-    session.Send(packet)
+    packet.WriteUint16(length)
+
+    return packet
 }
 
 // ServerState Packet which is NFY
-func ServerSate(session *network.Session) {
+func ServerSate() *network.Writer {
     // request server list
     var r = server.ListRes{}
     g_RPCHandler.Call(rpc.ServerList, server.ListReq{}, &r)
@@ -93,7 +93,7 @@ func ServerSate(session *network.Session) {
         }
     }
 
-    session.Send(packet)
+    return packet
 }
 
 // VerifyLinks

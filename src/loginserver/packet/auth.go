@@ -86,7 +86,7 @@ func AuthAccount(session *network.Session, reader *network.Reader) {
         URLToClient(session)
 
         // send normal system message
-        SystemMessg(session, message.Normal)
+        session.Send(SystemMessg(message.Normal, 0))
 
         // send server list periodically
         var t = time.NewTicker(time.Second * 5)
@@ -96,7 +96,7 @@ func AuthAccount(session *network.Session, reader *network.Reader) {
                     break
                 }
 
-                ServerSate(s)
+                s.Send(ServerSate())
                 <-t.C
             }
         }(session)

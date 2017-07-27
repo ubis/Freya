@@ -103,19 +103,32 @@ func (n *Network) GetOnlineUsers() int {
 }
 
 // Verifies user specified by index, key and sets it's database index
-func (n *Network) VerifyUser(i uint16, k uint32, ip string, db_idx int32) (bool, *Session) {
+func (n *Network) VerifyUser(i uint16, k uint32, ip string, db_idx int32) bool {
     n.lock.Lock()
     if n.clients[i] != nil && n.clients[i].AuthKey == k && n.clients[i].GetIp() == ip {
         n.clients[i].Data.Verified  = true
         n.clients[i].Data.LoggedIn  = true
         n.clients[i].Data.AccountId = db_idx
-        var tmp = n.clients[i]
         n.lock.Unlock()
-        return true, tmp
+        return true
     }
 
     n.lock.Unlock()
-    return false, nil
+    return false
+}
+
+// Sends packet to session by it's index
+func (n *Network) SendToUser(i uint16, writer *Writer) bool {
+    n.lock.RLock()
+    var session = n.clients[i]
+    if session != nil && session.Connected {
+        session.Send(writer)
+        n.lock.RUnlock()
+        return true
+    }
+
+    n.lock.RUnlock()
+    return false
 }
 
 // onClientDisconnect event informs server about disconnected client

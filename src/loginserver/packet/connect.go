@@ -2,7 +2,9 @@ package packet
 
 import (
     "time"
+    "share/rpc"
     "share/network"
+    "share/models/account"
 )
 
 // Connect2Svr Packet
@@ -37,6 +39,27 @@ func CheckVersion(session *network.Session, reader *network.Reader) {
     packet.WriteInt32(0x00) // debug
     packet.WriteInt32(0x00) // reserved
     packet.WriteInt32(0x00) // reserved
+
+    session.Send(packet)
+}
+
+// FDisconnect Packet
+func FDisconnect(session *network.Session, reader *network.Reader) {
+    var idx = reader.ReadInt32()
+
+    var packet = network.NewWriter(FDISCONNECT)
+    if idx != session.Data.AccountId {
+        // wooops invalid account id
+        packet.WriteByte(0x00) // failed
+    } else {
+        var res = account.OnlineRes{}
+        g_RPCHandler.Call(rpc.ForceDisconnect, account.OnlineReq{idx, true}, &res)
+        if res.Result {
+            packet.WriteByte(0x01) // success
+        } else {
+            packet.WriteByte(0x00) // failed
+        }
+    }
 
     session.Send(packet)
 }

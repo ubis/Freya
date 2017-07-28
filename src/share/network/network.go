@@ -131,6 +131,36 @@ func (n *Network) SendToUser(i uint16, writer *Writer) bool {
     return false
 }
 
+// Checks if account is online and returns user index
+func (n *Network) IsOnline(account int32) uint16 {
+    n.lock.RLock()
+    for _, s := range n.clients {
+        if s.Data.AccountId == account && s.Data.Verified && s.Data.LoggedIn {
+            var index = s.UserIdx
+            n.lock.RUnlock()
+            return index
+        }
+    }
+
+    n.lock.RUnlock()
+    return INVALID_USER_INDEX
+}
+
+// Closes session connection by it's index
+func (n *Network) CloseUser(i uint16) bool {
+    n.lock.RLock()
+    for _, session := range n.clients {
+        if session.UserIdx == i {
+            session.Close()
+            n.lock.RUnlock()
+            return true
+        }
+    }
+
+    n.lock.RUnlock()
+    return false
+}
+
 // onClientDisconnect event informs server about disconnected client
 func (n *Network) onClientDisconnect(event event.Event) {
     var session, err = event.(*Session)

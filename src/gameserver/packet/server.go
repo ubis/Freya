@@ -81,3 +81,12 @@ func VerifyLinks(session *network.Session, reader *network.Reader) {
 
     session.Send(packet)
 }
+
+// SystemMessg Packet which is NFY
+func SystemMessg(message byte, length uint16) *network.Writer {
+    var packet = network.NewWriter(SYSTEMMESSG)
+    packet.WriteByte(message)
+    packet.WriteUint16(length)
+
+    return packet
+}

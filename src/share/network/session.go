@@ -22,10 +22,10 @@ type Session struct {
     AuthKey     uint32
     Connected   bool
     Data        struct {
-        AccountId     int32
-        Verified      bool
-        LoggedIn      bool
-        CharVerified  bool
+        AccountId     int32 // database account id
+        Verified      bool  // version verification
+        LoggedIn      bool  // auth verification
+        CharVerified  bool  // character delete password verification
         SubPassword   *subpasswd.Details
         CharacterList []character.Character
     }

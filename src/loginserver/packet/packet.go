@@ -20,6 +20,7 @@ func RegisterPackets() {
     pk.Register(CONNECT2SVR, "Connect2Svr", Connect2Svr)
     pk.Register(VERIFYLINKS, "VerifyLinks", VerifyLinks)
     pk.Register(AUTHACCOUNT, "AuthAccount", AuthAccount)
+    pk.Register(FDISCONNECT, "FDisconnect", FDisconnect)
     pk.Register(SYSTEMMESSG, "SystemMessg", nil)
     pk.Register(SERVERSTATE, "ServerState", nil)
     pk.Register(CHECKVERSION, "CheckVersion", CheckVersion)

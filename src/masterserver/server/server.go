@@ -4,7 +4,9 @@ import (
     "sync"
     "sort"
     "share/logger"
+    "share/rpc"
     "share/models/server"
+    "share/models/account"
 )
 
 type ServerManager struct {
@@ -137,4 +139,40 @@ func (sm *ServerManager) SendToLS(m string, a interface{}, r interface{}) error 
     sm.lock.RUnlock()
 
     return nil
+}
+
+// Attempts to find logged in user in all servers by account id
+func (sm *ServerManager) IsOnline(id int32) bool {
+    sm.lock.RLock()
+    for _, value := range sm.servers {
+        var c   = value.Client
+        var res = account.OnlineRes{}
+        var err = c.Call(rpc.OnlineCheck, account.OnlineReq{id, false}, &res)
+
+        if err == nil && res.Result {
+            sm.lock.RUnlock()
+            return true
+        }
+    }
+    sm.lock.RUnlock()
+
+    return false
+}
+
+// Attempts to kick out user in all servers by account id
+func (sm *ServerManager) KickAccount(id int32) bool {
+    sm.lock.RLock()
+    for _, value := range sm.servers {
+        var c   = value.Client
+        var res = account.OnlineRes{}
+        var err = c.Call(rpc.OnlineCheck, account.OnlineReq{id, true}, &res)
+
+        if err == nil && res.Result {
+            sm.lock.RUnlock()
+            return true
+        }
+    }
+    sm.lock.RUnlock()
+
+    return false
 }

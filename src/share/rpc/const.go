@@ -8,9 +8,11 @@ const (
 
 // Account related RPC's
 const (
-    AuthCheck   = "AuthCheck"
-    UserVerify  = "UserVerify"
-    PasswdCheck = "PasswdCheck"
+    AuthCheck       = "AuthCheck"
+    UserVerify      = "UserVerify"
+    PasswdCheck     = "PasswdCheck"
+    OnlineCheck     = "OnlineCheck"
+    ForceDisconnect = "ForceDisconnect"
 )
 
 // SubPassword related RPC's

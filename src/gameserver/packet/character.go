@@ -2,6 +2,7 @@ package packet
 
 import (
 	"bytes"
+	"share/log"
 	"share/models/character"
 	"share/models/subpasswd"
 	"share/network"

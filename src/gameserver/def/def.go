@@ -1,15 +1,11 @@
 package def
 
 import (
-	"github.com/op/go-logging"
 	"os"
-	"share/logger"
 	"share/network"
 	"share/rpc"
 	"strconv"
 )
-
-var log *logging.Logger
 
 var ServerConfig = &Config{}
 var ServerSettings = &Settings{}
@@ -35,13 +31,11 @@ func init() {
 		ServerSettings.ServerId = 1
 		ServerSettings.ChannelId = 1
 	}
-
-	log = logger.Init(GetName())
 }
 
 // Returns GameServer name with id's
 func GetName() string {
-	var str = "gameserver_" + strconv.Itoa(ServerSettings.ServerId)
+	var str = "GameServer_" + strconv.Itoa(ServerSettings.ServerId)
 	str += "_" + strconv.Itoa(ServerSettings.ChannelId)
 
 	return str

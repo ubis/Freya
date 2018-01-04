@@ -2,10 +2,8 @@ package packet
 
 import (
 	"gameserver/def"
-	"share/logger"
+	"share/log"
 )
-
-var log = logger.Instance()
 
 var g_ServerConfig = def.ServerConfig
 var g_ServerSettings = def.ServerSettings

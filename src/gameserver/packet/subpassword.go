@@ -2,11 +2,12 @@ package packet
 
 import (
 	"bytes"
-	"golang.org/x/crypto/bcrypt"
 	"share/models/subpasswd"
 	"share/network"
 	"share/rpc"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // SubPasswordSet Packet

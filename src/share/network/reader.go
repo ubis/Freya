@@ -1,5 +1,7 @@
 package network
 
+import "log"
+
 type Reader struct {
 	buffer []byte
 	index  int

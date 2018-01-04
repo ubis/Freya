@@ -5,6 +5,7 @@ import (
 	"net"
 	"share/encryption"
 	"share/event"
+	"share/log"
 	"share/models/character"
 	"share/models/subpasswd"
 	"strings"

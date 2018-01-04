@@ -3,6 +3,7 @@ package network
 import (
 	"bytes"
 	"fmt"
+	"share/log"
 )
 
 // DumpPacket function dumps packet into console

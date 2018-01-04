@@ -2,11 +2,8 @@ package rpc
 
 import (
 	"loginserver/def"
-	"share/logger"
 	"share/rpc"
 )
-
-var log = logger.Instance()
 
 var g_ServerConfig = def.ServerConfig
 var g_ServerSettings = def.ServerSettings

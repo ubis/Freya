@@ -3,6 +3,7 @@ package def
 import (
 	"share/conf"
 	"share/directory"
+	"share/log"
 )
 
 type Config struct {

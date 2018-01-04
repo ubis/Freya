@@ -3,6 +3,7 @@ package packet
 import (
 	"bytes"
 	"loginserver/rsa"
+	"share/log"
 	"share/models/account"
 	"share/models/message"
 	"share/network"

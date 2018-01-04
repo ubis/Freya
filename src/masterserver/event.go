@@ -2,6 +2,7 @@ package main
 
 import (
 	"share/event"
+	"share/log"
 	"share/rpc"
 )
 

@@ -2,11 +2,9 @@ package rpc
 
 import (
 	"masterserver/def"
-	"share/logger"
+	"share/log"
 	"share/rpc"
 )
-
-var log = logger.Instance()
 
 var g_RPCHandler = def.RPCHandler
 var g_LoginDatabase = def.LoginDatabase

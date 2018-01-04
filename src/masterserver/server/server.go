@@ -1,7 +1,7 @@
 package server
 
 import (
-	"share/logger"
+	"share/log"
 	"share/models/account"
 	"share/models/server"
 	"share/rpc"
@@ -13,8 +13,6 @@ type ServerManager struct {
 	servers map[string]*server.Server
 	lock    sync.RWMutex
 }
-
-var log = logger.Instance()
 
 // Initializes ServerManager
 func (sm *ServerManager) Init() {

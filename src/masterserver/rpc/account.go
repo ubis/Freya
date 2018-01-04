@@ -1,9 +1,10 @@
 package rpc
 
 import (
-	"golang.org/x/crypto/bcrypt"
 	"share/models/account"
 	"share/rpc"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // AuthCheck RPC Call

@@ -1,15 +1,13 @@
 package def
 
 import (
-	"github.com/jmoiron/sqlx"
 	"masterserver/data"
 	"masterserver/database"
 	"masterserver/server"
-	"share/logger"
 	"share/rpc"
-)
 
-var log = logger.Init("masterserver")
+	"github.com/jmoiron/sqlx"
+)
 
 var ServerConfig = &Config{}
 var ServerSettings = &Settings{}

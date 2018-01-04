@@ -1,7 +1,7 @@
 package event
 
 import (
-	"share/logger"
+	"share/log"
 	"sync"
 )
 
@@ -12,7 +12,6 @@ type Event interface {
 // Event handler func
 type Handler func(Event)
 
-var log = logger.Instance()
 var handlers = map[string][]Handler{}
 var lock sync.Mutex
 

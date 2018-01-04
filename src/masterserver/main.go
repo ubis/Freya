@@ -1,14 +1,13 @@
 package main
 
 import (
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
 	"masterserver/def"
 	"masterserver/rpc"
-	"share/logger"
-)
+	"share/log"
 
-var log = logger.Instance()
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
+)
 
 // globals
 var g_ServerConfig = def.ServerConfig
@@ -19,7 +18,7 @@ var g_DatabaseManager = def.DatabaseManager
 var g_DataLoader = def.DataLoader
 
 func main() {
-	log.Info("MasterServer init")
+	log.Init("MasterServer")
 
 	// read config
 	g_ServerConfig.Read()

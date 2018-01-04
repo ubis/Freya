@@ -3,15 +3,13 @@ package conf
 import (
 	"errors"
 	"io/ioutil"
-	"share/logger"
+	"share/log"
 	"strconv"
 	"strings"
 )
 
 type keyValue map[string]string
 type section map[string]keyValue
-
-var log = logger.Instance()
 
 var sections = make(section)
 

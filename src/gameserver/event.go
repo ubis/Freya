@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"net"
 	"share/event"
+	"share/log"
 	"share/models/server"
 	"share/network"
 	"share/rpc"

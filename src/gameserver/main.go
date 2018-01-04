@@ -4,10 +4,8 @@ import (
 	"gameserver/def"
 	"gameserver/packet"
 	"gameserver/rpc"
-	"share/logger"
+	"share/log"
 )
-
-var log = logger.Instance()
 
 // globals
 var g_ServerConfig = def.ServerConfig
@@ -17,7 +15,7 @@ var g_PacketHandler = def.PacketHandler
 var g_RPCHandler = def.RPCHandler
 
 func main() {
-	log.Info("GameServer", def.GetName(), " init")
+	log.Init(def.GetName())
 
 	// read config
 	g_ServerConfig.Read()

@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"share/log"
 	"share/models/server"
 	"share/rpc"
 )

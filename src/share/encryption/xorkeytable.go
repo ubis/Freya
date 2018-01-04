@@ -1,8 +1,6 @@
 package encryption
 
-import "share/logger"
-
-var log = logger.Instance()
+import "share/log"
 
 type XorKeyTable struct {
 	KeyTable []uint32

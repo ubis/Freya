@@ -1,11 +1,13 @@
 package rpc
 
 import (
-	"github.com/jmoiron/sqlx"
+	"share/log"
 	"share/models/character"
 	"share/models/inventory"
 	"share/rpc"
 	"time"
+
+	"github.com/jmoiron/sqlx"
 )
 
 // LoadCharacters RPC Call

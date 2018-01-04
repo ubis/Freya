@@ -5,14 +5,12 @@ import (
 	"crypto/rsa"
 	"crypto/sha1"
 	"encoding/asn1"
-	"share/logger"
+	"share/log"
 )
 
 const RSA_KEY_LENGTH = 2048
 const RSA_LOGIN_LENGTH = RSA_KEY_LENGTH / 8
 const RSA_PUB_KEY_LENGTH = RSA_LOGIN_LENGTH + 14
-
-var log = logger.Instance()
 
 type RSA struct {
 	privateKey *rsa.PrivateKey

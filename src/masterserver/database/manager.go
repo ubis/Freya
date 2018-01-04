@@ -1,11 +1,10 @@
 package database
 
 import (
-	"github.com/jmoiron/sqlx"
-	"share/logger"
-)
+	"share/log"
 
-var log = logger.Instance()
+	"github.com/jmoiron/sqlx"
+)
 
 type DatabaseManager struct {
 	DBList map[int]*Database

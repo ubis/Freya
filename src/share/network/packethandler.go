@@ -1,5 +1,7 @@
 package network
 
+import "share/log"
+
 type PacketData struct {
 	Name   string
 	Method interface{}

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 	"share/event"
-	"share/logger"
+	"share/log"
 	"share/models/server"
 	"sync"
 )
@@ -15,8 +15,6 @@ type Network struct {
 	userIdx  uint16
 	settings *server.Settings
 }
-
-var log = logger.Instance()
 
 // Network initialization
 func (n *Network) Init(port int, s *server.Settings) {

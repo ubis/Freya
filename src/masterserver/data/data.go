@@ -1,16 +1,15 @@
 package data
 
 import (
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"share/directory"
-	"share/logger"
+	"share/log"
 	"share/models/inventory"
 	"share/models/links"
 	"share/models/skills"
-)
 
-var log = logger.Instance()
+	"gopkg.in/yaml.v2"
+)
 
 type Loader struct {
 	*InitialData

@@ -6,10 +6,10 @@ import (
 	"io"
 	"net"
 	"reflect"
+	"share/event"
+	"strconv"
 	"unicode"
 	"unicode/utf8"
-    "strconv"
-    "share/event"
 )
 
 // Precompute the reflect type for error.  Can't use error directly
@@ -20,7 +20,7 @@ var typeOfClient = reflect.TypeOf((*Client)(nil))
 type Server struct {
 	handlers map[string]*handler
 
-    Port     int
+	Port int
 }
 
 type handler struct {
@@ -31,27 +31,27 @@ type handler struct {
 
 // Initializes RPC Server
 func (s *Server) Init() {
-    log.Info("Initializing RPC Server...")
-    s.handlers = make(map[string]*handler)
+	log.Info("Initializing RPC Server...")
+	s.handlers = make(map[string]*handler)
 }
 
 // Registers a new RPC call function
 func (s *Server) Register(method string, handlerFunc interface{}) {
-    log.Infof("Registered RPC packet `%s`", method)
+	log.Infof("Registered RPC packet `%s`", method)
 	addHandler(s.handlers, method, handlerFunc)
 }
 
 // Starts up RPC server
 func (s *Server) Run() {
-    var listen, err = net.Listen("tcp", ":" + strconv.Itoa(s.Port))
-    defer listen.Close()
+	var listen, err = net.Listen("tcp", ":"+strconv.Itoa(s.Port))
+	defer listen.Close()
 
-    if err != nil {
-        log.Fatal("Error starting RPC Server:", err.Error())
-    }
+	if err != nil {
+		log.Fatal("Error starting RPC Server:", err.Error())
+	}
 
-    log.Info("Listening on " + listen.Addr().String() + "...")
-    s.accept(listen)
+	log.Info("Listening on " + listen.Addr().String() + "...")
+	s.accept(listen)
 }
 
 // Adds a new RPC call function handler
@@ -133,17 +133,17 @@ func (s *Server) accept(lis net.Listener) {
 
 // Runs the server on a single connection. Triggers SyncConnectEvent
 func (s *Server) serveConn(conn io.ReadWriteCloser, endpnt string) {
-    var codec = newGobCodec(conn)
-    defer codec.Close()
+	var codec = newGobCodec(conn)
+	defer codec.Close()
 
-    // client also handles the incoming connections
-    var client = NewClientWithCodec(codec)
+	// client also handles the incoming connections
+	var client = NewClientWithCodec(codec)
 
-    client.server    = true
-    client.handlers  = s.handlers
-    client.endpnt    = endpnt
-    client.connected = true
+	client.server = true
+	client.handlers = s.handlers
+	client.endpnt = endpnt
+	client.connected = true
 
-    event.Trigger(event.SyncConnectEvent, client)
-    client.Run()
+	event.Trigger(event.SyncConnectEvent, client)
+	client.Run()
 }

@@ -3,5 +3,5 @@ package server
 import "share/encryption"
 
 type Settings struct {
-    XorKeyTable  encryption.XorKeyTable
+	XorKeyTable encryption.XorKeyTable
 }

@@ -1,50 +1,50 @@
 package main
 
 import (
-    "share/logger"
-    "gameserver/def"
-    "gameserver/packet"
-    "gameserver/rpc"
+	"gameserver/def"
+	"gameserver/packet"
+	"gameserver/rpc"
+	"share/logger"
 )
 
 var log = logger.Instance()
 
 // globals
-var g_ServerConfig   = def.ServerConfig
+var g_ServerConfig = def.ServerConfig
 var g_ServerSettings = def.ServerSettings
 var g_NetworkManager = def.NetworkManager
-var g_PacketHandler  = def.PacketHandler
-var g_RPCHandler     = def.RPCHandler
+var g_PacketHandler = def.PacketHandler
+var g_RPCHandler = def.RPCHandler
 
 func main() {
-    log.Info("GameServer", def.GetName(), " init")
+	log.Info("GameServer", def.GetName(), " init")
 
-    // read config
-    g_ServerConfig.Read()
+	// read config
+	g_ServerConfig.Read()
 
-    // set server settings
-    g_ServerSettings.XorKeyTable.Init()
+	// set server settings
+	g_ServerSettings.XorKeyTable.Init()
 
-    // register events
-    RegisterEvents()
+	// register events
+	RegisterEvents()
 
-    // init packet handler
-    g_PacketHandler.Init()
+	// init packet handler
+	g_PacketHandler.Init()
 
-    // register packets
-    packet.RegisterPackets()
+	// register packets
+	packet.RegisterPackets()
 
-    // init RPC handler
-    g_RPCHandler.Init()
-    g_RPCHandler.IpAddress = g_ServerConfig.MasterIp
-    g_RPCHandler.Port      = g_ServerConfig.MasterPort
+	// init RPC handler
+	g_RPCHandler.Init()
+	g_RPCHandler.IpAddress = g_ServerConfig.MasterIp
+	g_RPCHandler.Port = g_ServerConfig.MasterPort
 
-    // register RPC calls
-    rpc.RegisterCalls()
+	// register RPC calls
+	rpc.RegisterCalls()
 
-    // start RPC handler
-    g_RPCHandler.Start()
+	// start RPC handler
+	g_RPCHandler.Start()
 
-    // create network and start listening for connections
-    g_NetworkManager.Init(g_ServerConfig.Port, &g_ServerSettings.Settings)
+	// create network and start listening for connections
+	g_NetworkManager.Init(g_ServerConfig.Port, &g_ServerSettings.Settings)
 }

@@ -1,6 +1,6 @@
 package links
 
 type Link struct {
-    Skill uint16
-    Slot  uint16
+	Skill uint16
+	Slot  uint16
 }

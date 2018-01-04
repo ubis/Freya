@@ -1,15 +1,15 @@
 package def
 
 import (
-    "share/logger"
-    "share/rpc"
-    "share/network"
+	"share/logger"
+	"share/network"
+	"share/rpc"
 )
 
 var log = logger.Init("loginserver")
 
-var ServerConfig   = &Config{}
+var ServerConfig = &Config{}
 var ServerSettings = &Settings{}
 var NetworkManager = &network.Network{}
-var PacketHandler  = &network.PacketHandler{}
-var RPCHandler     = &rpc.Client{}
+var PacketHandler = &network.PacketHandler{}
+var RPCHandler = &rpc.Client{}

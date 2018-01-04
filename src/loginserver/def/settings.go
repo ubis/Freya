@@ -1,11 +1,11 @@
 package def
 
 import (
-    "share/models/server"
-    "loginserver/rsa"
+	"loginserver/rsa"
+	"share/models/server"
 )
 
 type Settings struct {
-    server.Settings
-    RSA         rsa.RSA
+	server.Settings
+	RSA rsa.RSA
 }

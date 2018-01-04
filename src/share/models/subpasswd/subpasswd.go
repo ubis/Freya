@@ -3,27 +3,27 @@ package subpasswd
 import "time"
 
 type FetchReq struct {
-    Account int32
+	Account int32
 }
 
 type FetchRes struct {
-    Details
+	Details
 }
 
 type SetReq struct {
-    Account     int32
-    Details
+	Account int32
+	Details
 }
 
 type SetRes struct {
-    Success bool
+	Success bool
 }
 
 type Details struct {
-    Password  string
-    Answer    string
-    Question  byte
-    Expires   time.Time
-    Verified  bool
-    FailTimes byte
+	Password  string
+	Answer    string
+	Question  byte
+	Expires   time.Time
+	Verified  bool
+	FailTimes byte
 }

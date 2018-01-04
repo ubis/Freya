@@ -1,7 +1,11 @@
 ## Ignore Gogland IDE project settings
 .idea/
 
+## Ignore VSCode project settings
+.vscode/
+
 ## Ignore Binaries, logs...
 bin/
 log/
 pkg/
+cfg/

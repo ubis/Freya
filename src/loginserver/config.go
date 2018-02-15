@@ -1,6 +1,7 @@
 package main
 
 import (
+	"loginserver/net"
 	"share/conf"
 	"share/directory"
 	"share/log"
@@ -51,4 +52,17 @@ func (c *Config) Read() {
 	// master
 	c.MasterIP = conf.GetString("master", "ip", "127.0.0.1")
 	c.MasterPort = conf.GetInt("master", "port", 9001)
+}
+
+// Assign configuration for Packet structure
+func (c *Config) Assign(p *net.Packet) {
+	p.Version = c.Version
+	p.MagicKey = c.MagicKey
+	p.URL = []string{
+		c.CashWeb,
+		c.CashWebOdc,
+		c.CashWebCharge,
+		c.GuildWeb,
+		c.Sns,
+	}
 }

@@ -25,16 +25,8 @@ func main() {
 	// read config
 	conf.Read()
 
-	// update loaded config
-	packets.Version = conf.Version
-	packets.MagicKey = conf.MagicKey
-	packets.URL = []string{
-		conf.CashWeb,
-		conf.CashWebOdc,
-		conf.CashWebCharge,
-		conf.GuildWeb,
-		conf.Sns,
-	}
+	// assign config for Packet structure
+	conf.Assign(packets)
 
 	// initialize encryption
 	rsa.Init()

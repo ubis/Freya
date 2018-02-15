@@ -2,18 +2,18 @@ package event
 
 // Server events for client communication
 const (
-	ClientConnectEvent    = "onClientConnect"
-	ClientDisconnectEvent = "onClientDisconnect"
+	ClientConnect    = "onClientConnect"
+	ClientDisconnect = "onClientDisconnect"
 )
 
 // Server events for network
 const (
-	PacketReceiveEvent = "onPacketReceive"
-	PacketSendEvent    = "onPacketSent"
+	PacketReceive = "onPacketReceive"
+	PacketSend    = "onPacketSent"
 )
 
 // Server events for RPC
 const (
-	SyncConnectEvent    = "onSyncConnect"
-	SyncDisconnectEvent = "onSyncDisconnect"
+	SyncConnect    = "onSyncConnect"
+	SyncDisconnect = "onSyncDisconnect"
 )

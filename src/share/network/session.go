@@ -33,7 +33,7 @@ type Session struct {
 }
 
 // Starts session goroutine
-func (s *Session) Start(table encryption.XorKeyTable) {
+func (s *Session) Start(table *encryption.XorKeyTable) {
 	// create new receiving buffer
 	s.buffer = make([]byte, MAX_RECV_BUFFER_SIZE)
 
@@ -41,7 +41,7 @@ func (s *Session) Start(table encryption.XorKeyTable) {
 
 	// init encryption
 	s.Encryption = encryption.Encryption{}
-	s.Encryption.Init(&table)
+	s.Encryption.Init(table)
 
 	for {
 		// read data
@@ -83,7 +83,7 @@ func (s *Session) Start(table encryption.XorKeyTable) {
 			var arg = &PacketArgs{s, int(reader.Size), int(reader.Type), reader}
 
 			// trigger packet received event
-			event.Trigger(event.PacketReceiveEvent, arg)
+			event.Trigger(event.PacketReceive, arg)
 
 			i += packetLength
 		}
@@ -110,7 +110,7 @@ func (s *Session) Send(writer *Writer) {
 	var arg = &PacketArgs{s, length, writer.Type, nil}
 
 	// trigger packet sent event
-	event.Trigger(event.PacketSendEvent, arg)
+	event.Trigger(event.PacketSend, arg)
 }
 
 // Returns session's remote endpoint
@@ -128,5 +128,5 @@ func (s *Session) GetIp() string {
 func (s *Session) Close() {
 	s.Connected = false
 	s.socket.Close()
-	event.Trigger(event.ClientDisconnectEvent, s)
+	event.Trigger(event.ClientDisconnect, s)
 }

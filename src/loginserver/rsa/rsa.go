@@ -14,8 +14,7 @@ const RSA_PUB_KEY_LENGTH = RSA_LOGIN_LENGTH + 14
 
 type RSA struct {
 	privateKey *rsa.PrivateKey
-
-	PublicKey [RSA_PUB_KEY_LENGTH]byte
+	PublicKey  [RSA_PUB_KEY_LENGTH]byte
 }
 
 // Initializes RSA which generates keypair

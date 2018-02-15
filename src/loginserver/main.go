@@ -1,49 +1,64 @@
 package main
 
 import (
-	"loginserver/def"
-	"loginserver/packet"
-	"loginserver/rpc"
+	"loginserver/internal"
+	"loginserver/net"
+	"loginserver/rsa"
 	"share/log"
+	"share/network"
+	"share/rpc"
 )
 
-// globals
-var g_ServerConfig = def.ServerConfig
-var g_ServerSettings = def.ServerSettings
-var g_NetworkManager = def.NetworkManager
-var g_PacketHandler = def.PacketHandler
-var g_RPCHandler = def.RPCHandler
-
 func main() {
+	// init
+	conf := &Config{}
+	rsa := &rsa.RSA{}
+	sync := &rpc.Client{}
+	packets := &net.Packet{RPC: sync, RSA: rsa}
+	network := &network.Manager{}
+	events := &EventManager{rpc: sync, net: network}
+
+	internal := &internal.Manager{Network: network, Packets: packets}
+
 	log.Init("LoginServer")
 
 	// read config
-	g_ServerConfig.Read()
+	conf.Read()
 
-	// set server settings
-	g_ServerSettings.XorKeyTable.Init()
-	g_ServerSettings.RSA.Init()
+	// update loaded config
+	packets.Version = conf.Version
+	packets.MagicKey = conf.MagicKey
+	packets.URL = []string{
+		conf.CashWeb,
+		conf.CashWebOdc,
+		conf.CashWebCharge,
+		conf.GuildWeb,
+		conf.Sns,
+	}
 
-	// register events
-	RegisterEvents()
+	// initialize encryption
+	rsa.Init()
 
-	// init packet handler
-	g_PacketHandler.Init()
+	// init network manager
+	network.Init(conf.Port)
 
 	// register packets
-	packet.RegisterPackets()
+	packets.Register(network)
+
+	// register events
+	events.Register()
 
 	// init RPC handler
-	g_RPCHandler.Init()
-	g_RPCHandler.IpAddress = g_ServerConfig.MasterIp
-	g_RPCHandler.Port = g_ServerConfig.MasterPort
+	sync.Init()
+	sync.IpAddress = conf.MasterIP
+	sync.Port = conf.MasterPort
 
 	// register RPC calls
-	rpc.RegisterCalls()
+	internal.Register(sync)
 
 	// start RPC handler
-	g_RPCHandler.Start()
+	sync.Start()
 
-	// create network and start listening for connections
-	g_NetworkManager.Init(g_ServerConfig.Port, &g_ServerSettings.Settings)
+	// run network server
+	network.Run()
 }

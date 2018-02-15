@@ -145,6 +145,6 @@ func (s *Server) serveConn(conn io.ReadWriteCloser, endpnt string) {
 	client.endpnt = endpnt
 	client.connected = true
 
-	event.Trigger(event.SyncConnectEvent, client)
+	event.Trigger(event.SyncConnect, client)
 	client.Run()
 }

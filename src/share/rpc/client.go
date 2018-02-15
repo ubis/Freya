@@ -66,7 +66,7 @@ func (c *Client) run() {
 				c.endpnt = conn.RemoteAddr().String()
 
 				go c.Run()
-				event.Trigger(event.SyncConnectEvent, c)
+				event.Trigger(event.SyncConnect, c)
 			}
 		}
 
@@ -148,7 +148,7 @@ func (c *Client) readLoop() {
 	c.mutex.Unlock()
 	c.sending.Unlock()
 	c.connected = false
-	event.Trigger(event.SyncDisconnectEvent, c)
+	event.Trigger(event.SyncDisconnect, c)
 }
 
 func (c *Client) readRequest(req *Request) error {

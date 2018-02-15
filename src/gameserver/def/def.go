@@ -2,7 +2,6 @@ package def
 
 import (
 	"os"
-	"share/network"
 	"share/rpc"
 	"strconv"
 )

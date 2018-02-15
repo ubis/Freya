@@ -8,19 +8,26 @@ import (
 	"share/rpc"
 )
 
-// Registers server events
-func RegisterEvents() {
+// EventManager structure
+type EventManager struct {
+	rpc *rpc.Client
+	net *network.Manager
+}
+
+// Register attempts to register server events
+func (em *EventManager) Register() {
 	log.Info("Registering events...")
-	event.Register(event.ClientConnectEvent, event.Handler(OnClientConnect))
-	event.Register(event.ClientDisconnectEvent, event.Handler(OnClientDisconnect))
-	event.Register(event.PacketReceiveEvent, event.Handler(OnPacketReceive))
-	event.Register(event.PacketSendEvent, event.Handler(OnPacketSend))
-	event.Register(event.SyncConnectEvent, event.Handler(OnSyncConnect))
-	event.Register(event.SyncDisconnectEvent, event.Handler(OnSyncDisconnect))
+
+	event.Register(event.ClientConnect, event.Handler(em.OnClientConnect))
+	event.Register(event.ClientDisconnect, event.Handler(em.OnClientDisconnect))
+	event.Register(event.PacketReceive, event.Handler(em.OnPacketReceive))
+	event.Register(event.PacketSend, event.Handler(em.OnPacketSend))
+	event.Register(event.SyncConnect, event.Handler(em.OnSyncConnect))
+	event.Register(event.SyncDisconnect, event.Handler(em.OnSyncDisconnect))
 }
 
 // OnClientConnect event informs server about new connected client
-func OnClientConnect(e event.Event) {
+func (em *EventManager) OnClientConnect(e event.Event) {
 	if s, ok := e.(*network.Session); !ok {
 		log.Error("Cannot parse onClientConnect event!")
 	} else {
@@ -29,7 +36,7 @@ func OnClientConnect(e event.Event) {
 }
 
 // OnClientDisconnect event informs server about disconnected client
-func OnClientDisconnect(e event.Event) {
+func (em *EventManager) OnClientDisconnect(e event.Event) {
 	if s, ok := e.(*network.Session); !ok {
 		log.Error("Cannot parse onClientDisconnect event!")
 	} else {
@@ -38,40 +45,40 @@ func OnClientDisconnect(e event.Event) {
 }
 
 // OnPacketReceive event informs server about received packet
-func OnPacketReceive(e event.Event) {
+func (em *EventManager) OnPacketReceive(e event.Event) {
 	if a, ok := e.(*network.PacketArgs); !ok {
 		log.Error("Cannot parse onPacketReceive event!")
 	} else {
 		log.Debugf("Received Packet `%s` (Len: %d, type: %d, src: %s)",
-			g_PacketHandler.Name(a.Type), a.Length, a.Type, a.Session.GetEndPnt(),
-		)
+			em.net.GetPacketName(a.Type), a.Length, a.Type, a.Session.GetEndPnt())
 
 		// let it handle
-		g_PacketHandler.Handle(a)
+		em.net.HandlePacket(a)
 	}
 }
 
 // OnPacketSend event informs server about sent packet
-func OnPacketSend(e event.Event) {
+func (em *EventManager) OnPacketSend(e event.Event) {
 	if a, ok := e.(*network.PacketArgs); !ok {
 		log.Error("Cannot parse onPacketSent event!")
 	} else {
 		log.Debugf("Sent Packet `%s` (Len: %d, type: %d, src: %s)",
-			g_PacketHandler.Name(a.Type), a.Length, a.Type, a.Session.GetEndPnt(),
-		)
+			em.net.GetPacketName(a.Type), a.Length, a.Type, a.Session.GetEndPnt())
 	}
 }
 
-// OnSyncConnect event informs server about successful connection with the Master Server
-func OnSyncConnect(e event.Event) {
+// OnSyncConnect event informs server about successful connection with
+// the Master Server
+func (em *EventManager) OnSyncConnect(e event.Event) {
 	log.Info("Established connection with the Master Server!")
 
 	// register this server
 	var q = server.RegisterReq{Type: server.LOGIN_SERVER}
-	g_RPCHandler.Call(rpc.ServerRegister, q, &server.RegisterRes{})
+	em.rpc.Call(rpc.ServerRegister, q, &server.RegisterRes{})
 }
 
-// OnSyncDisconnect event informs server about lost connection with the Master Server
-func OnSyncDisconnect(e event.Event) {
+// OnSyncDisconnect event informs server about lost connection with
+// the Master Server
+func (em *EventManager) OnSyncDisconnect(e event.Event) {
 	log.Info("Lost connection with the Master Server! Reconnecting...")
 }

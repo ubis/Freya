@@ -12,13 +12,13 @@ const RSA_KEY_LENGTH = 2048
 const RSA_LOGIN_LENGTH = RSA_KEY_LENGTH / 8
 const RSA_PUB_KEY_LENGTH = RSA_LOGIN_LENGTH + 14
 
-type RSA struct {
+type Encryption struct {
 	privateKey *rsa.PrivateKey
 	PublicKey  [RSA_PUB_KEY_LENGTH]byte
 }
 
 // Initializes RSA which generates keypair
-func (r *RSA) Init() {
+func (r *Encryption) Init() {
 	log.Infof("Generating %d bit RSA key...", RSA_KEY_LENGTH)
 
 	// generate RSA key
@@ -40,7 +40,7 @@ func (r *RSA) Init() {
 }
 
 // Attempts to decrypt RSA data, which is `RSA_LOGIN_LENGTH` length
-func (r *RSA) Decrypt(data []byte) ([]byte, error) {
+func (r *Encryption) Decrypt(data []byte) ([]byte, error) {
 	var dec, err = rsa.DecryptOAEP(sha1.New(), rand.Reader, r.privateKey, data, nil)
 	if err != nil {
 		return nil, err

@@ -3,7 +3,6 @@ package main
 import (
 	"loginserver/internal"
 	"loginserver/net"
-	"loginserver/rsa"
 	"share/log"
 	"share/network"
 	"share/rpc"
@@ -12,9 +11,8 @@ import (
 func main() {
 	// init
 	conf := &Config{}
-	rsa := &rsa.RSA{}
 	sync := &rpc.Client{}
-	packets := &net.Packet{RPC: sync, RSA: rsa}
+	packets := &net.Packet{RPC: sync}
 	network := &network.Manager{}
 	events := &EventManager{rpc: sync, net: network}
 
@@ -27,9 +25,6 @@ func main() {
 
 	// assign config for Packet structure
 	conf.Assign(packets)
-
-	// initialize encryption
-	rsa.Init()
 
 	// init network manager
 	network.Init(conf.Port)

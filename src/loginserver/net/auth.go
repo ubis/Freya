@@ -13,7 +13,7 @@ import (
 
 // PublicKey Packet
 func (p *Packet) PublicKey(s *network.Session, r *network.Reader) {
-	var key = p.RSA.PublicKey
+	var key = p.rsa.PublicKey
 
 	var packet = network.NewWriter(PublicKey)
 	packet.WriteByte(0x01)
@@ -36,7 +36,7 @@ func (p *Packet) AuthAccount(s *network.Session, r *network.Reader) {
 
 	// read and decrypt RSA block
 	var loginData = r.ReadBytes(rsa.RSA_LOGIN_LENGTH)
-	var data, err = p.RSA.Decrypt(loginData[:])
+	var data, err = p.rsa.Decrypt(loginData[:])
 	if err != nil {
 		log.Errorf("%s; Src: %s", err.Error(), s.GetEndPnt())
 		s.Close()

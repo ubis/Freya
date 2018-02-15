@@ -10,15 +10,26 @@ import (
 // Packet structure
 type Packet struct {
 	RPC *rpc.Client
-	RSA *rsa.RSA
+	rsa *rsa.Encryption
 
 	Version  int
 	MagicKey int
 	URL      []string
 }
 
+// preInit makes required steps before registering packets
+func (p *Packet) preInit() {
+	// init RSA encryption
+	p.rsa = &rsa.Encryption{}
+	p.rsa.Init()
+}
+
 // Register network packets
 func (p *Packet) Register(m *network.Manager) {
+	// do pre-init work
+	p.preInit()
+
+	// register packets
 	log.Info("Registering packets...")
 
 	m.RegisterPacket(Connect2Svr, "Connect2Svr", p.Connect2Svr)

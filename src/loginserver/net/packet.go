@@ -41,6 +41,6 @@ func (p *Packet) Register(m *network.Manager) {
 	m.RegisterPacket(CheckVersion, "CheckVersion", p.CheckVersion)
 	m.RegisterPacket(URLToClient, "URLToClient", nil)
 	m.RegisterPacket(PublicKey, "PublicKey", p.PublicKey)
-	m.RegisterPacket(PreServerEnvRequest, "PreServerEnvRequest",
-		p.PreServerEnvRequest)
+	m.RegisterPacket(PreServerEnvRequest,
+		"PreServerEnvRequest", p.PreServerEnvRequest)
 }

@@ -41,7 +41,8 @@ func (r *Encryption) Init() {
 
 // Attempts to decrypt RSA data, which is `RSA_LOGIN_LENGTH` length
 func (r *Encryption) Decrypt(data []byte) ([]byte, error) {
-	var dec, err = rsa.DecryptOAEP(sha1.New(), rand.Reader, r.privateKey, data, nil)
+	var dec, err = rsa.DecryptOAEP(sha1.New(), 
+		rand.Reader, r.privateKey, data, nil)
 	if err != nil {
 		return nil, err
 	}

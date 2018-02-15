@@ -15,6 +15,8 @@ var sections = make(section)
 
 // Attempts to open and read configuration file. Error is returned on fail
 func Open(path string) error {
+	log.Debugf("Opening conf %s file...", path)
+
 	var f, err = ioutil.ReadFile(path)
 	if err != nil {
 		return err

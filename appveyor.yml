@@ -9,14 +9,13 @@ branches:
 clone_folder: c:\gopath\src\github.com\ubis\Freya
 
 environment:
-  GOPATH: c:\gopath
+  GOPATH: c:\gopath\src\github.com\ubis\Freya
 
 install:
   - echo %PATH%
   - echo %GOPATH%
   - go version
   - go env
-  - dir
   - go get -v loginserver
   - go get -v gameserver
   - go get -v masterserver

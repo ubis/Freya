@@ -22,3 +22,6 @@ install:
   - go install -v loginserver
   - go install -v gameserver
   - go install -v masterserver
+
+build: false
+deploy: false

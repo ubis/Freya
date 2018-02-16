@@ -4,7 +4,7 @@ platform: x64
 
 branches:
   only:
-    - builder
+    - development
 
 clone_folder: c:\gopath\src\github.com\ubis\Freya
 

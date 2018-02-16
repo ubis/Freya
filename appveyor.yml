@@ -14,7 +14,7 @@ environment:
 install:
   - echo %PATH%
   - echo %GOPATH%
-  - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
+  - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%;c:\gopath\src\github.com\ubis\Freya
   - go version
   - go env
   - go get -v loginserver

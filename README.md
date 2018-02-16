@@ -1,4 +1,7 @@
 # Freya #
+
+[![Build status](https://ci.appveyor.com/api/projects/status/m4k4o9xs54ugk0ds/branch/development?svg=true)](https://ci.appveyor.com/project/ubis/freya/branch/development)
+
 Freya is open-source Cabal Online MMORPG server emulator, written in Go language.
 
 ### Features ###

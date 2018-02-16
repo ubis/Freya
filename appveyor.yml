@@ -1,0 +1,25 @@
+version: "{build}"
+
+platform: x64
+
+branches:
+  only:
+    - builder
+
+clone_folder: c:\gopath\src\github.com\ubis\Freya
+
+environment:
+  GOPATH: c:\gopath
+
+install:
+  - echo %PATH%
+  - echo %GOPATH%
+  - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
+  - go version
+  - go env
+  - go get -v loginserver
+  - go get -v gameserver
+  - go get -v masterserver
+  - go install -v loginserver
+  - go install -v gameserver
+  - go install -v masterserver

@@ -54,14 +54,14 @@ func (s *Session) writer() {
 		// encrypt data
 		enc, err := s.Encryption.Encrypt(w.Finalize())
 		if err != nil {
-			log.Error("Error encrypting packet: " + err.Error())
+			log.Errorf("Error encrypting packet: %s %s", err.Error(), s.Info())
 			continue
 		}
 
 		// send it
 		len, err := s.socket.Write(enc)
 		if err != nil {
-			log.Error("Error sending packet: " + err.Error())
+			log.Errorf("Error sending packet: %s %s ", err.Error(), s.Info())
 			return
 		}
 
@@ -81,7 +81,7 @@ func (s *Session) reader() {
 
 		if err != nil {
 			if err != io.EOF {
-				log.Error("Error reading: " + err.Error())
+				log.Errorf("Error reading: %s %s", err.Error(), s.Info())
 			}
 			s.Close()
 			break
@@ -94,7 +94,8 @@ func (s *Session) reader() {
 
 			// check length
 			if i < 0 || i > len(s.buffer) || i+pLen > len(s.buffer) {
-				log.Error("Error parsing packet: slice bounds out of range!")
+				log.Error("Error parsing packet: slice bounds out of range!",
+					s.Info())
 				s.Close()
 				break
 			}
@@ -103,7 +104,7 @@ func (s *Session) reader() {
 			data, err := s.Encryption.Decrypt(s.buffer[i : i+pLen])
 
 			if err != nil {
-				log.Error("Error decrypting: " + err.Error())
+				log.Errorf("Error decrypting: %s", err.Error(), s.Info())
 				s.Close()
 				break
 			}

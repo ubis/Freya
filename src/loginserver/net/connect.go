@@ -12,7 +12,7 @@ import (
 func (p *Packet) Connect2Svr(s *network.Session, r *network.Reader) {
 	s.AuthKey = uint32(time.Now().Unix())
 
-	var packet = network.NewWriter(Connect2Svr)
+	packet := network.NewWriter(Connect2Svr)
 	packet.WriteUint32(s.Encryption.Key.Seed2nd)
 	packet.WriteUint32(s.AuthKey)
 	packet.WriteUint16(s.UserIdx)
@@ -23,18 +23,18 @@ func (p *Packet) Connect2Svr(s *network.Session, r *network.Reader) {
 
 // CheckVersion Packet
 func (p *Packet) CheckVersion(s *network.Session, r *network.Reader) {
-	var v1 = r.ReadInt32()
+	v1 := r.ReadInt32()
 
 	verified := &s.Data.Verified
 	*verified = true
 
 	if v1 != int32(p.Version) {
-		log.Errorf("Client version mismatch (Client: %d, server: %d, src: %s)",
-			v1, p.Version, s.GetEndPnt())
+		log.Warningf("Version mismatch (client: %d, server: %d) %s",
+			v1, p.Version, s.Info())
 		*verified = false
 	}
 
-	var packet = network.NewWriter(CheckVersion)
+	packet := network.NewWriter(CheckVersion)
 	packet.WriteInt32(p.Version)
 	packet.WriteInt32(0x00) // debug
 	packet.WriteInt32(0x00) // reserved
@@ -45,9 +45,9 @@ func (p *Packet) CheckVersion(s *network.Session, r *network.Reader) {
 
 // FDisconnect Packet
 func (p *Packet) FDisconnect(s *network.Session, r *network.Reader) {
-	var idx = r.ReadInt32()
+	idx := r.ReadInt32()
 
-	var packet = network.NewWriter(FDisconnect)
+	packet := network.NewWriter(FDisconnect)
 	if idx != s.Data.AccountId {
 		// wooops invalid account id
 		packet.WriteByte(0x00) // failed
@@ -55,8 +55,8 @@ func (p *Packet) FDisconnect(s *network.Session, r *network.Reader) {
 		return
 	}
 
-	var req = account.OnlineReq{Account: idx, Kick: true}
-	var res = account.OnlineRes{}
+	req := account.OnlineReq{Account: idx, Kick: true}
+	res := account.OnlineRes{}
 	p.RPC.Call(rpc.ForceDisconnect, req, &res)
 
 	packet.WriteByte(res.Result)
@@ -66,19 +66,19 @@ func (p *Packet) FDisconnect(s *network.Session, r *network.Reader) {
 
 // VerifyLinks Packet
 func (p *Packet) VerifyLinks(s *network.Session, r *network.Reader) {
-	var timestamp = r.ReadUint32()
-	var count = r.ReadUint16()
-	var channel = r.ReadByte()
-	var server = r.ReadByte()
-	var magickey = r.ReadInt32()
+	timestamp := r.ReadUint32()
+	count := r.ReadUint16()
+	channel := r.ReadByte()
+	server := r.ReadByte()
+	magickey := r.ReadInt32()
 
 	if magickey != int32(p.MagicKey) {
-		log.Errorf("Invalid MagicKey (Client: %d, Server: %d, id: %d, src: %s",
-			magickey, p.MagicKey, s.Data.AccountId, s.GetEndPnt())
+		log.Errorf("Invalid MagicKey (client: %d, server: %d) %s",
+			magickey, p.MagicKey, s.Info())
 		return
 	}
 
-	var send = account.VerifyReq{
+	send := account.VerifyReq{
 		AuthKey:   timestamp,
 		UserIdx:   count,
 		ServerId:  server,
@@ -86,10 +86,10 @@ func (p *Packet) VerifyLinks(s *network.Session, r *network.Reader) {
 		IP:        s.GetIp(),
 		DBIdx:     s.Data.AccountId,
 	}
-	var recv = account.VerifyRes{}
+	recv := account.VerifyRes{}
 	p.RPC.Call(rpc.UserVerify, send, &recv)
 
-	var packet = network.NewWriter(VerifyLinks)
+	packet := network.NewWriter(VerifyLinks)
 	packet.WriteByte(channel)
 	packet.WriteByte(server)
 

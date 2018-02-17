@@ -38,8 +38,8 @@ func (l *List) Handle(args *network.PacketArgs) {
 	// recover on panic
 	defer func(s *network.Session) {
 		if err := recover(); err != nil {
-			log.Warningf("Panic! Recovered from: %s, src: %s, id: %d",
-				l.GetName(args.Type), s.GetEndPnt(), s.Data.AccountId)
+			log.Warningf("Panic! Recovered from: %s %s",
+				l.GetName(args.Type), s.Info())
 			s.Close()
 		}
 	}(args.Session)
@@ -47,8 +47,8 @@ func (l *List) Handle(args *network.PacketArgs) {
 	code := int(args.Packet.Type)
 	if l.packets[code] == nil {
 		// unknown packet received
-		log.Errorf("Unknown packet received (Len: %d, type: %d, src: %s)",
-			args.Packet.Size, code, args.Session.GetEndPnt())
+		log.Errorf("Unknown packet received (len: %d, type: %d) %s",
+			args.Packet.Size, code, args.Session.Info())
 		return
 	}
 
@@ -56,9 +56,8 @@ func (l *List) Handle(args *network.PacketArgs) {
 	if invoke == nil {
 		s := args.Session
 		t := args.Type
-		log.Errorf(
-			"Trying to access procedure `%s` (Type: %d, src: %s, id: %d)",
-			l.GetName(t), t, s.GetEndPnt(), s.Data.AccountId)
+		log.Errorf("Trying to access procedure `%s` (type: %d) %s",
+			l.GetName(t), t, s.Info())
 		return
 	}
 

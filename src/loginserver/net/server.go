@@ -8,7 +8,7 @@ import (
 
 // PreServerEnvRequest Packet
 func (p *Packet) PreServerEnvRequest(s *network.Session, r *network.Reader) {
-	var packet = network.NewWriter(PreServerEnvRequest)
+	packet := network.NewWriter(PreServerEnvRequest)
 	packet.WriteBytes(make([]byte, 4113))
 
 	s.Send(packet)
@@ -22,13 +22,13 @@ func (p *Packet) URLToClient(s *network.Session) {
 	guild := p.URL[GuildWeb]
 	sns := p.URL[Sns]
 
-	var dataLen = len(cash) + 4
+	dataLen := len(cash) + 4
 	dataLen += len(odc) + 4
 	dataLen += len(charge) + 4
 	dataLen += len(guild) + 4
 	dataLen += len(sns) + 4
 
-	var packet = network.NewWriter(URLToClient)
+	packet := network.NewWriter(URLToClient)
 	packet.WriteInt16(dataLen + 2)
 	packet.WriteInt16(dataLen)
 	packet.WriteInt32(len(cash))
@@ -47,7 +47,7 @@ func (p *Packet) URLToClient(s *network.Session) {
 
 // SystemMessg Packet which is NFY
 func (p *Packet) SystemMessg(message byte, length uint16) *network.Writer {
-	var packet = network.NewWriter(SystemMessg)
+	packet := network.NewWriter(SystemMessg)
 	packet.WriteByte(message)
 	packet.WriteUint16(length)
 
@@ -57,12 +57,12 @@ func (p *Packet) SystemMessg(message byte, length uint16) *network.Writer {
 // ServerState Packet which is NFY
 func (p *Packet) ServerState() *network.Writer {
 	// request server list
-	var req = server.ListReq{}
-	var rsp = server.ListRes{}
+	req := server.ListReq{}
+	rsp := server.ListRes{}
 	p.RPC.Call(rpc.ServerList, req, &rsp)
-	var s = rsp.List
+	s := rsp.List
 
-	var packet = network.NewWriter(ServerState)
+	packet := network.NewWriter(ServerState)
 	packet.WriteByte(len(s))
 
 	for i := 0; i < len(s); i++ {
@@ -72,7 +72,7 @@ func (p *Packet) ServerState() *network.Writer {
 		packet.WriteByte(len(s[i].List))
 
 		for j := 0; j < len(s[i].List); j++ {
-			var c = s[i].List[j]
+			c := s[i].List[j]
 			packet.WriteByte(c.Id)
 			packet.WriteUint16(c.CurrentUsers)
 			packet.WriteUint16(0x00)

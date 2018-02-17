@@ -13,9 +13,9 @@ import (
 
 // PublicKey Packet
 func (p *Packet) PublicKey(s *network.Session, r *network.Reader) {
-	var key = p.rsa.PublicKey
+	key := p.rsa.PublicKey
 
-	var packet = network.NewWriter(PublicKey)
+	packet := network.NewWriter(PublicKey)
 	packet.WriteByte(0x01)
 	packet.WriteUint16(len(key))
 	packet.WriteBytes(key[:])
@@ -25,8 +25,8 @@ func (p *Packet) PublicKey(s *network.Session, r *network.Reader) {
 
 // AuthAccount Packet
 func (p *Packet) AuthAccount(s *network.Session, r *network.Reader) {
-	if s.Data.Verified != true {
-		log.Errorf("Session version is not verified! Src: %s", s.GetEndPnt())
+	if !s.Data.Verified {
+		log.Errorf("Session version is not verified %s", s.Info())
 		s.Close()
 		return
 	}
@@ -35,20 +35,20 @@ func (p *Packet) AuthAccount(s *network.Session, r *network.Reader) {
 	r.ReadUint16()
 
 	// read and decrypt RSA block
-	var loginData = r.ReadBytes(rsa.LoginLength)
-	var data, err = p.rsa.Decrypt(loginData[:])
+	loginData := r.ReadBytes(rsa.LoginLength)
+	data, err := p.rsa.Decrypt(loginData[:])
 	if err != nil {
-		log.Errorf("%s; Src: %s", err.Error(), s.GetEndPnt())
+		log.Errorf("%s %s", err.Error(), s.Info())
 		s.Close()
 		return
 	}
 
 	// extract name and pass
-	var name = string(bytes.Trim(data[:32], "\x00"))
-	var pass = string(bytes.Trim(data[32:], "\x00"))
+	name := string(bytes.Trim(data[:32], "\x00"))
+	pass := string(bytes.Trim(data[32:], "\x00"))
 
-	var req = account.AuthRequest{UserId: name, Password: pass}
-	var rsp = account.AuthResponse{Status: account.None}
+	req := account.AuthRequest{UserId: name, Password: pass}
+	rsp := account.AuthResponse{Status: account.None}
 	err = p.RPC.Call(rpc.AuthCheck, req, &rsp)
 
 	// if server is down...
@@ -56,7 +56,7 @@ func (p *Packet) AuthAccount(s *network.Session, r *network.Reader) {
 		rsp.Status = account.OutOfService
 	}
 
-	var packet = network.NewWriter(AuthAccount)
+	packet := network.NewWriter(AuthAccount)
 	packet.WriteByte(rsp.Status)
 	packet.WriteInt32(rsp.Id)
 	packet.WriteInt16(0x00)
@@ -90,7 +90,7 @@ func (p *Packet) AuthAccount(s *network.Session, r *network.Reader) {
 		s.Send(p.SystemMessg(message.Normal, 0))
 
 		// send server list periodically
-		var t = time.NewTicker(time.Second * 5)
+		t := time.NewTicker(time.Second * 5)
 		go func(s *network.Session, p *Packet) {
 			for {
 				if !s.Connected {

@@ -1,4 +1,4 @@
-package packet
+package net
 
 import (
 	"share/network"
@@ -6,10 +6,10 @@ import (
 )
 
 // Connect2Svr Packet
-func Connect2Svr(session *network.Session, reader *network.Reader) {
+func (p *Packet) Connect2Svr(session *network.Session, reader *network.Reader) {
 	session.AuthKey = uint32(time.Now().Unix())
 
-	var packet = network.NewWriter(CONNECT2SVR)
+	var packet = network.NewWriter(Connect2Svr)
 	packet.WriteUint32(session.Encryption.Key.Seed2nd)
 	packet.WriteUint32(session.AuthKey)
 	packet.WriteUint16(session.UserIdx)

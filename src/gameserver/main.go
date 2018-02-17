@@ -1,48 +1,52 @@
 package main
 
 import (
-	"gameserver/def"
-	"gameserver/packet"
-	"gameserver/rpc"
+	"gameserver/internal"
+	"gameserver/net"
+	"os"
 	"share/log"
+	"share/network"
+	"share/rpc"
+	"strconv"
 )
 
-// globals
-var g_ServerConfig = def.ServerConfig
-var g_ServerSettings = def.ServerSettings
-var g_NetworkManager = def.NetworkManager
-var g_PacketHandler = def.PacketHandler
-var g_RPCHandler = def.RPCHandler
+var serverID = 1
+var groupID = 1
+
+// init function, which runs before main()
+func init() {
+	if len(os.Args) > 2 {
+		if id, err := strconv.Atoi(os.Args[1]); err == nil {
+			serverID = id
+		}
+
+		if id, err := strconv.Atoi(os.Args[2]); err == nil {
+			groupID = id
+		}
+	}
+}
 
 func main() {
-	log.Init(def.GetName())
+	// init
+	conf := &Config{ServerID: serverID, GroupID: groupID}
+	rpc := &rpc.Client{}
+	network := &network.Server{}
+	packets := &net.Packet{RPC: rpc}
+	events := &events{rpc: rpc, lst: packets, svr: network, cfg: conf}
+	internal := &internal.Comm{Net: network, Lst: packets}
 
-	// read config
-	g_ServerConfig.Read()
+	log.Init(conf.GetName()) // log init
 
-	// set server settings
-	g_ServerSettings.XorKeyTable.Init()
+	conf.Read()          // read config
+	conf.Assign(packets) // assign config for Packet structure
 
-	// register events
-	RegisterEvents()
+	rpc.Init(conf.MasterIP, conf.MasterPort) // init RPC client handler
+	network.Init(conf.Port)                  // init network server
 
-	// init packet handler
-	g_PacketHandler.Init()
+	packets.Register()     // register server packets
+	events.Register()      // register server events
+	internal.Register(rpc) // register RPC calls
 
-	// register packets
-	packet.RegisterPackets()
-
-	// init RPC handler
-	g_RPCHandler.Init()
-	g_RPCHandler.IpAddress = g_ServerConfig.MasterIp
-	g_RPCHandler.Port = g_ServerConfig.MasterPort
-
-	// register RPC calls
-	rpc.RegisterCalls()
-
-	// start RPC handler
-	g_RPCHandler.Start()
-
-	// create network and start listening for connections
-	g_NetworkManager.Init(g_ServerConfig.Port, &g_ServerSettings.Settings)
+	rpc.Start()   // start RPC client
+	network.Run() // run network server
 }

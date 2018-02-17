@@ -1,4 +1,4 @@
-package packet
+package net
 
 import (
 	"bytes"
@@ -11,14 +11,15 @@ import (
 )
 
 // SubPasswordSet Packet
-func SubPasswordSet(session *network.Session, reader *network.Reader) {
+func (p *Packet) SubPasswordSet(session *network.Session,
+	reader *network.Reader) {
 	var passwd = string(bytes.Trim(reader.ReadBytes(10), "\x00"))
 	reader.ReadBytes(5)
 
 	var question = reader.ReadInt32()
 	var answer = string(bytes.Trim(reader.ReadBytes(16), "\x00"))
 
-	var packet = network.NewWriter(SUBPW_SET)
+	var packet = network.NewWriter(SubPasswordSet)
 
 	var sub = session.Data.SubPassword
 	var verified = &sub.Verified
@@ -62,7 +63,7 @@ func SubPasswordSet(session *network.Session, reader *network.Reader) {
 	// update to db
 	var req = subpasswd.SetReq{session.Data.AccountId, *sub}
 	var res = subpasswd.SetRes{}
-	var err = g_RPCHandler.Call(rpc.SetSubPassword, req, &res)
+	var err = p.RPC.Call(rpc.SetSubPassword, req, &res)
 
 	if err == nil && res.Success {
 		packet.WriteInt32(0x01) // success
@@ -80,11 +81,12 @@ func SubPasswordSet(session *network.Session, reader *network.Reader) {
 }
 
 // SubPasswordCheckRequest Packet
-func SubPasswordCheckRequest(session *network.Session, reader *network.Reader) {
+func (p *Packet) SubPasswordCheckRequest(session *network.Session,
+	reader *network.Reader) {
 	var sub = session.Data.SubPassword
 	var left = sub.Expires.Sub(time.Now())
 
-	var packet = network.NewWriter(SUBPW_CHECK_REQ)
+	var packet = network.NewWriter(SubPasswordCheckRequest)
 
 	if sub.Password == "" {
 		// need to create first
@@ -104,7 +106,8 @@ func SubPasswordCheckRequest(session *network.Session, reader *network.Reader) {
 }
 
 // SubPasswordCheck Packet
-func SubPasswordCheck(session *network.Session, reader *network.Reader) {
+func (p *Packet) SubPasswordCheck(session *network.Session,
+	reader *network.Reader) {
 	var password = string(bytes.Trim(reader.ReadBytes(10), "\x00"))
 	reader.ReadBytes(5)
 	var hours = reader.ReadInt32()
@@ -112,7 +115,7 @@ func SubPasswordCheck(session *network.Session, reader *network.Reader) {
 	var sub = session.Data.SubPassword
 	var err = bcrypt.CompareHashAndPassword([]byte(sub.Password), []byte(password))
 
-	var packet = network.NewWriter(SUBPW_CHECK)
+	var packet = network.NewWriter(SubPasswordCheck)
 
 	if hours < 0 || hours > 4 {
 		packet.WriteInt32(0x00) // failed
@@ -132,7 +135,7 @@ func SubPasswordCheck(session *network.Session, reader *network.Reader) {
 		sub.Expires = sub.Expires.Add(time.Hour * time.Duration(hours))
 		var req = subpasswd.SetReq{session.Data.AccountId, *sub}
 		var res = subpasswd.SetRes{}
-		err = g_RPCHandler.Call(rpc.SetSubPassword, req, &res)
+		err = p.RPC.Call(rpc.SetSubPassword, req, &res)
 
 		if err != nil || !res.Success {
 			packet.WriteInt32(0x00) // failed
@@ -152,10 +155,11 @@ func SubPasswordCheck(session *network.Session, reader *network.Reader) {
 }
 
 // SubPasswordFindRequest Packet
-func SubPasswordFindRequest(session *network.Session, reader *network.Reader) {
+func (p *Packet) SubPasswordFindRequest(session *network.Session,
+	reader *network.Reader) {
 	var sub = session.Data.SubPassword
 
-	var packet = network.NewWriter(SUBPW_FIND_REQ)
+	var packet = network.NewWriter(SubPasswordFindRequest)
 	packet.WriteInt32(sub.Question)
 	packet.WriteInt32(sub.Question)
 	packet.WriteInt32(0x01)
@@ -164,14 +168,15 @@ func SubPasswordFindRequest(session *network.Session, reader *network.Reader) {
 }
 
 // SubPasswordFind Packet
-func SubPasswordFind(session *network.Session, reader *network.Reader) {
+func (p *Packet) SubPasswordFind(session *network.Session,
+	reader *network.Reader) {
 	reader.ReadBytes(8)
 	var answer = string(bytes.Trim(reader.ReadBytes(16), "\x00"))
 
 	var sub = session.Data.SubPassword
 	var err = bcrypt.CompareHashAndPassword([]byte(sub.Answer), []byte(answer))
 
-	var packet = network.NewWriter(SUBPW_FIND)
+	var packet = network.NewWriter(SubPasswordFind)
 
 	if err != nil {
 		packet.WriteInt32(0x00) // failed
@@ -189,14 +194,15 @@ func SubPasswordFind(session *network.Session, reader *network.Reader) {
 }
 
 // SubPasswordDelRequest Packet
-func SubPasswordDelRequest(session *network.Session, reader *network.Reader) {
+func (p *Packet) SubPasswordDelRequest(session *network.Session,
+	reader *network.Reader) {
 	reader.ReadBytes(4)
 	var password = string(bytes.Trim(reader.ReadBytes(10), "\x00"))
 
 	var sub = session.Data.SubPassword
 	var err = bcrypt.CompareHashAndPassword([]byte(sub.Password), []byte(password))
 
-	var packet = network.NewWriter(SUBPW_DEL_REQ)
+	var packet = network.NewWriter(SubPasswordDelRequest)
 
 	if err != nil {
 		packet.WriteInt32(0x00) // failed
@@ -214,8 +220,9 @@ func SubPasswordDelRequest(session *network.Session, reader *network.Reader) {
 }
 
 // SubPasswordDel Packet
-func SubPasswordDel(session *network.Session, reader *network.Reader) {
-	var packet = network.NewWriter(SUBPW_DEL)
+func (p *Packet) SubPasswordDel(session *network.Session,
+	reader *network.Reader) {
+	var packet = network.NewWriter(SubPasswordDel)
 
 	var sub = session.Data.SubPassword
 
@@ -230,7 +237,7 @@ func SubPasswordDel(session *network.Session, reader *network.Reader) {
 	// update to db
 	var req = subpasswd.SetReq{Account: session.Data.AccountId}
 	var res = subpasswd.SetRes{}
-	var err = g_RPCHandler.Call(rpc.RemoveSubPassword, req, &res)
+	var err = p.RPC.Call(rpc.RemoveSubPassword, req, &res)
 
 	if err == nil && res.Success {
 		*sub = subpasswd.Details{}
@@ -245,14 +252,15 @@ func SubPasswordDel(session *network.Session, reader *network.Reader) {
 }
 
 // SubPasswordChangeQARequest Packet
-func SubPasswordChangeQARequest(session *network.Session, reader *network.Reader) {
+func (p *Packet) SubPasswordChangeQARequest(session *network.Session,
+	reader *network.Reader) {
 	reader.ReadBytes(4)
 	var password = string(bytes.Trim(reader.ReadBytes(10), "\x00"))
 
 	var sub = session.Data.SubPassword
 	var err = bcrypt.CompareHashAndPassword([]byte(sub.Password), []byte(password))
 
-	var packet = network.NewWriter(SUBPW_CHG_QA_REQ)
+	var packet = network.NewWriter(SubPasswordChangeQARequest)
 
 	if err != nil {
 		packet.WriteInt32(0x00) // failed
@@ -270,12 +278,13 @@ func SubPasswordChangeQARequest(session *network.Session, reader *network.Reader
 }
 
 // SubPasswordChangeQA Packet
-func SubPasswordChangeQA(session *network.Session, reader *network.Reader) {
+func (p *Packet) SubPasswordChangeQA(session *network.Session,
+	reader *network.Reader) {
 	reader.ReadBytes(4)
 	var question = reader.ReadInt32()
 	var answer = string(bytes.Trim(reader.ReadBytes(16), "\x00"))
 
-	var packet = network.NewWriter(SUBPW_CHG_QA)
+	var packet = network.NewWriter(SubPasswordChangeQA)
 
 	var sub = session.Data.SubPassword
 
@@ -294,7 +303,7 @@ func SubPasswordChangeQA(session *network.Session, reader *network.Reader) {
 	// update to db
 	var req = subpasswd.SetReq{session.Data.AccountId, *sub}
 	var res = subpasswd.SetRes{}
-	var err = g_RPCHandler.Call(rpc.SetSubPassword, req, &res)
+	var err = p.RPC.Call(rpc.SetSubPassword, req, &res)
 
 	if err == nil && res.Success {
 		packet.WriteInt32(0x01) // success
@@ -309,13 +318,14 @@ func SubPasswordChangeQA(session *network.Session, reader *network.Reader) {
 }
 
 // CharacterDeleteCheckSubPassword Packet
-func CharacterDeleteCheckSubPassword(session *network.Session, reader *network.Reader) {
+func (p *Packet) CharacterDeleteCheckSubPassword(session *network.Session,
+	reader *network.Reader) {
 	var password = string(bytes.Trim(reader.ReadBytes(10), "\x00"))
 
 	var sub = session.Data.SubPassword
 	var err = bcrypt.CompareHashAndPassword([]byte(sub.Password), []byte(password))
 
-	var packet = network.NewWriter(CHAR_DEL_CHK_SUBPW)
+	var packet = network.NewWriter(CharacterDeleteCheckSubPassword)
 
 	if err != nil {
 		packet.WriteInt32(0x00) // failed

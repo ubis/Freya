@@ -1,4 +1,4 @@
-package packet
+package net
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 )
 
 // GetMyChartr Packet
-func GetMyChartr(session *network.Session, reader *network.Reader) {
+func (p *Packet) GetMyChartr(session *network.Session, reader *network.Reader) {
 	if !session.Data.Verified {
 		log.Error("Unauthorized connection from", session.GetEndPnt())
 		session.Close()
@@ -20,7 +20,7 @@ func GetMyChartr(session *network.Session, reader *network.Reader) {
 	// fetch subpassword
 	var req = subpasswd.FetchReq{session.Data.AccountId}
 	var res = subpasswd.FetchRes{}
-	g_RPCHandler.Call(rpc.FetchSubPassword, req, &res)
+	p.RPC.Call(rpc.FetchSubPassword, req, &res)
 
 	session.Data.SubPassword = &res.Details
 
@@ -30,13 +30,13 @@ func GetMyChartr(session *network.Session, reader *network.Reader) {
 	}
 
 	// fetch characters
-	var reqList = character.ListReq{session.Data.AccountId, byte(g_ServerSettings.ServerId)}
+	var reqList = character.ListReq{session.Data.AccountId, byte(p.ServerID)}
 	var resList = character.ListRes{}
-	g_RPCHandler.Call(rpc.LoadCharacters, reqList, &resList)
+	p.RPC.Call(rpc.LoadCharacters, reqList, &resList)
 
 	session.Data.CharacterList = resList.List
 
-	var packet = network.NewWriter(GETMYCHARTR)
+	var packet = network.NewWriter(GetMyChartr)
 	packet.WriteInt32(subpasswdExist)
 	packet.WriteBytes(make([]byte, 10))
 	packet.WriteInt32(resList.LastId)
@@ -66,7 +66,7 @@ func GetMyChartr(session *network.Session, reader *network.Reader) {
 }
 
 // NewMyChartr Packet
-func NewMyChartr(session *network.Session, reader *network.Reader) {
+func (p *Packet) NewMyChartr(session *network.Session, reader *network.Reader) {
 	var style = reader.ReadUint32()
 	var _ = reader.ReadByte() // beginner join guild
 	var slot = reader.ReadByte()
@@ -77,7 +77,7 @@ func NewMyChartr(session *network.Session, reader *network.Reader) {
 	var newStyle = character.Style{}
 	newStyle.Set(style)
 
-	var packet = network.NewWriter(NEWMYCHARTR)
+	var packet = network.NewWriter(NewMyChartr)
 
 	if !newStyle.Verify() || slot > 5 || nameLength > 16 {
 		// invalid style, slot or nameLength
@@ -101,11 +101,11 @@ func NewMyChartr(session *network.Session, reader *network.Reader) {
 	}
 
 	var req = character.CreateReq{
-		byte(g_ServerSettings.ServerId),
+		byte(p.ServerID),
 		character.Character{Id: charId, Name: name, Style: newStyle},
 	}
 	var res = character.CreateRes{}
-	g_RPCHandler.Call(rpc.CreateCharacter, req, &res)
+	p.RPC.Call(rpc.CreateCharacter, req, &res)
 
 	if res.Result == character.Success {
 		packet.WriteInt32(charId)
@@ -121,7 +121,7 @@ func NewMyChartr(session *network.Session, reader *network.Reader) {
 }
 
 // DelMyChartr Packet
-func DelMyChartr(session *network.Session, reader *network.Reader) {
+func (p *Packet) DelMyChartr(session *network.Session, reader *network.Reader) {
 	var charId = reader.ReadInt32()
 
 	// if password wasn't verified
@@ -139,9 +139,9 @@ func DelMyChartr(session *network.Session, reader *network.Reader) {
 		return
 	}
 
-	var req = character.DeleteReq{byte(g_ServerSettings.ServerId), charId}
+	var req = character.DeleteReq{byte(p.ServerID), charId}
 	var res = character.DeleteRes{}
-	g_RPCHandler.Call(rpc.DeleteCharacter, req, &res)
+	p.RPC.Call(rpc.DeleteCharacter, req, &res)
 
 	if res.Result == character.Success {
 		// reset character delete passwd verification
@@ -161,7 +161,7 @@ func DelMyChartr(session *network.Session, reader *network.Reader) {
 		}
 	}
 
-	var packet = network.NewWriter(DELMYCHARTR)
+	var packet = network.NewWriter(DelMyChartr)
 	packet.WriteByte(res.Result + 1)
 	packet.WriteByte(0x00)
 
@@ -169,18 +169,19 @@ func DelMyChartr(session *network.Session, reader *network.Reader) {
 }
 
 // SetCharacterSlotOrder Packet
-func SetCharacterSlotOrder(session *network.Session, reader *network.Reader) {
+func (p *Packet) SetCharacterSlotOrder(session *network.Session,
+	reader *network.Reader) {
 	var order = reader.ReadInt32()
 
 	var req = character.SetOrderReq{
-		byte(g_ServerSettings.ServerId),
+		byte(p.ServerID),
 		session.Data.AccountId,
 		order,
 	}
 	var res = character.SetOrderRes{}
-	g_RPCHandler.Call(rpc.SetSlotOrder, req, &res)
+	p.RPC.Call(rpc.SetSlotOrder, req, &res)
 
-	var packet = network.NewWriter(SET_CHAR_SLOT_ORDER)
+	var packet = network.NewWriter(SetCharacterSlotOrder)
 	packet.WriteByte(0x01)
 
 	session.Send(packet)

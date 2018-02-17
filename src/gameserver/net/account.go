@@ -1,4 +1,4 @@
-package packet
+package net
 
 import (
 	"bytes"
@@ -8,8 +8,8 @@ import (
 )
 
 // ChargeInfo Packet
-func ChargeInfo(session *network.Session, reader *network.Reader) {
-	var packet = network.NewWriter(CHARGEINFO)
+func (p *Packet) ChargeInfo(session *network.Session, reader *network.Reader) {
+	var packet = network.NewWriter(ChargeInfo)
 	packet.WriteInt32(0x00)
 	packet.WriteInt32(0x00)  // service kind
 	packet.WriteUint32(0x00) // service expire
@@ -18,7 +18,8 @@ func ChargeInfo(session *network.Session, reader *network.Reader) {
 }
 
 // CheckUserPrivacyData Packet
-func CheckUserPrivacyData(session *network.Session, reader *network.Reader) {
+func (p *Packet) CheckUserPrivacyData(session *network.Session,
+	reader *network.Reader) {
 	// skip 4 bytes
 	reader.ReadInt32()
 
@@ -26,9 +27,9 @@ func CheckUserPrivacyData(session *network.Session, reader *network.Reader) {
 
 	var req = account.AuthCheckReq{session.Data.AccountId, passwd}
 	var res = account.AuthCheckRes{}
-	g_RPCHandler.Call(rpc.PasswdCheck, req, &res)
+	p.RPC.Call(rpc.PasswdCheck, req, &res)
 
-	var packet = network.NewWriter(CHECK_USR_PDATA)
+	var packet = network.NewWriter(CheckUserPrivacyData)
 
 	if res.Result {
 		// password verified

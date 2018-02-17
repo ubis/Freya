@@ -1,4 +1,4 @@
-package packet
+package net
 
 import (
 	"share/models/account"
@@ -8,14 +8,14 @@ import (
 )
 
 // GetSvrTime Packet
-func GetSvrTime(session *network.Session, reader *network.Reader) {
+func (p *Packet) GetSvrTime(session *network.Session, reader *network.Reader) {
 	var now = time.Now()
 	var _, z = time.Now().Zone()
 
 	z = z / 60 // to hours
 	z = z * -1 // add reverse sign
 
-	var packet = network.NewWriter(GETSVRTIME)
+	var packet = network.NewWriter(GetSvrTime)
 	packet.WriteInt64(now.Unix()) // utc time
 	packet.WriteInt16(z)          // timezone
 
@@ -23,8 +23,8 @@ func GetSvrTime(session *network.Session, reader *network.Reader) {
 }
 
 // ServerEnv Packet
-func ServerEnv(session *network.Session, reader *network.Reader) {
-	var packet = network.NewWriter(SERVERENV)
+func (p *Packet) ServerEnv(session *network.Session, reader *network.Reader) {
+	var packet = network.NewWriter(ServerEnv)
 	packet.WriteUint16(0x00BE)      // MaxLevel
 	packet.WriteByte(0x01)          // UseDummy
 	packet.WriteByte(0x01)          // Allow CashShop
@@ -58,7 +58,7 @@ func ServerEnv(session *network.Session, reader *network.Reader) {
 }
 
 // VerifyLinks
-func VerifyLinks(session *network.Session, reader *network.Reader) {
+func (p *Packet) VerifyLinks(session *network.Session, reader *network.Reader) {
 	var timestamp = reader.ReadUint32()
 	var count = reader.ReadUint16()
 	var channel = reader.ReadByte()
@@ -67,9 +67,9 @@ func VerifyLinks(session *network.Session, reader *network.Reader) {
 	var send = account.VerifyReq{
 		timestamp, count, server, channel, session.GetIp(), session.Data.AccountId}
 	var recv = account.VerifyRes{}
-	g_RPCHandler.Call(rpc.UserVerify, send, &recv)
+	p.RPC.Call(rpc.UserVerify, send, &recv)
 
-	var packet = network.NewWriter(VERIFYLINKS)
+	var packet = network.NewWriter(VerifyLinks)
 	packet.WriteByte(channel)
 	packet.WriteByte(server)
 
@@ -83,8 +83,8 @@ func VerifyLinks(session *network.Session, reader *network.Reader) {
 }
 
 // SystemMessg Packet which is NFY
-func SystemMessg(message byte, length uint16) *network.Writer {
-	var packet = network.NewWriter(SYSTEMMESSG)
+func (p *Packet) SystemMessg(message byte, length uint16) *network.Writer {
+	var packet = network.NewWriter(SystemMessg)
 	packet.WriteByte(message)
 	packet.WriteUint16(length)
 

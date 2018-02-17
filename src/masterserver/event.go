@@ -9,8 +9,8 @@ import (
 // Registers RPC Server events
 func RegisterEvents() {
 	log.Info("Registering events...")
-	event.Register(event.SyncConnectEvent, event.Handler(OnSyncConnect))
-	event.Register(event.SyncDisconnectEvent, event.Handler(OnSyncDisconnect))
+	event.Register(event.SyncConnect, event.Handler(OnSyncConnect))
+	event.Register(event.SyncDisconnect, event.Handler(OnSyncDisconnect))
 }
 
 // OnSyncConnect event informs server about new connection

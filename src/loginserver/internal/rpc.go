@@ -6,13 +6,13 @@ import (
 	"share/rpc"
 )
 
-type Manager struct {
-	Network *network.Manager
-	Packets *net.Packet
+type Comm struct {
+	Net *network.Server
+	Lst *net.Packet
 }
 
 // Register RPC calls
-func (m *Manager) Register(r *rpc.Client) {
-	r.Register(rpc.UserVerify, m.UserVerify)
-	r.Register(rpc.OnlineCheck, m.OnlineCheck)
+func (cm *Comm) Register(r *rpc.Client) {
+	r.Register(rpc.UserVerify, cm.UserVerify)
+	r.Register(rpc.OnlineCheck, cm.OnlineCheck)
 }

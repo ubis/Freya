@@ -10,42 +10,25 @@ import (
 
 func main() {
 	// init
-	conf := &Config{}
-	sync := &rpc.Client{}
-	packets := &net.Packet{RPC: sync}
-	network := &network.Manager{}
-	events := &EventManager{rpc: sync, net: network}
-
-	internal := &internal.Manager{Network: network, Packets: packets}
-
 	log.Init("LoginServer")
 
-	// read config
-	conf.Read()
+	conf := &Config{}
+	rpc := &rpc.Client{}
+	network := &network.Server{}
+	packets := &net.Packet{RPC: rpc}
+	events := &events{rpc: rpc, lst: packets}
+	internal := &internal.Comm{Net: network, Lst: packets}
 
-	// assign config for Packet structure
-	conf.Assign(packets)
+	conf.Read()          // read config
+	conf.Assign(packets) // assign config for Packet structure
 
-	// init network manager
-	network.Init(conf.Port)
+	rpc.Init(conf.MasterIP, conf.MasterPort) // init RPC client handler
+	network.Init(conf.Port)                  // init network server
 
-	// register packets
-	packets.Register(network)
+	packets.Register()     // register server packets
+	events.Register()      // register server events
+	internal.Register(rpc) // register RPC calls
 
-	// register events
-	events.Register()
-
-	// init RPC handler
-	sync.Init()
-	sync.IpAddress = conf.MasterIP
-	sync.Port = conf.MasterPort
-
-	// register RPC calls
-	internal.Register(sync)
-
-	// start RPC handler
-	sync.Start()
-
-	// run network server
-	network.Run()
+	rpc.Start()   // start RPC client
+	network.Run() // run network server
 }

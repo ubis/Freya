@@ -15,12 +15,12 @@ type Encryption struct {
 	isFirstPacket           bool
 	xorKeyTableBaseMultiple uint32
 
-	Key           *XorKeyTable
+	Key           XorKeyTable
 	RecvXorKeyIdx uint32
 }
 
 // Initializes encryption
-func (e *Encryption) Init(key *XorKeyTable) {
+func (e *Encryption) Init(key XorKeyTable) {
 	e.isFirstPacket = true
 	e.xorKeyTableBaseMultiple = 1
 	e.Key = key

@@ -11,12 +11,10 @@ import (
 	"strings"
 )
 
-// max buffer size
-const MAX_RECV_BUFFER_SIZE = 4096
-
 type Session struct {
-	socket net.Conn
-	buffer []byte
+	socket  net.Conn
+	buffer  []byte
+	txQueue chan *Writer
 
 	Encryption encryption.Encryption
 	UserIdx    uint16
@@ -32,20 +30,53 @@ type Session struct {
 	}
 }
 
-// Starts session goroutine
-func (s *Session) Start(table *encryption.XorKeyTable) {
+// Start session worker
+func (s *Session) Start(table encryption.XorKeyTable) {
 	// create new receiving buffer
-	s.buffer = make([]byte, MAX_RECV_BUFFER_SIZE)
-
+	s.buffer = make([]byte, maxRecvBufferSize)
+	s.txQueue = make(chan *Writer, txQueueMaxNum)
 	s.Connected = true
 
 	// init encryption
 	s.Encryption = encryption.Encryption{}
 	s.Encryption.Init(table)
 
+	go s.reader() // start reader
+	go s.writer() // start writer
+}
+
+// start socket writer
+func (s *Session) writer() {
+	for {
+		w := <-s.txQueue
+
+		// encrypt data
+		enc, err := s.Encryption.Encrypt(w.Finalize())
+		if err != nil {
+			log.Error("Error encrypting packet: " + err.Error())
+			continue
+		}
+
+		// send it
+		len, err := s.socket.Write(enc)
+		if err != nil {
+			log.Error("Error sending packet: " + err.Error())
+			return
+		}
+
+		// create new packet event argument
+		arg := &PacketArgs{s, len, w.Type, nil}
+
+		// trigger packet sent event
+		event.Trigger(event.PacketSend, arg)
+	}
+}
+
+// start socket reader
+func (s *Session) reader() {
 	for {
 		// read data
-		var length, err = s.socket.Read(s.buffer)
+		length, err := s.socket.Read(s.buffer)
 
 		if err != nil {
 			if err != io.EOF {
@@ -55,62 +86,45 @@ func (s *Session) Start(table *encryption.XorKeyTable) {
 			break
 		}
 
-		var i = 0
+		i := 0
 		for i < length {
 			// get packet length
-			var packetLength = s.Encryption.GetPacketSize(s.buffer[i:])
+			pLen := s.Encryption.GetPacketSize(s.buffer[i:])
 
 			// check length
-			if i < 0 || i > len(s.buffer) || i+packetLength > len(s.buffer) {
+			if i < 0 || i > len(s.buffer) || i+pLen > len(s.buffer) {
 				log.Error("Error parsing packet: slice bounds out of range!")
 				s.Close()
 				break
 			}
 
 			// attempt to decrypt packet
-			var data, error = s.Encryption.Decrypt(s.buffer[i : i+packetLength])
+			data, err := s.Encryption.Decrypt(s.buffer[i : i+pLen])
 
-			if error != nil {
-				log.Error("Error decrypting: " + error.Error())
+			if err != nil {
+				log.Error("Error decrypting: " + err.Error())
 				s.Close()
 				break
 			}
 
 			// create new packet reader
-			var reader = NewReader(data)
+			reader := NewReader(data)
 
 			// create new packet event argument
-			var arg = &PacketArgs{s, int(reader.Size), int(reader.Type), reader}
+			arg := &PacketArgs{s, int(reader.Size), int(reader.Type), reader}
 
 			// trigger packet received event
 			event.Trigger(event.PacketReceive, arg)
 
-			i += packetLength
+			i += pLen
 		}
 	}
 }
 
-// Sends specified data to the client
-func (s *Session) Send(writer *Writer) {
-	// encrypt data
-	var encrypt, err = s.Encryption.Encrypt(writer.Finalize())
-	if err != nil {
-		log.Error("Error encrypting packet: " + err.Error())
-		return
-	}
-
-	// send it...
-	var length, err2 = s.socket.Write(encrypt)
-	if err2 != nil {
-		log.Error("Error sending packet: " + err2.Error())
-		return
-	}
-
-	// create new packet event argument
-	var arg = &PacketArgs{s, length, writer.Type, nil}
-
-	// trigger packet sent event
-	event.Trigger(event.PacketSend, arg)
+// Send data packet to the client
+func (s *Session) Send(w *Writer) {
+	// post into channel
+	s.txQueue <- w
 }
 
 // Returns session's remote endpoint

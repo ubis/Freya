@@ -3,14 +3,16 @@ package net
 import (
 	"loginserver/rsa"
 	"share/log"
-	"share/network"
+	"share/network/packet"
 	"share/rpc"
 )
 
 // Packet structure
 type Packet struct {
-	RPC *rpc.Client
+	packet.List
 	rsa *rsa.Encryption
+
+	RPC *rpc.Client
 
 	Version  int
 	MagicKey int
@@ -25,22 +27,21 @@ func (p *Packet) preInit() {
 }
 
 // Register network packets
-func (p *Packet) Register(m *network.Manager) {
+func (p *Packet) Register() {
 	// do pre-init work
 	p.preInit()
 
 	// register packets
 	log.Info("Registering packets...")
 
-	m.RegisterPacket(Connect2Svr, "Connect2Svr", p.Connect2Svr)
-	m.RegisterPacket(VerifyLinks, "VerifyLinks", p.VerifyLinks)
-	m.RegisterPacket(AuthAccount, "AuthAccount", p.AuthAccount)
-	m.RegisterPacket(FDisconnect, "FDisconnect", p.FDisconnect)
-	m.RegisterPacket(SystemMessg, "SystemMessg", nil)
-	m.RegisterPacket(ServerState, "ServerState", nil)
-	m.RegisterPacket(CheckVersion, "CheckVersion", p.CheckVersion)
-	m.RegisterPacket(URLToClient, "URLToClient", nil)
-	m.RegisterPacket(PublicKey, "PublicKey", p.PublicKey)
-	m.RegisterPacket(PreServerEnvRequest,
-		"PreServerEnvRequest", p.PreServerEnvRequest)
+	p.Add(Connect2Svr, "Connect2Svr", p.Connect2Svr)
+	p.Add(VerifyLinks, "VerifyLinks", p.VerifyLinks)
+	p.Add(AuthAccount, "AuthAccount", p.AuthAccount)
+	p.Add(FDisconnect, "FDisconnect", p.FDisconnect)
+	p.Add(SystemMessg, "SystemMessg", nil)
+	p.Add(ServerState, "ServerState", nil)
+	p.Add(CheckVersion, "CheckVersion", p.CheckVersion)
+	p.Add(URLToClient, "URLToClient", nil)
+	p.Add(PublicKey, "PublicKey", p.PublicKey)
+	p.Add(PreServerEnvRequest, "PreServerEnvRequest", p.PreServerEnvRequest)
 }

@@ -33,14 +33,16 @@ type Client struct {
 	connected bool
 	endpnt    string
 
-	IpAddress string
-	Port      int
+	ipAddress string
+	port      int
 }
 
 // Initializes RPC Client
-func (c *Client) Init() {
-	log.Info("Attempting to connect to the Master Server...")
+func (c *Client) Init(ip string, port int) {
+	log.Info("Configuring RPC client...")
 
+	c.ipAddress = ip
+	c.port = port
 	c.pending = make(map[uint64]*Call)
 	c.handlers = make(map[string]*handler)
 	c.seq = 1
@@ -49,6 +51,7 @@ func (c *Client) Init() {
 
 // Starts up RPC client
 func (c *Client) Start() {
+	log.Info("Attempting to connect to the Master Server...")
 	go c.run()
 }
 
@@ -57,7 +60,7 @@ func (c *Client) Start() {
 func (c *Client) run() {
 	for {
 		if !c.connected {
-			var conn, err = net.Dial("tcp", c.IpAddress+":"+strconv.Itoa(c.Port))
+			var conn, err = net.Dial("tcp", c.ipAddress+":"+strconv.Itoa(c.port))
 			if err == nil {
 				c.codec = newGobCodec(conn)
 				c.connected = true

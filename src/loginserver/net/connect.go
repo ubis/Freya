@@ -92,7 +92,12 @@ func (p *Packet) VerifyLinks(s *network.Session, r *network.Reader) {
 	var packet = network.NewWriter(VerifyLinks)
 	packet.WriteByte(channel)
 	packet.WriteByte(server)
-	packet.WriteByte(recv.Verified)
+
+	if recv.Verified {
+		packet.WriteByte(0x01)
+	} else {
+		packet.WriteByte(0x00)
+	}
 
 	s.Send(packet)
 }

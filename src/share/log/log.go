@@ -39,7 +39,7 @@ func Init(name string) {
 		return
 	}
 
-	var b1 = logging.NewLogBackend(f, "", 0)
+	b1 := logging.NewLogBackend(f, "", 0)
 	logging.SetBackend(logging.NewBackendFormatter(b1, format),
 		logging.NewBackendFormatter(b2, format))
 	log.Info(name + " init")

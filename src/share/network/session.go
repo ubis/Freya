@@ -1,6 +1,7 @@
 package network
 
 import (
+	"fmt"
 	"io"
 	"net"
 	"share/encryption"
@@ -143,4 +144,10 @@ func (s *Session) Close() {
 	s.Connected = false
 	s.socket.Close()
 	event.Trigger(event.ClientDisconnect, s)
+}
+
+// Info returns session's data as a string
+func (s *Session) Info() string {
+	return fmt.Sprintf("[conn: %d, endpnt: %s, account: %d]",
+		s.UserIdx, s.GetEndPnt(), s.Data.AccountId)
 }

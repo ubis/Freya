@@ -28,7 +28,7 @@ type Config struct {
 func (c *Config) Read() {
 	log.Info("Reading configuration...")
 
-	var location = directory.Root() + "/cfg/loginserver.ini"
+	location := directory.Root() + "/cfg/loginserver.ini"
 
 	// parse configuration file...
 	if err := conf.Open(location); err != nil {

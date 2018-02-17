@@ -19,17 +19,17 @@ type events struct {
 func (e *events) Register() {
 	log.Info("Registering events...")
 
-	event.Register(event.ClientConnect, event.Handler(e.OnClientConnect))
-	event.Register(event.ClientDisconnect, event.Handler(e.OnClientDisconnect))
-	event.Register(event.PacketReceive, event.Handler(e.OnPacketReceive))
-	event.Register(event.PacketSend, event.Handler(e.OnPacketSend))
-	event.Register(event.SyncConnect, event.Handler(e.OnSyncConnect))
-	event.Register(event.SyncDisconnect, event.Handler(e.OnSyncDisconnect))
+	event.Register(event.ClientConnect, event.Handler(e.onClientConnect))
+	event.Register(event.ClientDisconnect, event.Handler(e.onClientDisconnect))
+	event.Register(event.PacketReceive, event.Handler(e.onPacketReceive))
+	event.Register(event.PacketSend, event.Handler(e.onPacketSend))
+	event.Register(event.SyncConnect, event.Handler(e.onSyncConnect))
+	event.Register(event.SyncDisconnect, event.Handler(e.onSyncDisconnect))
 }
 
-// OnClientConnect event informs server about new connected client
-func (e *events) OnClientConnect(ev event.Event) {
-	var s, ok = ev.(*network.Session)
+// onClientConnect event informs server about new connected client
+func (e *events) onClientConnect(ev event.Event) {
+	s, ok := ev.(*network.Session)
 	if !ok {
 		return
 	}
@@ -37,9 +37,9 @@ func (e *events) OnClientConnect(ev event.Event) {
 	log.Infof("Client `%s` connected to the LoginServer", s.GetEndPnt())
 }
 
-// OnClientDisconnect event informs server about disconnected client
-func (e *events) OnClientDisconnect(ev event.Event) {
-	var s, ok = ev.(*network.Session)
+// onClientDisconnect event informs server about disconnected client
+func (e *events) onClientDisconnect(ev event.Event) {
+	s, ok := ev.(*network.Session)
 	if !ok {
 		return
 	}
@@ -47,9 +47,9 @@ func (e *events) OnClientDisconnect(ev event.Event) {
 	log.Infof("Client `%s` disconnected from the LoginServer", s.GetEndPnt())
 }
 
-// OnPacketReceive event informs server about received packet
-func (e *events) OnPacketReceive(ev event.Event) {
-	var a, ok = ev.(*network.PacketArgs)
+// onPacketReceive event informs server about received packet
+func (e *events) onPacketReceive(ev event.Event) {
+	a, ok := ev.(*network.PacketArgs)
 	if !ok {
 		return
 	}
@@ -61,9 +61,9 @@ func (e *events) OnPacketReceive(ev event.Event) {
 	e.lst.Handle(a)
 }
 
-// OnPacketSend event informs server about sent packet
-func (e *events) OnPacketSend(ev event.Event) {
-	var a, ok = ev.(*network.PacketArgs)
+// onPacketSend event informs server about sent packet
+func (e *events) onPacketSend(ev event.Event) {
+	a, ok := ev.(*network.PacketArgs)
 	if !ok {
 		return
 	}
@@ -72,18 +72,18 @@ func (e *events) OnPacketSend(ev event.Event) {
 		e.lst.GetName(a.Type), a.Length, a.Type, a.Session.GetEndPnt())
 }
 
-// OnSyncConnect event informs server about successful connection with
+// onSyncConnect event informs server about successful connection with
 // the Master Server
-func (e *events) OnSyncConnect(ev event.Event) {
+func (e *events) onSyncConnect(ev event.Event) {
 	log.Info("Established connection with the Master Server!")
 
 	// register this server
-	var req = server.RegisterReq{Type: server.LOGIN_SERVER}
+	req := server.RegisterReq{Type: server.LOGIN_SERVER}
 	e.rpc.Call(rpc.ServerRegister, req, &server.RegisterRes{})
 }
 
-// OnSyncDisconnect event informs server about lost connection with
+// onSyncDisconnect event informs server about lost connection with
 // the Master Server
-func (e *events) OnSyncDisconnect(ev event.Event) {
+func (e *events) onSyncDisconnect(ev event.Event) {
 	log.Info("Lost connection with the Master Server! Reconnecting...")
 }

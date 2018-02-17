@@ -2,6 +2,7 @@ package log
 
 import (
 	"os"
+	"runtime"
 	"share/directory"
 	"strings"
 
@@ -12,11 +13,16 @@ var log = logging.MustGetLogger("example")
 
 // Init logging system which will create a log file or append one
 func Init(name string) {
+	newline := ""
+	if runtime.GOOS == "windows" {
+		newline = "\r"
+	}
+
 	b2 := logging.NewLogBackend(os.Stderr, "", 0)
 	path := directory.Root() + "/log/"
 	fname := path + strings.ToLower(name) + ".log"
 	format := logging.MustStringFormatter(
-		`%{time:2006-01-02 15:04:05.000} [%{level}] %{message}`)
+		`%{time:2006-01-02 15:04:05.000} [%{level}] %{message}` + newline)
 	logging.SetBackend(logging.NewBackendFormatter(b2, format))
 
 	log.Infof("Opening %s file...", fname)
@@ -27,7 +33,7 @@ func Init(name string) {
 	}
 
 	// open log file for writing
-	var f, err = os.OpenFile(fname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
+	f, err := os.OpenFile(fname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
 		log.Error(err)
 		return

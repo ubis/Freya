@@ -14,6 +14,7 @@ const (
 	publicKeyLength = LoginLength + 14
 )
 
+// RSA Encryption structure
 type Encryption struct {
 	privateKey *rsa.PrivateKey
 	PublicKey  [publicKeyLength]byte

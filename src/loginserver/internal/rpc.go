@@ -6,6 +6,7 @@ import (
 	"share/rpc"
 )
 
+// RPC Communication structure
 type Comm struct {
 	Net *network.Server
 	Lst *net.Packet

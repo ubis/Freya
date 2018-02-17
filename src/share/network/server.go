@@ -83,9 +83,6 @@ func (s *Server) Run() {
 		// create user session
 		session := &Session{socket: socket, UserIdx: s.connIdx}
 
-		// increase connection index
-		s.connIdx++
-
 		// trigger client connect event
 		event.Trigger(event.ClientConnect, session)
 
@@ -95,6 +92,9 @@ func (s *Server) Run() {
 		s.lock.Lock()
 		s.connLst[int(s.connIdx)] = session // add new session
 		s.lock.Unlock()
+
+		// increase connection index
+		s.connIdx++
 	}
 }
 

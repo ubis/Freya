@@ -35,7 +35,7 @@ func (p *Packet) AuthAccount(s *network.Session, r *network.Reader) {
 	r.ReadUint16()
 
 	// read and decrypt RSA block
-	var loginData = r.ReadBytes(rsa.RSA_LOGIN_LENGTH)
+	var loginData = r.ReadBytes(rsa.LoginLength)
 	var data, err = p.rsa.Decrypt(loginData[:])
 	if err != nil {
 		log.Errorf("%s; Src: %s", err.Error(), s.GetEndPnt())

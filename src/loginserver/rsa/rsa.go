@@ -8,41 +8,45 @@ import (
 	"share/log"
 )
 
-const RSA_KEY_LENGTH = 2048
-const RSA_LOGIN_LENGTH = RSA_KEY_LENGTH / 8
-const RSA_PUB_KEY_LENGTH = RSA_LOGIN_LENGTH + 14
+const (
+	keyLength       = 2048
+	LoginLength     = keyLength / 8
+	publicKeyLength = LoginLength + 14
+)
 
 type Encryption struct {
 	privateKey *rsa.PrivateKey
-	PublicKey  [RSA_PUB_KEY_LENGTH]byte
+	PublicKey  [publicKeyLength]byte
 }
 
 // Initializes RSA which generates keypair
 func (r *Encryption) Init() {
-	log.Infof("Generating %d bit RSA key...", RSA_KEY_LENGTH)
+	log.Infof("Generating %d bit RSA key...", keyLength)
 
 	// generate RSA key
-	var pKey, err = rsa.GenerateKey(rand.Reader, RSA_KEY_LENGTH)
+	pKey, err := rsa.GenerateKey(rand.Reader, keyLength)
 	if err != nil {
 		log.Fatal("Error generating RSA key:" + err.Error())
 	}
 
+	// store private key
 	r.privateKey = pKey
 
 	// encode key to ASN.1 PublicKey Type
-	var key, err2 = asn1.Marshal(r.privateKey.PublicKey)
-	if err2 != nil {
-		log.Fatal("Error encoding Public RSA key:" + err2.Error())
+	key, err := asn1.Marshal(r.privateKey.PublicKey)
+	if err != nil {
+		log.Fatal("Error encoding Public RSA key:" + err.Error())
 	}
 
 	// move public key to array
 	copy(r.PublicKey[:], key)
 }
 
-// Attempts to decrypt RSA data, which is `RSA_LOGIN_LENGTH` length
+// Attempts to decrypt RSA data, which is `LoginLength` length
 func (r *Encryption) Decrypt(data []byte) ([]byte, error) {
-	var dec, err = rsa.DecryptOAEP(sha1.New(), 
-		rand.Reader, r.privateKey, data, nil)
+	hash := sha1.New()
+	reader := rand.Reader
+	dec, err := rsa.DecryptOAEP(hash, reader, r.privateKey, data, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -51,9 +51,8 @@ func (sm *ServerManager) GetServer(endpnt string) *server.Server {
 	var server = sm.servers[endpnt]
 	sm.lock.RUnlock()
 
-	if server != nil {
+	if server == nil {
 		log.Errorf("Server with endpoint doesn't exist: %s", endpnt)
-		return nil
 	}
 
 	return server

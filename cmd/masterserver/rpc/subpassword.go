@@ -25,7 +25,7 @@ func SetSubPassword(c *rpc.Client, r *subpasswd.SetReq, s *subpasswd.SetRes) err
 	g_LoginDatabase.Get(&exist,
 		"SELECT account FROM sub_password WHERE account = ?", r.Account)
 
-	if exist == 1 {
+	if exist > 0 {
 		// changing subpassword
 		g_LoginDatabase.MustExec(
 			"UPDATE sub_password "+

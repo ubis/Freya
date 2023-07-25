@@ -9,3 +9,6 @@ bin/
 log/
 pkg/
 cfg/
+
+## Ignore macOS FS files
+.DS_Store

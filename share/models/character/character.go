@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/ubis/Freya/share/models/inventory"
+	"github.com/ubis/Freya/share/models/skills"
 )
 
 type ListReq struct {
@@ -56,15 +57,34 @@ type Character struct {
 	Style     Style
 	Alz       uint64
 	Nation    byte
-	CurrentHP uint16
-	MaxHP     uint16
-	CurrentMP uint16
-	MaxMP     uint16
-	STR       uint32
-	INT       uint32
-	DEX       uint32
-	SwordRank byte `db:"sword_rank"`
-	MagicRank byte `db:"magic_rank"`
+	SwordRank byte   `db:"sword_rank"`
+	MagicRank byte   `db:"magic_rank"`
+	CurrentHP uint16 `db:"current_hp"`
+	MaxHP     uint16 `db:"max_hp"`
+	CurrentMP uint16 `db:"current_mp"`
+	MaxMP     uint16 `db:"max_mp"`
+	CurrentSP uint16 `db:"current_sp"`
+	MaxSP     uint16 `db:"max_sp"`
+	STR       uint32 `db:"str_stat"`
+	INT       uint32 `db:"int_stat"`
+	DEX       uint32 `db:"dex_stat"`
+	PNT       uint32 `db:"pnt_stat"`
+	Exp       uint64
+	WarExp    uint64 `db:"war_exp"`
 	Equipment inventory.Equipment
+	Inventory inventory.Inventory
+	Skills    skills.SkillList
+	Links     skills.Links
 	Created   time.Time
+}
+
+type DataReq struct {
+	Server byte
+	Id     int32
+}
+
+type DataRes struct {
+	Inventory inventory.Inventory
+	Skills    skills.SkillList
+	Links     skills.Links
 }

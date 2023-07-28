@@ -23,7 +23,9 @@ func LoadCharacters(_ *rpc.Client, r *character.ListReq, s *character.ListRes) e
 
 	var rows, err = db.Queryx(
 		"SELECT "+
-			"id, name, level, world, x, y, alz, nation, sword_rank, magic_rank, created "+
+			"id, name, level, world, x, y, alz, nation, sword_rank, magic_rank, "+
+			"current_hp, max_hp, current_mp, max_mp, current_sp, max_sp, str_stat, "+
+			"int_stat, dex_stat, pnt_stat, exp, war_exp, created "+
 			"FROM characters "+
 			"WHERE id >= ? AND id <= ?", r.Account*8, r.Account*8+5)
 
@@ -192,7 +194,7 @@ func CreateCharacter(_ *rpc.Client, r *character.CreateReq, s *character.CreateR
 		value.Slot = uint16(key)
 		db.MustExec("INSERT INTO characters_quickslots "+
 			"(id, skill, slot) VALUES (?, ?, ?)",
-			c.Id, value.Slot, value.Slot,
+			c.Id, value.Skill, value.Slot,
 		)
 	}
 

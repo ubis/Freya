@@ -6,7 +6,6 @@ import (
 	"github.com/ubis/Freya/share/directory"
 	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/models/inventory"
-	"github.com/ubis/Freya/share/models/links"
 	"github.com/ubis/Freya/share/models/skills"
 
 	"gopkg.in/yaml.v2"
@@ -24,7 +23,7 @@ type InitialData struct {
 		Equipment map[string]inventory.Item
 		Inventory map[int]inventory.Item
 		Skills    map[int]skills.Skill
-		Links     map[int]links.Link
+		Links     map[int]skills.Link
 	}
 }
 

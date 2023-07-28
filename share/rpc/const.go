@@ -24,8 +24,9 @@ const (
 
 // Character related RPC's
 const (
-	LoadCharacters  = "LoadCharacters"
-	CreateCharacter = "CreateCharacter"
-	DeleteCharacter = "DeleteCharacter"
-	SetSlotOrder    = "SetSlotOrder"
+	LoadCharacters    = "LoadCharacters"
+	CreateCharacter   = "CreateCharacter"
+	DeleteCharacter   = "DeleteCharacter"
+	SetSlotOrder      = "SetSlotOrder"
+	LoadCharacterData = "LoadCharacterData"
 )

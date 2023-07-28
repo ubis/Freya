@@ -83,7 +83,7 @@ func SubPasswordSet(session *network.Session, reader *network.Reader) {
 // SubPasswordCheckRequest Packet
 func SubPasswordCheckRequest(session *network.Session, reader *network.Reader) {
 	var sub = session.Data.SubPassword
-	var left = sub.Expires.Sub(time.Now())
+	var left = time.Until(sub.Expires)
 
 	var packet = network.NewWriter(SUBPW_CHECK_REQ)
 
@@ -92,7 +92,7 @@ func SubPasswordCheckRequest(session *network.Session, reader *network.Reader) {
 		packet.WriteInt32(0x00)
 	} else {
 		// now check actual time
-		if left > 0 {
+		if left.Seconds() > 0 {
 			// no verification needed
 			packet.WriteInt32(0x00)
 		} else {
@@ -130,7 +130,7 @@ func SubPasswordCheck(session *network.Session, reader *network.Reader) {
 		packet.WriteInt32(0x00) // failed
 		sub.FailTimes++
 	} else {
-		sub.Expires = sub.Expires.Add(time.Hour * time.Duration(hours))
+		sub.Expires = time.Now().Add(time.Hour * time.Duration(hours))
 		var req = subpasswd.SetReq{session.Data.AccountId, *sub}
 		var res = subpasswd.SetRes{}
 		err = g_RPCHandler.Call(rpc.SetSubPassword, req, &res)

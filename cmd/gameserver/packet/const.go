@@ -7,6 +7,7 @@ const (
 	DELMYCHARTR         = 135
 	CONNECT2SVR         = 140
 	VERIFYLINKS         = 141
+	INITIALIZED         = 142
 	GETSVRTIME          = 148
 	SYSTEMMESSG         = 241
 	CHARGEINFO          = 324

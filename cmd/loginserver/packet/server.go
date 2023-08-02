@@ -6,6 +6,7 @@ import (
 
 	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/models/account"
+	"github.com/ubis/Freya/share/models/message"
 	"github.com/ubis/Freya/share/models/server"
 	"github.com/ubis/Freya/share/network"
 	"github.com/ubis/Freya/share/rpc"
@@ -54,6 +55,17 @@ func SystemMessg(message byte, length uint16) *network.Writer {
 	var packet = network.NewWriter(SYSTEMMESSG)
 	packet.WriteByte(message)
 	packet.WriteUint16(length)
+
+	return packet
+}
+
+// SystemMessgEx Packet which is NFY
+func SystemMessgEx(msg string) *network.Writer {
+	var packet = network.NewWriter(SYSTEMMESSG)
+	packet.WriteByte(message.Normal)
+	packet.WriteUint16(len(msg) + 2)
+	packet.WriteString("``") // thanks to Iris
+	packet.WriteString(msg)
 
 	return packet
 }

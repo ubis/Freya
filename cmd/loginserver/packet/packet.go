@@ -1,14 +1,40 @@
 package packet
 
 import (
+	"runtime"
+	"runtime/debug"
+
 	"github.com/ubis/Freya/cmd/loginserver/def"
 	"github.com/ubis/Freya/share/log"
+	"github.com/ubis/Freya/share/network"
 )
 
 var g_ServerConfig = def.ServerConfig
 var g_ServerSettings = def.ServerSettings
 var g_PacketHandler = def.PacketHandler
 var g_RPCHandler = def.RPCHandler
+
+func NotifyServerInfo(session *network.Session) {
+	msg := "Welcome to Freya - CABAL Server Emulator!"
+	session.Send(SystemMessgEx(msg))
+
+	msg = "Running on " + runtime.GOOS + " OS with " + runtime.Version()
+	session.Send(SystemMessgEx(msg))
+
+	var BuildCommit = func() string {
+		if info, ok := debug.ReadBuildInfo(); ok {
+			for _, setting := range info.Settings {
+				if setting.Key == "vcs.revision" {
+					return setting.Value
+				}
+			}
+		}
+		return ""
+	}()
+
+	msg = "Build: #" + BuildCommit[:6]
+	session.Send(SystemMessgEx(msg))
+}
 
 // Registers network packets
 func RegisterPackets() {

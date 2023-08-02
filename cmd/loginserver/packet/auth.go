@@ -90,6 +90,9 @@ func AuthAccount(session *network.Session, reader *network.Reader) {
 		// send normal system message
 		session.Send(SystemMessg(message.Normal, 0))
 
+		// notify server info
+		NotifyServerInfo(session)
+
 		// send server list periodically
 		var t = time.NewTicker(time.Second * 5)
 		go func(s *network.Session) {

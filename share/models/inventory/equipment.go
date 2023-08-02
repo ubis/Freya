@@ -46,7 +46,7 @@ func (e *Equipment) Remove(slot uint16) bool {
 }
 
 // Serializes equipment into byte array
-func (e *Equipment) Serialize() []byte {
+func (e *Equipment) Serialize() ([]byte, int) {
 	// collect keys for sorted iteration
 	var keys []int
 	for k := range e.Equip {
@@ -54,13 +54,17 @@ func (e *Equipment) Serialize() []byte {
 	}
 
 	sort.Ints(keys)
+	var length = 0
 
 	var equip bytes.Buffer
 	for _, value := range keys {
-		binary.Write(&equip, binary.BigEndian, e.Equip[value])
+		if e.Equip[value].Kind > 0 {
+			binary.Write(&equip, binary.LittleEndian, e.Equip[value])
+			length++
+		}
 	}
 
-	return equip.Bytes()
+	return equip.Bytes(), length
 }
 
 // Serializes equipment kind_idx into byte array

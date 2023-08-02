@@ -125,6 +125,19 @@ func (s *Session) GetIp() string {
 	return ip[0]
 }
 
+// GetLocalEndPntIp returns local end point IP address.
+// Local end point is server to which session is connected to.
+func (s *Session) GetLocalEndPntIp() string {
+	pnt := s.socket.LocalAddr().String()
+	ip := strings.Split(pnt, ":")
+	return ip[0]
+}
+
+// IsLocal checks if session's remote endpoint originated from private network.
+func (s *Session) IsLocal() bool {
+	return net.IP.IsPrivate(net.ParseIP(s.GetIp()))
+}
+
 // Closes session socket
 func (s *Session) Close() {
 	s.Connected = false

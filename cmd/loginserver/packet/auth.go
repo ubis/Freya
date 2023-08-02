@@ -98,7 +98,7 @@ func AuthAccount(session *network.Session, reader *network.Reader) {
 					break
 				}
 
-				s.Send(ServerSate())
+				s.Send(ServerSate(s))
 				<-t.C
 			}
 		}(session)

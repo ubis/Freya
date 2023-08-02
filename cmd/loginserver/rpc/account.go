@@ -12,23 +12,31 @@ import (
 
 // UserVerify RPC Call
 func UserVerify(c *rpc.Client, r *account.VerifyReq, s *account.VerifyRes) error {
-	var verify = g_NetworkManager.VerifyUser(r.UserIdx, r.AuthKey, r.IP, r.DBIdx)
+	state := g_NetworkManager.VerifyUser(r.UserIdx, r.AuthKey, r.IP, r.DBIdx)
+	*s = account.VerifyRes{Verified: state}
 
-	if verify {
-		// send server list periodically
-		var t = time.NewTicker(time.Second * 5)
-		go func(id uint16) {
-			for {
-				if !g_NetworkManager.SendToUser(id, packet.ServerSate()) {
-					break
-				}
-
-				<-t.C
-			}
-		}(r.UserIdx)
+	if !state {
+		return nil
 	}
 
-	*s = account.VerifyRes{verify}
+	// session is verified, send server list periodically
+	t := time.NewTicker(time.Second * 5)
+	go func(id uint16) {
+		for {
+			session := g_NetworkManager.GetSession(id)
+			if session == nil {
+				break
+			}
+
+			pkt := packet.ServerSate(session)
+			if !g_NetworkManager.SendToUser(id, pkt) {
+				break
+			}
+
+			<-t.C
+		}
+	}(r.UserIdx)
+
 	return nil
 }
 

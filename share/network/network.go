@@ -101,6 +101,21 @@ func (n *Network) GetOnlineUsers() int {
 	return users
 }
 
+// GetSession finds and returns session by user index.
+// If no session is found, nil is returned.
+func (n *Network) GetSession(idx uint16) *Session {
+	n.lock.RLock()
+	for _, value := range n.clients {
+		if value.UserIdx == idx {
+			n.lock.RUnlock()
+			return value
+		}
+	}
+	n.lock.RUnlock()
+
+	return nil
+}
+
 // Verifies user specified by index, key and sets it's database index
 func (n *Network) VerifyUser(i uint16, k uint32, ip string, db_idx int32) bool {
 	n.lock.Lock()

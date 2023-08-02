@@ -1,6 +1,9 @@
 package packet
 
 import (
+	"encoding/binary"
+	"net"
+
 	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/models/account"
 	"github.com/ubis/Freya/share/models/server"
@@ -56,7 +59,7 @@ func SystemMessg(message byte, length uint16) *network.Writer {
 }
 
 // ServerState Packet which is NFY
-func ServerSate() *network.Writer {
+func ServerSate(session *network.Session) *network.Writer {
 	// request server list
 	var r = server.ListRes{}
 	g_RPCHandler.Call(rpc.ServerList, server.ListReq{}, &r)
@@ -88,7 +91,18 @@ func ServerSate() *network.Writer {
 			packet.WriteByte(0x00)
 			packet.WriteByte(0xFF)
 			packet.WriteUint16(c.MaxUsers)
-			packet.WriteUint32(c.Ip)
+
+			// if session is local, provide local IPs...
+			// this helps during development when you have local & remote clients
+			// however, here we assume that locally all servers will run on the
+			// same IP
+			if session.IsLocal() {
+				ip := net.ParseIP(session.GetLocalEndPntIp())[12:16]
+				packet.WriteUint32(binary.LittleEndian.Uint32(ip))
+			} else {
+				packet.WriteUint32(c.Ip)
+			}
+
 			packet.WriteUint16(c.Port)
 			packet.WriteUint32(c.Type)
 		}

@@ -21,18 +21,24 @@ func NotifyServerInfo(session *network.Session) {
 	msg = "Running on " + runtime.GOOS + " OS with " + runtime.Version()
 	session.Send(SystemMessgEx(msg))
 
-	var BuildCommit = func() string {
-		if info, ok := debug.ReadBuildInfo(); ok {
-			for _, setting := range info.Settings {
-				if setting.Key == "vcs.revision" {
-					return setting.Value
-				}
-			}
+	var buildCommit = func() string {
+		info, ok := debug.ReadBuildInfo()
+		if !ok {
+			return ""
 		}
+
+		for _, setting := range info.Settings {
+			if setting.Key != "vcs.revision" {
+				continue
+			}
+			return setting.Value
+
+		}
+
 		return ""
 	}()
 
-	msg = "Build: #" + BuildCommit[:6]
+	msg = "Build: #" + buildCommit[:6]
 	session.Send(SystemMessgEx(msg))
 }
 

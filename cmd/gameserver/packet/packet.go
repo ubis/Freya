@@ -21,6 +21,7 @@ func RegisterPackets() {
 	pk.Register(CONNECT2SVR, "Connect2Svr", Connect2Svr)
 	pk.Register(VERIFYLINKS, "VerifyLinks", VerifyLinks)
 	pk.Register(INITIALIZED, "Initialized", Initialized)
+	pk.Register(UNINITIALZE, "Uninitialze", Uninitialze)
 	pk.Register(GETSVRTIME, "GetSvrTime", GetSvrTime)
 	pk.Register(SYSTEMMESSG, "SystemMessg", nil)
 	pk.Register(CHARGEINFO, "ChargeInfo", ChargeInfo)

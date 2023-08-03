@@ -196,3 +196,21 @@ func Initialized(session *network.Session, reader *network.Reader) {
 
 	session.Send(pkt)
 }
+
+// Uninitialze Packet
+func Uninitialze(session *network.Session, reader *network.Reader) {
+	_ = reader.ReadUint16() // index
+	_ = reader.ReadByte()   // map id
+	_ = reader.ReadByte()   // log out
+
+	pkt := network.NewWriter(UNINITIALZE)
+	pkt.WriteByte(0) // result
+
+	// complete - 0x00
+	// fail - 0x01
+	// ignored - 0x02
+	// busy - 0x03
+	// anti online game - 0x30
+
+	session.Send(pkt)
+}

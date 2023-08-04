@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"net"
 
+	"github.com/ubis/Freya/cmd/gameserver/packet"
 	"github.com/ubis/Freya/share/event"
 	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/models/server"
@@ -33,11 +34,16 @@ func OnClientConnect(e event.Event) {
 
 // OnClientDisconnect event informs server about disconnected client
 func OnClientDisconnect(e event.Event) {
-	if s, ok := e.(*network.Session); !ok {
+	s, ok := e.(*network.Session)
+	if !ok {
 		log.Error("Cannot parse onClientDisconnect event!")
-	} else {
-		log.Infof("Client `%s` disconnected from the GameServer", s.GetEndPnt())
+		return
 	}
+
+	// in case client was in the world, notify other players
+	packet.DelUserList(s)
+
+	log.Infof("Client `%s` disconnected from the GameServer", s.GetEndPnt())
 }
 
 // OnPacketReceive event informs server about received packet

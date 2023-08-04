@@ -33,6 +33,7 @@ func RegisterPackets() {
 	pk.Register(UNINITIALZE, "Uninitialze", Uninitialze)
 	pk.Register(GETSVRTIME, "GetSvrTime", GetSvrTime)
 	pk.Register(NEWUSERLIST, "NewUserList", nil)
+	pk.Register(DELUSERLIST, "DelUserList", nil)
 	pk.Register(SYSTEMMESSG, "SystemMessg", nil)
 	pk.Register(CHARGEINFO, "ChargeInfo", ChargeInfo)
 	pk.Register(SERVERENV, "ServerEnv", ServerEnv)

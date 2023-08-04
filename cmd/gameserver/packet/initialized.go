@@ -227,6 +227,8 @@ func Uninitialze(session *network.Session, reader *network.Reader) {
 	// anti online game - 0x30
 
 	session.Send(pkt)
+
+	DelUserList(session) // notify that player is gone
 }
 
 // notifyNewPlayer to all already connected players
@@ -320,4 +322,44 @@ func fillPlayerInfo(pkt *network.Writer, session *network.Session) {
 	// pkt.WriteString("guild name")
 
 	pkt.WriteBytes(eq)
+}
+
+// DelUserList to all already connected players
+func DelUserList(session *network.Session) {
+	if session.DataEx == nil {
+		// we might have invalid clients, ignore
+		return
+	}
+
+	ctx, ok := session.DataEx.(*context)
+	if !ok {
+		// we might have invalid clients, ignore
+		return
+	}
+
+	ctx.mutex.RLock()
+	if ctx.char == nil {
+		// user might be (or was) in the lobby
+		ctx.mutex.RUnlock()
+		return
+	}
+
+	charId := ctx.char.Id
+	ctx.char = nil // we are no longer in the world
+	ctx.mutex.RUnlock()
+
+	pkt := network.NewWriter(DELUSERLIST)
+	pkt.WriteUint32(charId)
+	pkt.WriteByte(0x12) // type
+
+	/* types:
+	 * dead = 0x10
+	 * warp = 0x11
+	 * logout = 0x12
+	 * retn = 0x13
+	 * dissapear = 0x14
+	 * nfsdead = 0x15
+	 */
+
+	g_NetworkManager.SendToAllExcept(pkt, session)
 }

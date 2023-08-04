@@ -11,6 +11,7 @@ const (
 	UNINITIALZE         = 143
 	GETSVRTIME          = 148
 	NEWUSERLIST         = 200
+	DELUSERLIST         = 201
 	SYSTEMMESSG         = 241
 	CHARGEINFO          = 324
 	SERVERENV           = 464

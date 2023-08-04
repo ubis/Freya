@@ -92,6 +92,26 @@ func (n *Network) Init(port int, s *server.Settings) {
 	}
 }
 
+// Lock network mutex.
+func (n *Network) Lock() {
+	n.lock.Lock()
+}
+
+// Unlock network mutex
+func (n *Network) Unlock() {
+	n.lock.Unlock()
+}
+
+// RLock network mutex.
+func (n *Network) RLock() {
+	n.lock.RLock()
+}
+
+// RUnlock network mutex
+func (n *Network) RUnlock() {
+	n.lock.RUnlock()
+}
+
 // Returns current online user count
 func (n *Network) GetOnlineUsers() int {
 	n.lock.RLock()
@@ -99,6 +119,12 @@ func (n *Network) GetOnlineUsers() int {
 	n.lock.RUnlock()
 
 	return users
+}
+
+// GetSessions returns a map of all connected sessions.
+// Note: map is not thread safe and Lock/Unlock should be used.
+func (n *Network) GetSessions() map[uint16]*Session {
+	return n.clients
 }
 
 // GetSession finds and returns session by user index.
@@ -143,6 +169,20 @@ func (n *Network) SendToUser(i uint16, writer *Writer) bool {
 
 	n.lock.RUnlock()
 	return false
+}
+
+// SendToAllExcept will send a packet to all session except one in the args.
+func (n *Network) SendToAllExcept(writer *Writer, session *Session) {
+	n.lock.RLock()
+	for _, s := range n.clients {
+		if s == session {
+			continue
+		}
+
+		s.Send(writer)
+	}
+
+	n.lock.RUnlock()
 }
 
 // Checks if account is online and returns user index

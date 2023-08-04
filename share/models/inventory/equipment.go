@@ -84,3 +84,27 @@ func (e *Equipment) SerializeKind() []byte {
 
 	return equip.Bytes()
 }
+
+// SerializeEx serializes equipment with kind and option into byte array
+func (e *Equipment) SerializeEx() ([]byte, int) {
+	// collect keys for sorted iteration
+	var keys []int
+	for k := range e.Equip {
+		keys = append(keys, k)
+	}
+
+	sort.Ints(keys)
+	var length = 0
+
+	var equip bytes.Buffer
+	for key, value := range keys {
+		if e.Equip[value].Kind > 0 {
+			binary.Write(&equip, binary.LittleEndian, byte(key))
+			binary.Write(&equip, binary.LittleEndian, e.Equip[value].Kind)
+			binary.Write(&equip, binary.LittleEndian, e.Equip[value].Option)
+			length++
+		}
+	}
+
+	return equip.Bytes(), length
+}

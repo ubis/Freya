@@ -1,14 +1,22 @@
 package packet
 
 import (
+	"sync"
+
 	"github.com/ubis/Freya/cmd/gameserver/def"
 	"github.com/ubis/Freya/share/log"
+	"github.com/ubis/Freya/share/models/character"
 )
 
 var g_ServerConfig = def.ServerConfig
 var g_ServerSettings = def.ServerSettings
 var g_PacketHandler = def.PacketHandler
 var g_RPCHandler = def.RPCHandler
+
+type context struct {
+	char  *character.Character
+	mutex sync.RWMutex
+}
 
 // Registers network packets
 func RegisterPackets() {

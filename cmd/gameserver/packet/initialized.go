@@ -12,8 +12,15 @@ import (
 func Initialized(session *network.Session, reader *network.Reader) {
 	charId := reader.ReadInt32()
 
-	if !session.Data.Verified || !session.Data.LoggedIn {
+	if !session.Data.Verified || !session.Data.LoggedIn || session.DataEx == nil {
 		log.Errorf("User is not verified (char: %d)", charId)
+		return
+	}
+
+	ctx, ok := session.DataEx.(*context)
+	if !ok {
+		log.Error("Unable to retrieve user context (id: %d)",
+			session.Data.AccountId)
 		return
 	}
 
@@ -195,6 +202,10 @@ func Initialized(session *network.Session, reader *network.Reader) {
 	pkt.WriteBytes(sl)
 
 	session.Send(pkt)
+
+	ctx.mutex.Lock()
+	ctx.char = &c
+	ctx.mutex.Unlock()
 }
 
 // Uninitialze Packet

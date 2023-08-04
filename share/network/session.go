@@ -23,6 +23,7 @@ type Session struct {
 	UserIdx    uint16
 	AuthKey    uint32
 	Connected  bool
+	DataEx     any
 	Data       struct {
 		AccountId     int32 // database account id
 		Verified      bool  // version verification

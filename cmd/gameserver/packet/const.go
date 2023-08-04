@@ -10,8 +10,10 @@ const (
 	INITIALIZED         = 142
 	UNINITIALZE         = 143
 	GETSVRTIME          = 148
+	MESSAGEEVNT         = 195
 	NEWUSERLIST         = 200
 	DELUSERLIST         = 201
+	NFY_MESSAGEEVNT     = 217
 	SYSTEMMESSG         = 241
 	CHARGEINFO          = 324
 	SERVERENV           = 464

@@ -293,6 +293,11 @@ func fillPlayerInfo(pkt *network.Writer, session *network.Session) {
 
 	c := ctx.char
 
+	if c == nil {
+		// client is not ready
+		return
+	}
+
 	pkt.WriteUint32(c.Id)
 	pkt.WriteUint32(session.UserIdx)
 	pkt.WriteUint32(c.Level)
@@ -362,4 +367,51 @@ func DelUserList(session *network.Session) {
 	 */
 
 	g_NetworkManager.SendToAllExcept(pkt, session)
+}
+
+// MessageEvnt Packet
+func MessageEvnt(session *network.Session, reader *network.Reader) {
+	unk1 := reader.ReadInt16()
+	msglen := reader.ReadInt16()
+	_ = reader.ReadInt16()
+	mtype := reader.ReadByte() // 0xA0 = normal; 0xA1 = trade
+	msg := reader.ReadString(int(msglen))
+
+	if session.DataEx == nil {
+		// we have invalid user, ignore
+		return
+	}
+
+	ctx, ok := session.DataEx.(*context)
+	if !ok {
+		// we have invalid user, ignore
+		return
+	}
+
+	ctx.mutex.RLock()
+	if ctx.char == nil {
+		// user is in the lobby, we cannot receive such messages
+		ctx.mutex.RUnlock()
+		return
+	}
+
+	charId := ctx.char.Id
+	ctx.mutex.RUnlock()
+
+	pkt := network.NewWriter(NFY_MESSAGEEVNT)
+	pkt.WriteUint32(charId)
+	pkt.WriteByte(0) // 0x03 = [GM] prefix
+	pkt.WriteByte(unk1)
+	pkt.WriteByte(0)
+	pkt.WriteByte(len(msg) + 3)
+	pkt.WriteByte(0)
+	pkt.WriteByte(254)
+	pkt.WriteByte(254)
+	pkt.WriteByte(mtype) // 0xA0 = normal; trade = 0xA1
+	pkt.WriteString(msg)
+	pkt.WriteByte(0)
+	pkt.WriteByte(0)
+	pkt.WriteByte(0)
+
+	g_NetworkManager.SendToAll(pkt)
 }

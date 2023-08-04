@@ -171,7 +171,17 @@ func (n *Network) SendToUser(i uint16, writer *Writer) bool {
 	return false
 }
 
-// SendToAllExcept will send a packet to all session except one in the args.
+// SendToAll will send a packet to all sessions.
+func (n *Network) SendToAll(writer *Writer) {
+	n.lock.RLock()
+	for _, s := range n.clients {
+		s.Send(writer)
+	}
+
+	n.lock.RUnlock()
+}
+
+// SendToAllExcept will send a packet to all sessions except one in the args.
 func (n *Network) SendToAllExcept(writer *Writer, session *Session) {
 	n.lock.RLock()
 	for _, s := range n.clients {

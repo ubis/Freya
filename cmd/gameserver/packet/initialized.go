@@ -203,6 +203,12 @@ func Initialized(session *network.Session, reader *network.Reader) {
 
 	session.Send(pkt)
 
+	// player is not moving anywhere, initialize begin/end movement variables
+	c.BeginX = int16(c.X)
+	c.BeginY = int16(c.Y)
+	c.EndX = int16(c.X)
+	c.EndY = int16(c.Y)
+
 	ctx.mutex.Lock()
 	ctx.char = &c
 	ctx.mutex.Unlock()
@@ -301,11 +307,11 @@ func fillPlayerInfo(pkt *network.Writer, session *network.Session) {
 	pkt.WriteUint32(c.Id)
 	pkt.WriteUint32(session.UserIdx)
 	pkt.WriteUint32(c.Level)
-	pkt.WriteInt32(0x01C2)
-	pkt.WriteUint16(c.X) // start
-	pkt.WriteUint16(c.Y)
-	pkt.WriteUint16(c.X) // end
-	pkt.WriteUint16(c.Y)
+	pkt.WriteInt32(0x01C2)    // might be dwMoveBgnTime
+	pkt.WriteUint16(c.BeginX) // start
+	pkt.WriteUint16(c.BeginY)
+	pkt.WriteUint16(c.EndX) // end
+	pkt.WriteUint16(c.EndY)
 	pkt.WriteByte(0)
 	pkt.WriteInt32(0)
 	pkt.WriteInt16(0)

@@ -76,6 +76,12 @@ type Character struct {
 	Skills    skills.SkillList
 	Links     skills.Links
 	Created   time.Time
+
+	// movement data
+	BeginX int16 `db:"-"`
+	BeginY int16 `db:"-"`
+	EndX   int16 `db:"-"`
+	EndY   int16 `db:"-"`
 }
 
 type DataReq struct {

@@ -12,6 +12,7 @@ var g_ServerConfig = def.ServerConfig
 var g_ServerSettings = def.ServerSettings
 var g_PacketHandler = def.PacketHandler
 var g_RPCHandler = def.RPCHandler
+var g_NetworkManager = def.NetworkManager
 
 type context struct {
 	char  *character.Character
@@ -31,6 +32,7 @@ func RegisterPackets() {
 	pk.Register(INITIALIZED, "Initialized", Initialized)
 	pk.Register(UNINITIALZE, "Uninitialze", Uninitialze)
 	pk.Register(GETSVRTIME, "GetSvrTime", GetSvrTime)
+	pk.Register(NEWUSERLIST, "NewUserList", nil)
 	pk.Register(SYSTEMMESSG, "SystemMessg", nil)
 	pk.Register(CHARGEINFO, "ChargeInfo", ChargeInfo)
 	pk.Register(SERVERENV, "ServerEnv", ServerEnv)

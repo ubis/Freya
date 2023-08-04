@@ -206,6 +206,9 @@ func Initialized(session *network.Session, reader *network.Reader) {
 	ctx.mutex.Lock()
 	ctx.char = &c
 	ctx.mutex.Unlock()
+
+	notifyNewPlayer(session)     // notify others about new player
+	notifyOnlinePlayers(session) // notify all players to our new player
 }
 
 // Uninitialze Packet
@@ -224,4 +227,97 @@ func Uninitialze(session *network.Session, reader *network.Reader) {
 	// anti online game - 0x30
 
 	session.Send(pkt)
+}
+
+// notifyNewPlayer to all already connected players
+func notifyNewPlayer(session *network.Session) {
+	pkt := network.NewWriter(NEWUSERLIST)
+	pkt.WriteUint16(1) // player num
+
+	g_NetworkManager.RLock()
+	fillPlayerInfo(pkt, session)
+	g_NetworkManager.RUnlock()
+
+	g_NetworkManager.SendToAllExcept(pkt, session)
+}
+
+// notifyOnlinePlayers to newly connected player
+func notifyOnlinePlayers(session *network.Session) {
+	online := g_NetworkManager.GetOnlineUsers()
+	if online == 1 {
+		// no point, we are alone
+		return
+	}
+
+	online--
+	sessions := g_NetworkManager.GetSessions()
+
+	pkt := network.NewWriter(NEWUSERLIST)
+	pkt.WriteUint16(online)
+
+	g_NetworkManager.RLock()
+	for _, v := range sessions {
+		if v == session || v.DataEx == nil {
+			// we don't want to send player data to our newly connected session
+			// or invalid clients - connected but not sent Connect2Svr packet
+			continue
+		}
+
+		if _, ok := v.DataEx.(*context); !ok {
+			// this is ok - we might have users in the lobby and not in-game
+			// if user is not in-game, DataEx.context will be nil
+			continue
+		}
+
+		fillPlayerInfo(pkt, v)
+
+	}
+	g_NetworkManager.RUnlock()
+
+	session.Send(pkt)
+}
+
+// fillPlayerInfo with player character data
+func fillPlayerInfo(pkt *network.Writer, session *network.Session) {
+	ctx, ok := session.DataEx.(*context)
+	if !ok {
+		log.Error("Unable to retrieve user context (id: %d)",
+			session.Data.AccountId)
+		return
+	}
+
+	ctx.mutex.RLock()
+	defer ctx.mutex.RUnlock()
+
+	c := ctx.char
+
+	pkt.WriteUint32(c.Id)
+	pkt.WriteUint32(session.UserIdx)
+	pkt.WriteUint32(c.Level)
+	pkt.WriteInt32(0x01C2)
+	pkt.WriteUint16(c.X) // start
+	pkt.WriteUint16(c.Y)
+	pkt.WriteUint16(c.X) // end
+	pkt.WriteUint16(c.Y)
+	pkt.WriteByte(0)
+	pkt.WriteInt32(0)
+	pkt.WriteInt16(0)
+	pkt.WriteInt32(c.Style.Get())
+	pkt.WriteByte(0) // animation id aka "live style"
+	pkt.WriteInt16(0)
+
+	eq, eqlen := c.Equipment.SerializeEx()
+	pkt.WriteInt16(eqlen)
+	pkt.WriteInt16(0x00)
+
+	for i := 0; i < 21; i++ {
+		pkt.WriteByte(0)
+	}
+
+	pkt.WriteByte(len(c.Name) + 1)
+	pkt.WriteString(c.Name)
+	pkt.WriteByte(0) // guild name len
+	// pkt.WriteString("guild name")
+
+	pkt.WriteBytes(eq)
 }

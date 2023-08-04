@@ -1,9 +1,12 @@
 package packet
 
 import (
+	"encoding/binary"
+	"net"
 	"time"
 
 	"github.com/ubis/Freya/share/models/account"
+	"github.com/ubis/Freya/share/models/server"
 	"github.com/ubis/Freya/share/network"
 	"github.com/ubis/Freya/share/rpc"
 )
@@ -90,4 +93,85 @@ func SystemMessg(message byte, length uint16) *network.Writer {
 	packet.WriteUint16(length)
 
 	return packet
+}
+
+// BackToCharLobby Packet
+func BackToCharLobby(session *network.Session, reader *network.Reader) {
+	pkt := network.NewWriter(BACK_TO_CHAR_LOBBY)
+	pkt.WriteByte(1)
+
+	session.Send(pkt)
+}
+
+// ChannelChange Packet
+func ChannelList(session *network.Session, reader *network.Reader) {
+	// request server list
+	req := server.ListReq{}
+	res := server.ListRes{}
+	g_RPCHandler.Call(rpc.ServerList, &req, &res)
+
+	var server *server.ServerItem
+
+	for _, v := range res.List {
+		if v.Id != byte(g_ServerSettings.ServerId) {
+			continue
+		}
+
+		server = &v
+		break
+	}
+
+	pkt := network.NewWriter(CHANNEL_LIST)
+
+	if server == nil {
+		pkt.WriteByte(0)
+		session.Send(pkt)
+		return
+	}
+
+	pkt.WriteByte(len(server.List))
+
+	for _, v := range server.List {
+		pkt.WriteByte(v.Id)
+		pkt.WriteUint16(v.CurrentUsers)
+		pkt.WriteUint16(0x00)
+		pkt.WriteUint16(0xFFFF)
+		pkt.WriteUint16(0x00)
+		pkt.WriteUint16(0x00)
+		pkt.WriteUint32(0x00)
+		pkt.WriteUint16(0x00)
+		pkt.WriteUint16(0x00)
+		pkt.WriteUint16(0x00)
+		pkt.WriteByte(0x00)
+		pkt.WriteByte(0x00)
+		pkt.WriteByte(0x00)
+		pkt.WriteByte(0xFF)
+		pkt.WriteUint16(v.MaxUsers)
+
+		// if session is local, provide local IPs...
+		// this helps during development when you have local & remote clients
+		// however, here we assume that locally all servers will run on the
+		// same IP
+		if session.IsLocal() {
+			ip := net.ParseIP(session.GetLocalEndPntIp())[12:16]
+			pkt.WriteUint32(binary.LittleEndian.Uint32(ip))
+		} else {
+			pkt.WriteUint32(v.Ip)
+		}
+
+		pkt.WriteUint16(v.Port)
+		pkt.WriteUint32(v.Type)
+	}
+
+	session.Send(pkt)
+}
+
+// ChannelChange Packet
+func ChannelChange(session *network.Session, reader *network.Reader) {
+	_ = reader.ReadByte() // channel id
+
+	pkt := network.NewWriter(CHANNEL_CHANGE)
+	pkt.WriteInt32(1)
+
+	session.Send(pkt)
 }

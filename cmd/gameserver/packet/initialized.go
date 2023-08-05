@@ -2,6 +2,7 @@ package packet
 
 import (
 	"github.com/ubis/Freya/share/models/character"
+	"github.com/ubis/Freya/share/models/server"
 	"github.com/ubis/Freya/share/network"
 	"github.com/ubis/Freya/share/rpc"
 
@@ -234,7 +235,7 @@ func Uninitialze(session *network.Session, reader *network.Reader) {
 
 	session.Send(pkt)
 
-	DelUserList(session) // notify that player is gone
+	DelUserList(session, server.DelUserLogout) // notify that player is gone
 }
 
 // notifyNewPlayer to all already connected players
@@ -336,7 +337,7 @@ func fillPlayerInfo(pkt *network.Writer, session *network.Session) {
 }
 
 // DelUserList to all already connected players
-func DelUserList(session *network.Session) {
+func DelUserList(session *network.Session, reason server.DelUserType) {
 	if session.DataEx == nil {
 		// we might have invalid clients, ignore
 		return
@@ -356,12 +357,16 @@ func DelUserList(session *network.Session) {
 	}
 
 	charId := ctx.char.Id
-	ctx.char = nil // we are no longer in the world
+
+	if reason != server.DelUserWarp {
+		ctx.char = nil // we are no longer in the world
+	}
+
 	ctx.mutex.RUnlock()
 
 	pkt := network.NewWriter(DELUSERLIST)
 	pkt.WriteUint32(charId)
-	pkt.WriteByte(0x12) // type
+	pkt.WriteByte(byte(reason)) // type
 
 	/* types:
 	 * dead = 0x10

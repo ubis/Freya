@@ -15,6 +15,7 @@ var g_ServerSettings = def.ServerSettings
 var g_PacketHandler = def.PacketHandler
 var g_RPCHandler = def.RPCHandler
 var g_NetworkManager = def.NetworkManager
+var g_DataLoader = def.DataLoader
 
 type context struct {
 	char  *character.Character
@@ -86,6 +87,7 @@ func RegisterPackets() {
 	pk.Register(NFY_MOVECHANGED, "NotifyMoveChanged", nil)
 	pk.Register(NFY_MESSAGEEVNT, "NotifyMessageEvnt", nil)
 	pk.Register(SYSTEMMESSG, "SystemMessg", nil)
+	pk.Register(WARPCOMMAND, "WarpCommand", WarpCommand)
 	pk.Register(CHARGEINFO, "ChargeInfo", ChargeInfo)
 	pk.Register(CHANGEDIRECTION, "ChangeDirection", ChangeDirection)
 	pk.Register(NFY_CHANGEDIRECTION, "NotifyChangeDirection", nil)

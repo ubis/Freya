@@ -426,3 +426,59 @@ func MessageEvnt(session *network.Session, reader *network.Reader) {
 
 	g_NetworkManager.SendToAll(pkt)
 }
+
+// WarpCommand packet
+func WarpCommand(session *network.Session, reader *network.Reader) {
+	warpId := reader.ReadByte()
+
+	ctx, err := parseSessionContext(session)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	ctx.mutex.RLock()
+	world := ctx.char.World
+	ctx.mutex.RUnlock()
+
+	warp := g_DataLoader.WarpData.FindWarp(world, warpId)
+	if warp == nil {
+		log.Error("Unable to find warp:", warpId)
+		return
+	}
+
+	pkt := network.NewWriter(WARPCOMMAND)
+	pkt.WriteInt16(warp.Location[0].X) // pos x
+	pkt.WriteInt16(warp.Location[0].Y) // pos y
+	pkt.WriteInt32(0)                  // exp
+	pkt.WriteInt32(0)                  // axp
+	pkt.WriteInt32(0)                  // alz
+	pkt.WriteInt32(0)                  // unk
+	pkt.WriteInt16(session.UserIdx)
+	pkt.WriteInt16(0x0100)
+	pkt.WriteInt32(0x08)
+	pkt.WriteByte(0)
+	pkt.WriteInt32(warp.World)
+	pkt.WriteInt32(0)
+	pkt.WriteInt32(0)
+
+	DelUserList(session, server.DelUserWarp)
+
+	session.Send(pkt)
+
+	ctx.mutex.Lock()
+	ctx.char.World = byte(warp.World)
+	ctx.char.X = byte(warp.Location[0].X)
+	ctx.char.Y = byte(warp.Location[0].Y)
+	ctx.char.BeginX = int16(warp.Location[0].X)
+	ctx.char.BeginY = int16(warp.Location[0].Y)
+	ctx.char.EndX = int16(warp.Location[0].X)
+	ctx.char.EndY = int16(warp.Location[0].Y)
+	ctx.mutex.Unlock()
+
+	// this will produce little glitches - player re-appears, though it is in
+	// the different world
+	// this is because we don't have proper map management (yet)
+	notifyNewPlayer(session)     // notify others about new player
+	notifyOnlinePlayers(session) // notify all players to our new player
+}

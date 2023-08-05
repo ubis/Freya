@@ -1,6 +1,10 @@
 package network
 
-import "github.com/ubis/Freya/share/log"
+import (
+	"runtime/debug"
+
+	"github.com/ubis/Freya/share/log"
+)
 
 type PacketData struct {
 	Name   string
@@ -39,6 +43,8 @@ func (pk *PacketHandler) Handle(args *PacketArgs) {
 			log.Warningf("Panic! Recovered from: %s, src: %s, id: %d",
 				pk.Name(args.Type), args.Session.GetEndPnt(), args.Session.Data.AccountId,
 			)
+			log.Error(err)
+			log.Error(string(debug.Stack()))
 
 			args.Session.Close()
 		}
@@ -49,6 +55,8 @@ func (pk *PacketHandler) Handle(args *PacketArgs) {
 		log.Errorf("Unknown packet received (Len: %d, type: %d, src: %s)",
 			args.Packet.Size, args.Packet.Type, args.Session.GetEndPnt(),
 		)
+
+		DumpPacket(args.Packet)
 
 		return
 	}

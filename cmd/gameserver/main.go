@@ -13,6 +13,7 @@ var g_ServerSettings = def.ServerSettings
 var g_NetworkManager = def.NetworkManager
 var g_PacketHandler = def.PacketHandler
 var g_RPCHandler = def.RPCHandler
+var g_DataLoader = def.DataLoader
 
 func main() {
 	log.Init(def.GetName())
@@ -39,6 +40,9 @@ func main() {
 
 	// register RPC calls
 	rpc.RegisterCalls()
+
+	// init DataLoader
+	g_DataLoader.Init()
 
 	// start RPC handler
 	g_RPCHandler.Start()

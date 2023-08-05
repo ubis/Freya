@@ -1,0 +1,67 @@
+warp:
+  - world: 1 # bloody ice
+    warps: [
+      {
+        id: 15,
+        world: 30, # warp gate
+        location: [
+          { x: 139, y: 242 }, # capella
+          { x: 139, y: 242 }, # procyon
+          { x: 139, y: 242 }  # neutral
+        ]
+      }
+    ]
+  - world: 2 # desert scream
+    warps: [
+      {
+        id: 15,
+        world: 30, # warp gate
+        location: [
+          { x: 139, y: 242 }, # capella
+          { x: 139, y: 242 }, # procyon
+          { x: 139, y: 242 }  # neutral
+        ]
+      }
+    ]
+  - world: 3 # green despair
+    warps: [
+      {
+        id: 15,
+        world: 30, # warp gate
+        location: [
+          { x: 139, y: 242 }, # capella
+          { x: 139, y: 242 }, # procyon
+          { x: 139, y: 242 }  # neutral
+        ]
+      }
+    ]
+  - world: 30 # warp gate
+    warps: [
+      {
+        id: 1,
+        world: 1, # bloody ice
+        location: [
+          { x: 19, y: 109 }, # capella
+          { x: 19, y: 109 }, # procyon
+          { x: 19, y: 109 }  # neutral
+        ]
+      },
+      {
+        id: 2,
+        world: 2, # desert scream
+        location: [
+          { x: 69, y: 247 }, # capella
+          { x: 69, y: 247 }, # procyon
+          { x: 69, y: 247 }  # neutral
+        ]
+      },
+      {
+        id: 3,
+        world: 3, # green despair
+        location: [
+          { x: 221, y: 18 }, # capella
+          { x: 221, y: 18 }, # procyon
+          { x: 221, y: 18 }  # neutral
+        ]
+      }
+    ]

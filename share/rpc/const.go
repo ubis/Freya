@@ -30,3 +30,10 @@ const (
 	SetSlotOrder      = "SetSlotOrder"
 	LoadCharacterData = "LoadCharacterData"
 )
+
+const (
+	MoveItemEquToEqu = "MoveItemEquToEqu"
+	MoveItemEquToInv = "MoveItemEquToInv"
+	MoveItemInvToEqu = "MoveItemInvToEqu"
+	MoveItemInvToInv = "MoveItemInvToInv"
+)

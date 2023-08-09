@@ -8,8 +8,6 @@ import (
 	"github.com/ubis/Freya/share/models/inventory"
 	"github.com/ubis/Freya/share/models/skills"
 	"github.com/ubis/Freya/share/rpc"
-
-	"github.com/jmoiron/sqlx"
 )
 
 // LoadCharacters RPC Call
@@ -267,6 +265,138 @@ func LoadCharacterData(c *rpc.Client, r *character.DataReq, s *character.DataRes
 	res.Links = LoadLinks(db, r.Id)
 
 	*s = res
+	return nil
+}
+
+func MoveItemEquToEqu(c *rpc.Client, r *character.ItemEquipReq, s *character.ItemEquipRes) error {
+	var db = g_DatabaseManager.Get(r.Server)
+
+	var inv = inventory.Inventory{}
+	inv.Init()
+
+	var equ = inventory.Equipment{}
+	equ.Init()
+
+	var item inventory.Item
+	err := db.QueryRow("SELECT kind, serials, opt, slot, expire FROM characters_inventory WHERE id = ? AND slot = ?", r.Id, r.DeleteSlot).Scan(&item.Kind, &item.Serials, &item.Option, &item.Slot, &item.Expire)
+
+	//log.Printf("EQUIP ITEM ", item)
+	//log.Printf("EQUIP [DATABASE]", err)
+	//log.Printf("EQUIP Request ", r)
+
+	if err == nil {
+		inv.Remove(item.Slot)
+		var _, err3 = db.Queryx(
+			"DELETE "+
+				"FROM characters_inventory "+
+				"WHERE id = ? AND slot = ?", r.Id, item.Slot)
+		if err3 != nil {
+			log.Printf("[DATABASE]", err3)
+		}
+		item.Slot = r.CreateSlot
+		equ.Set(item.Slot, item)
+		db.MustExec("INSERT INTO characters_equipment "+
+			"(id, kind, serials, opt, slot, expire) VALUES (?, ?, ?, ?, ?, ?)",
+			r.Id, item.Kind, item.Serials, item.Option, item.Slot, item.Expire,
+		)
+
+		s.ItemKind = uint32(item.Kind)
+	}
+
+	if err != nil {
+		log.Printf("[DATABASE]", err)
+	}
+
+	return nil
+}
+
+func MoveItemEquToInv(c *rpc.Client, r *character.ItemEquipReq, s *character.ItemEquipRes) error {
+	var db = g_DatabaseManager.Get(r.Server)
+
+	var inv = inventory.Inventory{}
+	inv.Init()
+
+	var equ = inventory.Equipment{}
+	equ.Init()
+
+	var item inventory.Item
+	err := db.QueryRow("SELECT kind, serials, opt, slot, expire FROM characters_equipment WHERE id = ? AND slot = ?", r.Id, r.DeleteSlot).Scan(&item.Kind, &item.Serials, &item.Option, &item.Slot, &item.Expire)
+
+	//log.Printf("UNEQUIP ITEM ", item)
+	//log.Printf("UNEQUIP [DATABASE]", err)
+	//log.Printf("UNEQUIP Request ", r)
+
+	if err == nil {
+		equ.Remove(item.Slot)
+		var _, err3 = db.Queryx(
+			"DELETE "+
+				"FROM characters_equipment "+
+				"WHERE id = ? AND slot = ?", r.Id, item.Slot)
+		if err3 != nil {
+			log.Printf("[DATABASE]", err3)
+		}
+		item.Slot = r.CreateSlot
+		inv.Set(item.Slot, item)
+		db.MustExec("INSERT INTO characters_inventory "+
+			"(id, kind, serials, opt, slot, expire) VALUES (?, ?, ?, ?, ?, ?)",
+			r.Id, item.Kind, item.Serials, item.Option, item.Slot, item.Expire,
+		)
+
+		s.ItemKind = uint32(item.Kind)
+	}
+
+	if err != nil {
+		log.Printf("[DATABASE]", err)
+	}
+
+	return nil
+}
+
+func MoveItemInvToEqu(c *rpc.Client, r *character.ItemEquipReq, s *character.ItemEquipRes) error {
+	var db = g_DatabaseManager.Get(r.Server)
+
+	var item inventory.Item
+	err := db.QueryRow("SELECT kind, serials, opt, slot, expire FROM characters_inventory WHERE id = ? AND slot = ?", r.Id, r.DeleteSlot).Scan(&item.Kind, &item.Serials, &item.Option, &item.Slot, &item.Expire)
+
+	//log.Printf("UNEQUIP ITEM ", item)
+	//log.Printf("UNEQUIP [DATABASE]", err)
+	//log.Printf("UNEQUIP Request ", r)
+
+	if err == nil {
+		db.MustExec("UPDATE characters_inventory SET slot = ? WHERE id = ? AND slot = ?", r.CreateSlot, r.Id, item.Slot)
+		item.Slot = r.CreateSlot
+
+		s.ItemKind = uint32(item.Kind)
+	}
+
+	if err != nil {
+		log.Printf("[DATABASE]", err)
+	}
+
+	return nil
+}
+
+func MoveItemInvToInv(c *rpc.Client, r *character.ItemEquipReq, s *character.ItemEquipRes) error {
+	var db = g_DatabaseManager.Get(r.Server)
+
+	var item inventory.Item
+	err := db.QueryRow("SELECT kind, serials, opt, slot, expire FROM characters_equipment WHERE id = ? AND slot = ?", r.Id, r.DeleteSlot).Scan(&item.Kind, &item.Serials, &item.Option, &item.Slot, &item.Expire)
+
+	//log.Printf("UNEQUIP ITEM ", item)
+	//log.Printf("UNEQUIP [DATABASE]", err)
+	//log.Printf("UNEQUIP Request ", r)
+
+	if err == nil {
+		db.MustExec("UPDATE characters_equipment SET slot = ? WHERE id = ? AND slot = ?", r.CreateSlot, r.Id, item.Slot)
+		item.Slot = r.CreateSlot
+
+		s.ItemKind = uint32(item.Kind)
+	}
+
+	if err != nil {
+		log.Printf("[DATABASE]", err)
+	}
+
 	return nil
 }
 

@@ -32,4 +32,8 @@ func RegisterPackets() {
 	g_RPCHandler.Register(rpc.DeleteCharacter, DeleteCharacter)
 	g_RPCHandler.Register(rpc.SetSlotOrder, SetSlotOrder)
 	g_RPCHandler.Register(rpc.LoadCharacterData, LoadCharacterData)
+	g_RPCHandler.Register(rpc.MoveItemEquToEqu, MoveItemEquToEqu)
+	g_RPCHandler.Register(rpc.MoveItemEquToInv, MoveItemEquToInv)
+	g_RPCHandler.Register(rpc.MoveItemInvToEqu, MoveItemInvToEqu)
+	g_RPCHandler.Register(rpc.MoveItemInvToInv, MoveItemInvToInv)
 }

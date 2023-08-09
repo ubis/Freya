@@ -115,4 +115,5 @@ func RegisterPackets() {
 	pk.Register(CHANNEL_CHANGE, "ChannelChange", ChannelChange)
 	pk.Register(CHAR_DEL_CHK_SUBPW,
 		"CharacterDeleteCheckSubPassword", CharacterDeleteCheckSubPassword)
+	pk.Register(MOVE_ITEM, "MoveItem", MoveItem)
 }

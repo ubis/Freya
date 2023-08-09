@@ -280,9 +280,9 @@ func MoveItemEquToEqu(c *rpc.Client, r *character.ItemEquipReq, s *character.Ite
 	var item inventory.Item
 	err := db.QueryRow("SELECT kind, serials, opt, slot, expire FROM characters_inventory WHERE id = ? AND slot = ?", r.Id, r.DeleteSlot).Scan(&item.Kind, &item.Serials, &item.Option, &item.Slot, &item.Expire)
 
-	//log.Printf("EQUIP ITEM ", item)
-	//log.Printf("EQUIP [DATABASE]", err)
-	//log.Printf("EQUIP Request ", r)
+	//log.Error("EQUIP ITEM ", item)
+	//log.Error("EQUIP [DATABASE]", err)
+	//log.Error("EQUIP Request ", r)
 
 	if err == nil {
 		inv.Remove(item.Slot)
@@ -291,7 +291,7 @@ func MoveItemEquToEqu(c *rpc.Client, r *character.ItemEquipReq, s *character.Ite
 				"FROM characters_inventory "+
 				"WHERE id = ? AND slot = ?", r.Id, item.Slot)
 		if err3 != nil {
-			log.Printf("[DATABASE]", err3)
+			log.Error("[DATABASE]", err3)
 		}
 		item.Slot = r.CreateSlot
 		equ.Set(item.Slot, item)
@@ -304,7 +304,7 @@ func MoveItemEquToEqu(c *rpc.Client, r *character.ItemEquipReq, s *character.Ite
 	}
 
 	if err != nil {
-		log.Printf("[DATABASE]", err)
+		log.Error("[DATABASE]", err)
 	}
 
 	return nil
@@ -322,9 +322,9 @@ func MoveItemEquToInv(c *rpc.Client, r *character.ItemEquipReq, s *character.Ite
 	var item inventory.Item
 	err := db.QueryRow("SELECT kind, serials, opt, slot, expire FROM characters_equipment WHERE id = ? AND slot = ?", r.Id, r.DeleteSlot).Scan(&item.Kind, &item.Serials, &item.Option, &item.Slot, &item.Expire)
 
-	//log.Printf("UNEQUIP ITEM ", item)
-	//log.Printf("UNEQUIP [DATABASE]", err)
-	//log.Printf("UNEQUIP Request ", r)
+	//log.Error("UNEQUIP ITEM ", item)
+	//log.Error("UNEQUIP [DATABASE]", err)
+	//log.Error("UNEQUIP Request ", r)
 
 	if err == nil {
 		equ.Remove(item.Slot)
@@ -333,7 +333,7 @@ func MoveItemEquToInv(c *rpc.Client, r *character.ItemEquipReq, s *character.Ite
 				"FROM characters_equipment "+
 				"WHERE id = ? AND slot = ?", r.Id, item.Slot)
 		if err3 != nil {
-			log.Printf("[DATABASE]", err3)
+			log.Error("[DATABASE]", err3)
 		}
 		item.Slot = r.CreateSlot
 		inv.Set(item.Slot, item)
@@ -346,7 +346,7 @@ func MoveItemEquToInv(c *rpc.Client, r *character.ItemEquipReq, s *character.Ite
 	}
 
 	if err != nil {
-		log.Printf("[DATABASE]", err)
+		log.Error("[DATABASE]", err)
 	}
 
 	return nil
@@ -358,9 +358,9 @@ func MoveItemInvToEqu(c *rpc.Client, r *character.ItemEquipReq, s *character.Ite
 	var item inventory.Item
 	err := db.QueryRow("SELECT kind, serials, opt, slot, expire FROM characters_inventory WHERE id = ? AND slot = ?", r.Id, r.DeleteSlot).Scan(&item.Kind, &item.Serials, &item.Option, &item.Slot, &item.Expire)
 
-	//log.Printf("UNEQUIP ITEM ", item)
-	//log.Printf("UNEQUIP [DATABASE]", err)
-	//log.Printf("UNEQUIP Request ", r)
+	//log.Error("UNEQUIP ITEM ", item)
+	//log.Error("UNEQUIP [DATABASE]", err)
+	//log.Error("UNEQUIP Request ", r)
 
 	if err == nil {
 		db.MustExec("UPDATE characters_inventory SET slot = ? WHERE id = ? AND slot = ?", r.CreateSlot, r.Id, item.Slot)
@@ -370,7 +370,7 @@ func MoveItemInvToEqu(c *rpc.Client, r *character.ItemEquipReq, s *character.Ite
 	}
 
 	if err != nil {
-		log.Printf("[DATABASE]", err)
+		log.Error("[DATABASE]", err)
 	}
 
 	return nil
@@ -382,9 +382,9 @@ func MoveItemInvToInv(c *rpc.Client, r *character.ItemEquipReq, s *character.Ite
 	var item inventory.Item
 	err := db.QueryRow("SELECT kind, serials, opt, slot, expire FROM characters_equipment WHERE id = ? AND slot = ?", r.Id, r.DeleteSlot).Scan(&item.Kind, &item.Serials, &item.Option, &item.Slot, &item.Expire)
 
-	//log.Printf("UNEQUIP ITEM ", item)
-	//log.Printf("UNEQUIP [DATABASE]", err)
-	//log.Printf("UNEQUIP Request ", r)
+	//log.Error("UNEQUIP ITEM ", item)
+	//log.Error("UNEQUIP [DATABASE]", err)
+	//log.Error("UNEQUIP Request ", r)
 
 	if err == nil {
 		db.MustExec("UPDATE characters_equipment SET slot = ? WHERE id = ? AND slot = ?", r.CreateSlot, r.Id, item.Slot)
@@ -394,7 +394,7 @@ func MoveItemInvToInv(c *rpc.Client, r *character.ItemEquipReq, s *character.Ite
 	}
 
 	if err != nil {
-		log.Printf("[DATABASE]", err)
+		log.Error("[DATABASE]", err)
 	}
 
 	return nil

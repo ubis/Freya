@@ -8,6 +8,8 @@ import (
 	"github.com/ubis/Freya/share/models/inventory"
 	"github.com/ubis/Freya/share/models/skills"
 	"github.com/ubis/Freya/share/rpc"
+
+	"github.com/jmoiron/sqlx"
 )
 
 // LoadCharacters RPC Call

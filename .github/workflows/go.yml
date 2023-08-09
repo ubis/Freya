@@ -1,0 +1,41 @@
+name: Go
+
+on:
+  push:
+    branches: [ "development" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.20'
+
+    - name: Build
+      run: |
+        GOOS=linux make && mv bin bin_linux
+        GOOS=windows make && mv bin bin_windows
+        GOOS=darwin make && mv bin bin_darwin
+
+    - name: Upload Linux Build
+      uses: actions/upload-artifact@v2
+      with:
+        name: freya-linux
+        path: ./bin_linux
+
+    - name: Upload Windows Build
+      uses: actions/upload-artifact@v2
+      with:
+        name: freya-windows
+        path: ./bin_windows
+
+    - name: Upload macOS Build
+      uses: actions/upload-artifact@v2
+      with:
+        name: freya-darwin
+        path: ./bin_darwin

@@ -5,10 +5,10 @@
 .vscode/
 
 ## Ignore Binaries, logs...
-bin/
-log/
-pkg/
-cfg/
+bin/*
+log/*
+pkg/*
+cfg/*
 
 ## Ignore macOS FS files
 .DS_Store

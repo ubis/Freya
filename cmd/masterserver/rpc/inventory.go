@@ -7,7 +7,7 @@ import (
 	"github.com/ubis/Freya/share/rpc"
 )
 
-func MoveItemEquToEqu(c *rpc.Client, r *character.ItemEquipReq, s *character.ItemEquipRes) error {
+func MoveItemInvToEqu(c *rpc.Client, r *character.ItemEquipReq, s *character.ItemEquipRes) error {
 	var db = g_DatabaseManager.Get(r.Server)
 
 	var inv = inventory.Inventory{}
@@ -23,7 +23,7 @@ func MoveItemEquToEqu(c *rpc.Client, r *character.ItemEquipReq, s *character.Ite
 
 	//log.Error("EQUIP ITEM ", item)
 	//log.Error("EQUIP [DATABASE]", err)
-	//log.Error("EQUIP Request ", r)
+	//log.Debug("MOVE E TO E Request ", r)
 
 	if err == nil {
 		inv.Remove(item.Slot)
@@ -65,7 +65,7 @@ func MoveItemEquToInv(c *rpc.Client, r *character.ItemEquipReq, s *character.Ite
 
 	//log.Error("UNEQUIP ITEM ", item)
 	//log.Error("UNEQUIP [DATABASE]", err)
-	//log.Error("UNEQUIP Request ", r)
+	//log.Debug("MOVE E TO I Request ", r)
 
 	if err == nil {
 		equ.Remove(item.Slot)
@@ -91,21 +91,22 @@ func MoveItemEquToInv(c *rpc.Client, r *character.ItemEquipReq, s *character.Ite
 	return nil
 }
 
-func MoveItemInvToEqu(c *rpc.Client, r *character.ItemEquipReq, s *character.ItemEquipRes) error {
+func MoveItemEquToEqu(c *rpc.Client, r *character.ItemEquipReq, s *character.ItemEquipRes) error {
 	var db = g_DatabaseManager.Get(r.Server)
 
 	var item inventory.Item
 	query := db.QueryRow("SELECT kind, serials, opt, slot, expire "+
-		"FROM characters_inventory WHERE id = ? AND slot = ?", r.Id, r.DeleteSlot)
+		"FROM characters_equipment WHERE id = ? AND slot = ?", r.Id, r.DeleteSlot)
 	err := query.Scan(&item.Kind, &item.Serials, &item.Option, &item.Slot, &item.Expire)
+
 	//log.Error("UNEQUIP ITEM ", item)
 	//log.Error("UNEQUIP [DATABASE]", err)
-	//log.Error("UNEQUIP Request ", r)
+	//log.Debug("MOVE E TO E Request ", r)
 
 	if err == nil {
-		db.MustExec("UPDATE characters_inventory SET slot = ? WHERE id = ? AND slot = ?", r.CreateSlot, r.Id, item.Slot)
+		db.MustExec("UPDATE characters_equipment SET slot = ? WHERE id = ? AND slot = ?", r.CreateSlot, r.Id, item.Slot)
 		item.Slot = r.CreateSlot
-		s.ItemKind = uint32(item.Kind)
+		s.ItemKind = item.Kind
 	}
 
 	if err != nil {
@@ -120,16 +121,17 @@ func MoveItemInvToInv(c *rpc.Client, r *character.ItemEquipReq, s *character.Ite
 
 	var item inventory.Item
 	query := db.QueryRow("SELECT kind, serials, opt, slot, expire "+
-		"FROM characters_equipment WHERE id = ? AND slot = ?", r.Id, r.DeleteSlot)
+		"FROM characters_inventory WHERE id = ? AND slot = ?", r.Id, r.DeleteSlot)
 	err := query.Scan(&item.Kind, &item.Serials, &item.Option, &item.Slot, &item.Expire)
+
 	//log.Error("UNEQUIP ITEM ", item)
 	//log.Error("UNEQUIP [DATABASE]", err)
-	//log.Error("UNEQUIP Request ", r)
+	//log.Debug("MOVE I TO I Request ", r)
 
 	if err == nil {
-		db.MustExec("UPDATE characters_equipment SET slot = ? WHERE id = ? AND slot = ?", r.CreateSlot, r.Id, item.Slot)
+		db.MustExec("UPDATE characters_inventory SET slot = ? WHERE id = ? AND slot = ?", r.CreateSlot, r.Id, item.Slot)
 		item.Slot = r.CreateSlot
-		s.ItemKind = uint32(item.Kind)
+		s.ItemKind = item.Kind
 	}
 
 	if err != nil {

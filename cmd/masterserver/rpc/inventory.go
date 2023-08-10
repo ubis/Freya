@@ -38,9 +38,7 @@ func MoveItemEquToEqu(c *rpc.Client, r *character.ItemEquipReq, s *character.Ite
 		equ.Set(item.Slot, item)
 		db.MustExec("INSERT INTO characters_equipment "+
 			"(id, kind, serials, opt, slot, expire) VALUES (?, ?, ?, ?, ?, ?)",
-			r.Id, item.Kind, item.Serials, item.Option, item.Slot, item.Expire,
-		)
-
+			r.Id, item.Kind, item.Serials, item.Option, item.Slot, item.Expire)
 		s.ItemKind = uint32(item.Kind)
 	}
 
@@ -82,9 +80,7 @@ func MoveItemEquToInv(c *rpc.Client, r *character.ItemEquipReq, s *character.Ite
 		inv.Set(item.Slot, item)
 		db.MustExec("INSERT INTO characters_inventory "+
 			"(id, kind, serials, opt, slot, expire) VALUES (?, ?, ?, ?, ?, ?)",
-			r.Id, item.Kind, item.Serials, item.Option, item.Slot, item.Expire,
-		)
-
+			r.Id, item.Kind, item.Serials, item.Option, item.Slot, item.Expire)
 		s.ItemKind = uint32(item.Kind)
 	}
 
@@ -109,7 +105,6 @@ func MoveItemInvToEqu(c *rpc.Client, r *character.ItemEquipReq, s *character.Ite
 	if err == nil {
 		db.MustExec("UPDATE characters_inventory SET slot = ? WHERE id = ? AND slot = ?", r.CreateSlot, r.Id, item.Slot)
 		item.Slot = r.CreateSlot
-
 		s.ItemKind = uint32(item.Kind)
 	}
 
@@ -134,7 +129,6 @@ func MoveItemInvToInv(c *rpc.Client, r *character.ItemEquipReq, s *character.Ite
 	if err == nil {
 		db.MustExec("UPDATE characters_equipment SET slot = ? WHERE id = ? AND slot = ?", r.CreateSlot, r.Id, item.Slot)
 		item.Slot = r.CreateSlot
-
 		s.ItemKind = uint32(item.Kind)
 	}
 

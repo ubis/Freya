@@ -116,4 +116,6 @@ func RegisterPackets() {
 	pk.Register(CHAR_DEL_CHK_SUBPW,
 		"CharacterDeleteCheckSubPassword", CharacterDeleteCheckSubPassword)
 	pk.Register(MOVE_ITEM, "MoveItem", MoveItem)
+	pk.Register(NFY_ITEM_EQUIP, "NotifyItemEquip", nil)
+	pk.Register(NFY_ITEM_UNEQUIP, "NotifyItemUnEquip", nil)
 }

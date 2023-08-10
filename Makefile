@@ -10,6 +10,10 @@ all: pre
 	$(foreach server,$(TARGETS), \
 		go build -v -o $(BINDIR)/$(server) $(SRVDIR)/$(server);)
 
+exe: pre
+	$(foreach server,$(TARGETS), \
+    		GOOS=windows go build -v -o $(BINDIR)/$(server).exe $(SRVDIR)/$(server);)
+
 pre:
 	mkdir -p $(BINDIR)
 

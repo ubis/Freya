@@ -56,20 +56,22 @@ func fillPlayerInfo(pkt *network.Writer, session *network.Session) {
 	pkt.WriteBytes(eq)
 }
 
-func NewUserSingle(session *network.Session) *network.Writer {
+func NewUserSingle(session *network.Session, reason server.NewUserType) *network.Writer {
 	pkt := network.NewWriter(net.NEWUSERLIST)
-	pkt.WriteUint16(1) // player num
+	pkt.WriteByte(1) // player num
+	pkt.WriteByte(byte(reason))
 
 	fillPlayerInfo(pkt, session)
 
 	return pkt
 }
 
-func NewUserList(players map[uint16]*network.Session) *network.Writer {
+func NewUserList(players map[uint16]*network.Session, reason server.NewUserType) *network.Writer {
 	online := len(players)
 
 	pkt := network.NewWriter(net.NEWUSERLIST)
-	pkt.WriteUint16(online)
+	pkt.WriteByte(online)
+	pkt.WriteByte(byte(reason))
 
 	for _, v := range players {
 		fillPlayerInfo(pkt, v)

@@ -4,6 +4,7 @@ import (
 	"github.com/ubis/Freya/cmd/gameserver/context"
 	"github.com/ubis/Freya/cmd/gameserver/net"
 	"github.com/ubis/Freya/share/models/character"
+	"github.com/ubis/Freya/share/models/server"
 	"github.com/ubis/Freya/share/network"
 	"github.com/ubis/Freya/share/rpc"
 
@@ -252,7 +253,7 @@ func Uninitialze(session *network.Session, reader *network.Reader) {
 
 	session.Send(pkt)
 
-	world.ExitWorld(session)
+	world.ExitWorld(session, server.DelUserLogout)
 }
 
 // MessageEvnt Packet
@@ -342,7 +343,7 @@ func WarpCommand(session *network.Session, reader *network.Reader) {
 	pkt.WriteInt32(0)
 	pkt.WriteInt32(0)
 
-	world.ExitWorld(session)
+	world.ExitWorld(session, server.DelUserWarp)
 
 	session.Send(pkt)
 

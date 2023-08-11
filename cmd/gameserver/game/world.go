@@ -131,7 +131,7 @@ func (w *World) EnterWorld(session *network.Session) {
 	column, row := cell.GetId()
 
 	// notify other nearby cells about new player with radius of -2/+2
-	pkt := notify.NewUserSingle(session)
+	pkt := notify.NewUserSingle(session, server.NewUserInit)
 	w.sendToNearbyCells(pkt, column, row, 2)
 
 	// notify player about nearby cell states
@@ -151,7 +151,7 @@ func (w *World) EnterWorld(session *network.Session) {
 }
 
 // ExitWorld removes a player session from the current world cell.
-func (w *World) ExitWorld(session *network.Session) {
+func (w *World) ExitWorld(session *network.Session, reason server.DelUserType) {
 	ctx, err := context.Parse(session)
 	if err != nil {
 		log.Error("Unable to parse session context:", err.Error())
@@ -177,7 +177,7 @@ func (w *World) ExitWorld(session *network.Session) {
 	cell.RemovePlayer(session)
 
 	// notify other players about leaving player
-	pkt := notify.DelUserList(session, server.DelUserLogout)
+	pkt := notify.DelUserList(session, reason)
 	if pkt == nil {
 		return
 	}
@@ -221,7 +221,7 @@ func (w *World) AdjustCell(session *network.Session) {
 	// get column and row from new cell
 	nc, nr := newCell.GetId()
 
-	pkt := notify.NewUserSingle(session)
+	pkt := notify.NewUserSingle(session, server.NewUserMove)
 	if pkt == nil {
 		log.Error("Failed to create NewUserSingle packet!")
 		return

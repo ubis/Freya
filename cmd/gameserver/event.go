@@ -45,7 +45,7 @@ func OnClientDisconnect(e event.Event) {
 	// in case client was in the world, notify other players
 	world := context.GetWorld(s)
 	if world != nil {
-		world.ExitWorld(s)
+		world.ExitWorld(s, server.DelUserLogout)
 	}
 
 	log.Infof("Client `%s` disconnected from the GameServer", s.GetEndPnt())

@@ -6,6 +6,7 @@ import (
 	"github.com/ubis/Freya/cmd/gameserver/context"
 	"github.com/ubis/Freya/cmd/gameserver/packet/notify"
 	"github.com/ubis/Freya/share/log"
+	"github.com/ubis/Freya/share/models/server"
 	"github.com/ubis/Freya/share/network"
 )
 
@@ -26,7 +27,7 @@ func (c *Cell) sendPlayers(session *network.Session) {
 		return
 	}
 
-	pkt := notify.NewUserList(c.players)
+	pkt := notify.NewUserList(c.players, server.NewUserNone)
 	if pkt == nil {
 		return
 	}

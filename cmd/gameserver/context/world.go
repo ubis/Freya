@@ -2,6 +2,7 @@ package context
 
 import (
 	"github.com/ubis/Freya/share/log"
+	"github.com/ubis/Freya/share/models/server"
 	"github.com/ubis/Freya/share/network"
 )
 
@@ -18,7 +19,7 @@ type CellHandler interface {
 type WorldHandler interface {
 	Initialize(wm WorldManagerHandler)
 	EnterWorld(session *network.Session)
-	ExitWorld(session *network.Session)
+	ExitWorld(session *network.Session, reason server.DelUserType)
 	AdjustCell(session *network.Session)
 	BroadcastPacket(session *network.Session, pkt *network.Writer)
 	FindWarp(warp byte) *Warp

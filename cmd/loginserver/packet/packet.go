@@ -38,8 +38,10 @@ func NotifyServerInfo(session *network.Session) {
 		return ""
 	}()
 
-	msg = "Build: #" + buildCommit[:6]
-	session.Send(SystemMessgEx(msg))
+	if len(buildCommit) >= 6 {
+		msg = "Build: #" + buildCommit[:6]
+		session.Send(SystemMessgEx(msg))
+	}
 }
 
 // Registers network packets

@@ -1,5 +1,6 @@
-warp:
-  - world: 1 # bloody ice
+[
+  {
+    world: 1, # bloody ice
     warps: [
       {
         id: 15,
@@ -11,7 +12,9 @@ warp:
         ]
       }
     ]
-  - world: 2 # desert scream
+  },
+  {
+    world: 2, # desert scream
     warps: [
       {
         id: 15,
@@ -23,7 +26,9 @@ warp:
         ]
       }
     ]
-  - world: 3 # green despair
+  },
+  {
+    world: 3, # green despair
     warps: [
       {
         id: 15,
@@ -35,7 +40,9 @@ warp:
         ]
       }
     ]
-  - world: 30 # warp gate
+  },
+  {
+    world: 30, # warp gate
     warps: [
       {
         id: 1,
@@ -65,3 +72,5 @@ warp:
         ]
       }
     ]
+  }
+]

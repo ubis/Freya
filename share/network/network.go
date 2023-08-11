@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/ubis/Freya/share/event"
 	"github.com/ubis/Freya/share/log"
@@ -79,8 +80,9 @@ func (n *Network) Init(port int, s *server.Settings) {
 		}
 
 		n.lock.Lock()
-		n.clients[n.userIdx] = &session // add new session
-		session.UserIdx = n.userIdx     // update session user index
+		n.clients[n.userIdx] = &session             // add new session
+		session.UserIdx = n.userIdx                 // update session user index
+		session.AuthKey = uint32(time.Now().Unix()) // set auth key
 		n.userIdx++
 		n.lock.Unlock()
 

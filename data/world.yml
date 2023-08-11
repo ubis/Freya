@@ -9,6 +9,36 @@
     id: 3 # green despair
   },
   {
+    id: 4 # port lux
+  },
+  {
+    id: 5 # fort ruina
+  },
+  {
+    id: 6 # lake side
+  },
+  {
+    id: 7 # undead ground
+  },
+  {
+    id: 8 # forgotten ruin
+  },
+  {
+    id: 9 # mutant forest
+  },
+  {
+    id: 10 # pontus ferrum
+  },
+  {
+    id: 11 # porta inferno
+  },
+  {
+    id: 12 # arcane trace
+  },
+  {
+    id: 22 # senillinea
+  },
+  {
     id: 30 # warp gate
   }
 ]

@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/ubis/Freya/cmd/gameserver/context"
+	"github.com/ubis/Freya/cmd/gameserver/game"
 	"github.com/ubis/Freya/share/event"
 	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/models/server"
@@ -13,9 +14,13 @@ import (
 )
 
 // Registers server events
-func RegisterEvents() {
+func RegisterEvents(wm *game.WorldManager) {
 	log.Info("Registering events...")
-	event.Register(event.ClientConnectEvent, event.Handler(OnClientConnect))
+
+	event.Register(event.ClientConnectEvent, event.Handler(func(e event.Event) {
+		OnClientConnect(e, wm)
+	}))
+
 	event.Register(event.ClientDisconnectEvent, event.Handler(OnClientDisconnect))
 	event.Register(event.PacketReceiveEvent, event.Handler(OnPacketReceive))
 	event.Register(event.PacketSendEvent, event.Handler(OnPacketSend))
@@ -24,11 +29,11 @@ func RegisterEvents() {
 }
 
 // OnClientConnect event informs server about new connected client
-func OnClientConnect(e event.Event) {
+func OnClientConnect(e event.Event, wm *game.WorldManager) {
 	if s, ok := e.(*network.Session); !ok {
 		log.Error("Cannot parse onClientConnect event!")
 	} else {
-		s.DataEx = &context.Context{WorldManager: g_WorldManager}
+		s.DataEx = &context.Context{WorldManager: wm}
 
 		log.Infof("Client `%s` connected to the GameServer", s.GetEndPnt())
 	}
@@ -81,19 +86,19 @@ func OnSyncConnect(event event.Event) {
 	log.Info("Established connection with the Master Server!")
 
 	// register this server
-	var req = server.RegisterReq{
-		server.GAME_SERVER,
-		byte(g_ServerConfig.ServerType),
-		byte(g_ServerSettings.ServerId),
-		byte(g_ServerSettings.ChannelId),
-		binary.LittleEndian.Uint32(net.ParseIP(g_ServerConfig.PublicIp)[12:16]),
-		uint16(g_ServerConfig.Port),
-		uint16(g_NetworkManager.GetOnlineUsers()),
-		uint16(g_ServerConfig.MaxUsers),
+	req := server.RegisterReq{
+		Type:         server.GAME_SERVER,
+		ServerType:   byte(g_ServerConfig.ServerType),
+		ServerId:     byte(g_ServerSettings.ServerId),
+		ChannelId:    byte(g_ServerSettings.ChannelId),
+		PublicIp:     binary.LittleEndian.Uint32(net.ParseIP(g_ServerConfig.PublicIp)[12:16]),
+		PublicPort:   uint16(g_ServerConfig.Port),
+		CurrentUsers: uint16(g_NetworkManager.GetOnlineUsers()),
+		MaxUsers:     uint16(g_ServerConfig.MaxUsers),
 	}
-	var res = server.RegisterRes{}
+	res := server.RegisterRes{}
 
-	g_RPCHandler.Call(rpc.ServerRegister, req, &res)
+	g_RPCHandler.Call(rpc.ServerRegister, &req, &res)
 }
 
 // OnSyncDisconnect event informs server about lost connection with the Master Server

@@ -1,8 +1,9 @@
 package packet
 
 import (
+	"github.com/ubis/Freya/cmd/gameserver/context"
+	"github.com/ubis/Freya/cmd/gameserver/net"
 	"github.com/ubis/Freya/share/models/character"
-	"github.com/ubis/Freya/share/models/server"
 	"github.com/ubis/Freya/share/network"
 	"github.com/ubis/Freya/share/rpc"
 
@@ -18,10 +19,9 @@ func Initialized(session *network.Session, reader *network.Reader) {
 		return
 	}
 
-	ctx, ok := session.DataEx.(*context)
-	if !ok {
-		log.Error("Unable to retrieve user context (id: %d)",
-			session.Data.AccountId)
+	ctx, err := context.PreParse(session)
+	if err != nil {
+		log.Error(err.Error())
 		return
 	}
 
@@ -75,7 +75,7 @@ func Initialized(session *network.Session, reader *network.Reader) {
 	sk, sklen := res.Skills.Serialize()
 	sl, sllen := res.Links.Serialize()
 
-	pkt := network.NewWriter(INITIALIZED)
+	pkt := network.NewWriter(net.INITIALIZED)
 	pkt.WriteBytes(make([]byte, 57))
 	pkt.WriteByte(0x00)
 	pkt.WriteByte(0x14)
@@ -210,12 +210,23 @@ func Initialized(session *network.Session, reader *network.Reader) {
 	c.EndX = int16(c.X)
 	c.EndY = int16(c.Y)
 
-	ctx.mutex.Lock()
-	ctx.char = &c
-	ctx.mutex.Unlock()
+	ctx.Mutex.Lock()
+	ctx.Char = &c
+	worldManager := ctx.WorldManager
+	ctx.Mutex.Unlock()
 
-	notifyNewPlayer(session)     // notify others about new player
-	notifyOnlinePlayers(session) // notify all players to our new player
+	if worldManager == nil {
+		log.Error("Unable to get world manager!")
+		return
+	}
+
+	world := worldManager.FindWorld(c.World)
+	if world == nil {
+		log.Error("Unable to get world")
+		return
+	}
+
+	world.EnterWorld(session)
 }
 
 // Uninitialze Packet
@@ -224,7 +235,13 @@ func Uninitialze(session *network.Session, reader *network.Reader) {
 	_ = reader.ReadByte()   // map id
 	_ = reader.ReadByte()   // log out
 
-	pkt := network.NewWriter(UNINITIALZE)
+	world := context.GetWorld(session)
+	if world == nil {
+		log.Error("Unable to get current world!")
+		return
+	}
+
+	pkt := network.NewWriter(net.UNINITIALZE)
 	pkt.WriteByte(0) // result
 
 	// complete - 0x00
@@ -235,149 +252,7 @@ func Uninitialze(session *network.Session, reader *network.Reader) {
 
 	session.Send(pkt)
 
-	DelUserList(session, server.DelUserLogout) // notify that player is gone
-}
-
-// notifyNewPlayer to all already connected players
-func notifyNewPlayer(session *network.Session) {
-	pkt := network.NewWriter(NEWUSERLIST)
-	pkt.WriteUint16(1) // player num
-
-	g_NetworkManager.RLock()
-	fillPlayerInfo(pkt, session)
-	g_NetworkManager.RUnlock()
-
-	g_NetworkManager.SendToAllExcept(pkt, session)
-}
-
-// notifyOnlinePlayers to newly connected player
-func notifyOnlinePlayers(session *network.Session) {
-	online := g_NetworkManager.GetOnlineUsers()
-	if online == 1 {
-		// no point, we are alone
-		return
-	}
-
-	online--
-	sessions := g_NetworkManager.GetSessions()
-
-	pkt := network.NewWriter(NEWUSERLIST)
-	pkt.WriteUint16(online)
-
-	g_NetworkManager.RLock()
-	for _, v := range sessions {
-		if v == session || v.DataEx == nil {
-			// we don't want to send player data to our newly connected session
-			// or invalid clients - connected but not sent Connect2Svr packet
-			continue
-		}
-
-		if _, ok := v.DataEx.(*context); !ok {
-			// this is ok - we might have users in the lobby and not in-game
-			// if user is not in-game, DataEx.context will be nil
-			continue
-		}
-
-		fillPlayerInfo(pkt, v)
-
-	}
-	g_NetworkManager.RUnlock()
-
-	session.Send(pkt)
-}
-
-// fillPlayerInfo with player character data
-func fillPlayerInfo(pkt *network.Writer, session *network.Session) {
-	ctx, ok := session.DataEx.(*context)
-	if !ok {
-		log.Error("Unable to retrieve user context (id: %d)",
-			session.Data.AccountId)
-		return
-	}
-
-	ctx.mutex.RLock()
-	defer ctx.mutex.RUnlock()
-
-	c := ctx.char
-
-	if c == nil {
-		// client is not ready
-		return
-	}
-
-	pkt.WriteUint32(c.Id)
-	pkt.WriteUint32(session.UserIdx)
-	pkt.WriteUint32(c.Level)
-	pkt.WriteInt32(0x01C2)    // might be dwMoveBgnTime
-	pkt.WriteUint16(c.BeginX) // start
-	pkt.WriteUint16(c.BeginY)
-	pkt.WriteUint16(c.EndX) // end
-	pkt.WriteUint16(c.EndY)
-	pkt.WriteByte(0)
-	pkt.WriteInt32(0)
-	pkt.WriteInt16(0)
-	pkt.WriteInt32(c.Style.Get())
-	pkt.WriteByte(0) // animation id aka "live style"
-	pkt.WriteInt16(0)
-
-	eq, eqlen := c.Equipment.SerializeEx()
-	pkt.WriteInt16(eqlen)
-	pkt.WriteInt16(0x00)
-
-	for i := 0; i < 21; i++ {
-		pkt.WriteByte(0)
-	}
-
-	pkt.WriteByte(len(c.Name) + 1)
-	pkt.WriteString(c.Name)
-	pkt.WriteByte(0) // guild name len
-	// pkt.WriteString("guild name")
-
-	pkt.WriteBytes(eq)
-}
-
-// DelUserList to all already connected players
-func DelUserList(session *network.Session, reason server.DelUserType) {
-	if session.DataEx == nil {
-		// we might have invalid clients, ignore
-		return
-	}
-
-	ctx, ok := session.DataEx.(*context)
-	if !ok {
-		// we might have invalid clients, ignore
-		return
-	}
-
-	ctx.mutex.RLock()
-	if ctx.char == nil {
-		// user might be (or was) in the lobby
-		ctx.mutex.RUnlock()
-		return
-	}
-
-	charId := ctx.char.Id
-
-	if reason != server.DelUserWarp {
-		ctx.char = nil // we are no longer in the world
-	}
-
-	ctx.mutex.RUnlock()
-
-	pkt := network.NewWriter(DELUSERLIST)
-	pkt.WriteUint32(charId)
-	pkt.WriteByte(byte(reason)) // type
-
-	/* types:
-	 * dead = 0x10
-	 * warp = 0x11
-	 * logout = 0x12
-	 * retn = 0x13
-	 * dissapear = 0x14
-	 * nfsdead = 0x15
-	 */
-
-	g_NetworkManager.SendToAllExcept(pkt, session)
+	world.ExitWorld(session)
 }
 
 // MessageEvnt Packet
@@ -388,29 +263,20 @@ func MessageEvnt(session *network.Session, reader *network.Reader) {
 	mtype := reader.ReadByte() // 0xA0 = normal; 0xA1 = trade
 	msg := reader.ReadString(int(msglen))
 
-	if session.DataEx == nil {
-		// we have invalid user, ignore
+	world := context.GetWorld(session)
+	if world == nil {
+		log.Error("Unable to get current world!")
 		return
 	}
 
-	ctx, ok := session.DataEx.(*context)
-	if !ok {
-		// we have invalid user, ignore
+	id, err := context.GetCharId(session)
+	if err != nil {
+		log.Error(err.Error())
 		return
 	}
 
-	ctx.mutex.RLock()
-	if ctx.char == nil {
-		// user is in the lobby, we cannot receive such messages
-		ctx.mutex.RUnlock()
-		return
-	}
-
-	charId := ctx.char.Id
-	ctx.mutex.RUnlock()
-
-	pkt := network.NewWriter(NFY_MESSAGEEVNT)
-	pkt.WriteUint32(charId)
+	pkt := network.NewWriter(net.NFY_MESSAGEEVNT)
+	pkt.WriteUint32(id)
 	pkt.WriteByte(0) // 0x03 = [GM] prefix
 	pkt.WriteByte(unk1)
 	pkt.WriteByte(0)
@@ -424,30 +290,44 @@ func MessageEvnt(session *network.Session, reader *network.Reader) {
 	pkt.WriteByte(0)
 	pkt.WriteByte(0)
 
-	g_NetworkManager.SendToAll(pkt)
+	world.BroadcastPacket(session, pkt)
 }
 
 // WarpCommand packet
 func WarpCommand(session *network.Session, reader *network.Reader) {
 	warpId := reader.ReadByte()
 
-	ctx, err := parseSessionContext(session)
+	ctx, err := context.Parse(session)
 	if err != nil {
 		log.Error(err.Error())
 		return
 	}
 
-	ctx.mutex.RLock()
-	world := ctx.char.World
-	ctx.mutex.RUnlock()
+	wm := context.GetWorldManager(session)
+	if wm == nil {
+		log.Error("Unable to get world manager!")
+		return
+	}
 
-	warp := g_DataLoader.WarpData.FindWarp(world, warpId)
+	world := context.GetWorld(session)
+	if world == nil {
+		log.Error("Unable to get current world!")
+		return
+	}
+
+	warp := world.FindWarp(warpId)
 	if warp == nil {
 		log.Error("Unable to find warp:", warpId)
 		return
 	}
 
-	pkt := network.NewWriter(WARPCOMMAND)
+	newWorld := wm.FindWorld(warp.World)
+	if newWorld == nil {
+		log.Error("Unable to find new world:", warp.World)
+		return
+	}
+
+	pkt := network.NewWriter(net.WARPCOMMAND)
 	pkt.WriteInt16(warp.Location[0].X) // pos x
 	pkt.WriteInt16(warp.Location[0].Y) // pos y
 	pkt.WriteInt32(0)                  // exp
@@ -462,23 +342,19 @@ func WarpCommand(session *network.Session, reader *network.Reader) {
 	pkt.WriteInt32(0)
 	pkt.WriteInt32(0)
 
-	DelUserList(session, server.DelUserWarp)
+	world.ExitWorld(session)
 
 	session.Send(pkt)
 
-	ctx.mutex.Lock()
-	ctx.char.World = byte(warp.World)
-	ctx.char.X = byte(warp.Location[0].X)
-	ctx.char.Y = byte(warp.Location[0].Y)
-	ctx.char.BeginX = int16(warp.Location[0].X)
-	ctx.char.BeginY = int16(warp.Location[0].Y)
-	ctx.char.EndX = int16(warp.Location[0].X)
-	ctx.char.EndY = int16(warp.Location[0].Y)
-	ctx.mutex.Unlock()
+	ctx.Mutex.Lock()
+	ctx.Char.World = byte(warp.World)
+	ctx.Char.X = byte(warp.Location[0].X)
+	ctx.Char.Y = byte(warp.Location[0].Y)
+	ctx.Char.BeginX = int16(warp.Location[0].X)
+	ctx.Char.BeginY = int16(warp.Location[0].Y)
+	ctx.Char.EndX = int16(warp.Location[0].X)
+	ctx.Char.EndY = int16(warp.Location[0].Y)
+	ctx.Mutex.Unlock()
 
-	// this will produce little glitches - player re-appears, though it is in
-	// the different world
-	// this is because we don't have proper map management (yet)
-	notifyNewPlayer(session)     // notify others about new player
-	notifyOnlinePlayers(session) // notify all players to our new player
+	newWorld.EnterWorld(session)
 }

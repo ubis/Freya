@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/ubis/Freya/cmd/gameserver/def"
+	"github.com/ubis/Freya/cmd/gameserver/game"
 	"github.com/ubis/Freya/cmd/gameserver/packet"
 	"github.com/ubis/Freya/cmd/gameserver/rpc"
 	"github.com/ubis/Freya/share/log"
@@ -13,13 +14,15 @@ var g_ServerSettings = def.ServerSettings
 var g_NetworkManager = def.NetworkManager
 var g_PacketHandler = def.PacketHandler
 var g_RPCHandler = def.RPCHandler
-var g_DataLoader = def.DataLoader
+var g_WorldManager = &game.WorldManager{}
 
 func main() {
 	log.Init(def.GetName())
 
 	// read config
 	g_ServerConfig.Read()
+
+	g_WorldManager.Initialize()
 
 	// set server settings
 	g_ServerSettings.XorKeyTable.Init()
@@ -40,9 +43,6 @@ func main() {
 
 	// register RPC calls
 	rpc.RegisterCalls()
-
-	// init DataLoader
-	g_DataLoader.Init()
 
 	// start RPC handler
 	g_RPCHandler.Start()

@@ -4,7 +4,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/ubis/Freya/cmd/gameserver/data"
 	"github.com/ubis/Freya/share/network"
 	"github.com/ubis/Freya/share/rpc"
 )
@@ -14,7 +13,6 @@ var ServerSettings = &Settings{}
 var NetworkManager = &network.Network{}
 var PacketHandler = &network.PacketHandler{}
 var RPCHandler = &rpc.Client{}
-var DataLoader = &data.Loader{}
 
 // init function, which runs before main()
 func init() {

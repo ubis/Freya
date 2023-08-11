@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"net"
 
-	"github.com/ubis/Freya/cmd/gameserver/packet"
+	"github.com/ubis/Freya/cmd/gameserver/context"
 	"github.com/ubis/Freya/share/event"
 	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/models/server"
@@ -28,6 +28,8 @@ func OnClientConnect(e event.Event) {
 	if s, ok := e.(*network.Session); !ok {
 		log.Error("Cannot parse onClientConnect event!")
 	} else {
+		s.DataEx = &context.Context{WorldManager: g_WorldManager}
+
 		log.Infof("Client `%s` connected to the GameServer", s.GetEndPnt())
 	}
 }
@@ -41,7 +43,10 @@ func OnClientDisconnect(e event.Event) {
 	}
 
 	// in case client was in the world, notify other players
-	packet.DelUserList(s, server.DelUserLogout)
+	world := context.GetWorld(s)
+	if world != nil {
+		world.ExitWorld(s)
+	}
 
 	log.Infof("Client `%s` disconnected from the GameServer", s.GetEndPnt())
 }

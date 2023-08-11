@@ -3,6 +3,7 @@ package packet
 import (
 	"bytes"
 
+	"github.com/ubis/Freya/cmd/gameserver/net"
 	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/models/character"
 	"github.com/ubis/Freya/share/models/subpasswd"
@@ -37,7 +38,7 @@ func GetMyChartr(session *network.Session, reader *network.Reader) {
 
 	session.Data.CharacterList = resList.List
 
-	var packet = network.NewWriter(GETMYCHARTR)
+	var packet = network.NewWriter(net.GETMYCHARTR)
 	packet.WriteInt32(subpasswdExist)
 	packet.WriteBytes(make([]byte, 10))
 	packet.WriteInt32(resList.LastId)
@@ -78,7 +79,7 @@ func NewMyChartr(session *network.Session, reader *network.Reader) {
 	var newStyle = character.Style{}
 	newStyle.Set(style)
 
-	var packet = network.NewWriter(NEWMYCHARTR)
+	var packet = network.NewWriter(net.NEWMYCHARTR)
 
 	if !newStyle.Verify() || slot > 5 || nameLength > 16 {
 		// invalid style, slot or nameLength
@@ -162,7 +163,7 @@ func DelMyChartr(session *network.Session, reader *network.Reader) {
 		}
 	}
 
-	var packet = network.NewWriter(DELMYCHARTR)
+	var packet = network.NewWriter(net.DELMYCHARTR)
 	packet.WriteByte(res.Result + 1)
 	packet.WriteByte(0x00)
 
@@ -181,7 +182,7 @@ func SetCharacterSlotOrder(session *network.Session, reader *network.Reader) {
 	var res = character.SetOrderRes{}
 	g_RPCHandler.Call(rpc.SetSlotOrder, req, &res)
 
-	var packet = network.NewWriter(SET_CHAR_SLOT_ORDER)
+	var packet = network.NewWriter(net.SET_CHAR_SLOT_ORDER)
 	packet.WriteByte(0x01)
 
 	session.Send(packet)

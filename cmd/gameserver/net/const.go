@@ -1,4 +1,4 @@
-package packet
+package net
 
 // Packet Type ID's
 const (

@@ -2,9 +2,10 @@ package packet
 
 import (
 	"encoding/binary"
-	"net"
+	nnet "net"
 	"time"
 
+	"github.com/ubis/Freya/cmd/gameserver/net"
 	"github.com/ubis/Freya/share/models/account"
 	"github.com/ubis/Freya/share/models/server"
 	"github.com/ubis/Freya/share/network"
@@ -19,7 +20,7 @@ func GetSvrTime(session *network.Session, reader *network.Reader) {
 	z = z / 60 // to hours
 	z = z * -1 // add reverse sign
 
-	var packet = network.NewWriter(GETSVRTIME)
+	var packet = network.NewWriter(net.GETSVRTIME)
 	packet.WriteInt64(now.Unix()) // utc time
 	packet.WriteInt16(z)          // timezone
 
@@ -28,7 +29,7 @@ func GetSvrTime(session *network.Session, reader *network.Reader) {
 
 // ServerEnv Packet
 func ServerEnv(session *network.Session, reader *network.Reader) {
-	var packet = network.NewWriter(SERVERENV)
+	var packet = network.NewWriter(net.SERVERENV)
 	packet.WriteUint16(0x00BE)      // MaxLevel
 	packet.WriteByte(0x01)          // UseDummy
 	packet.WriteByte(0x01)          // Allow CashShop
@@ -73,7 +74,7 @@ func VerifyLinks(session *network.Session, reader *network.Reader) {
 	var recv = account.VerifyRes{}
 	g_RPCHandler.Call(rpc.UserVerify, send, &recv)
 
-	var packet = network.NewWriter(VERIFYLINKS)
+	var packet = network.NewWriter(net.VERIFYLINKS)
 	packet.WriteByte(channel)
 	packet.WriteByte(server)
 
@@ -88,7 +89,7 @@ func VerifyLinks(session *network.Session, reader *network.Reader) {
 
 // SystemMessg Packet which is NFY
 func SystemMessg(message byte, length uint16) *network.Writer {
-	var packet = network.NewWriter(SYSTEMMESSG)
+	var packet = network.NewWriter(net.SYSTEMMESSG)
 	packet.WriteByte(message)
 	packet.WriteUint16(length)
 
@@ -97,7 +98,7 @@ func SystemMessg(message byte, length uint16) *network.Writer {
 
 // BackToCharLobby Packet
 func BackToCharLobby(session *network.Session, reader *network.Reader) {
-	pkt := network.NewWriter(BACK_TO_CHAR_LOBBY)
+	pkt := network.NewWriter(net.BACK_TO_CHAR_LOBBY)
 	pkt.WriteByte(1)
 
 	session.Send(pkt)
@@ -121,7 +122,7 @@ func ChannelList(session *network.Session, reader *network.Reader) {
 		break
 	}
 
-	pkt := network.NewWriter(CHANNEL_LIST)
+	pkt := network.NewWriter(net.CHANNEL_LIST)
 
 	if server == nil {
 		pkt.WriteByte(0)
@@ -153,7 +154,7 @@ func ChannelList(session *network.Session, reader *network.Reader) {
 		// however, here we assume that locally all servers will run on the
 		// same IP
 		if session.IsLocal() {
-			ip := net.ParseIP(session.GetLocalEndPntIp())[12:16]
+			ip := nnet.ParseIP(session.GetLocalEndPntIp())[12:16]
 			pkt.WriteUint32(binary.LittleEndian.Uint32(ip))
 		} else {
 			pkt.WriteUint32(v.Ip)
@@ -170,7 +171,7 @@ func ChannelList(session *network.Session, reader *network.Reader) {
 func ChannelChange(session *network.Session, reader *network.Reader) {
 	_ = reader.ReadByte() // channel id
 
-	pkt := network.NewWriter(CHANNEL_CHANGE)
+	pkt := network.NewWriter(net.CHANNEL_CHANGE)
 	pkt.WriteInt32(1)
 
 	session.Send(pkt)

@@ -94,3 +94,15 @@ type DataRes struct {
 	Skills    skills.SkillList
 	Links     skills.Links
 }
+
+type ItemMoveReq struct {
+	Server     byte
+	Id         int32
+	DeleteSlot uint16
+	CreateSlot uint16
+}
+
+type ItemMoveRes struct {
+	Item   inventory.Item
+	Result error
+}

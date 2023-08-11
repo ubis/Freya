@@ -30,3 +30,10 @@ const (
 	SetSlotOrder      = "SetSlotOrder"
 	LoadCharacterData = "LoadCharacterData"
 )
+
+const (
+	ChangeEquipItemSlot     = "ChangeEquipItemSlot"
+	UnEquipItem             = "UnEquipItem"
+	EquipItem               = "EquipItem"
+	ChangeInventoryItemSlot = "ChangeInventoryItemSlot"
+)

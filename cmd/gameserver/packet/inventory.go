@@ -47,13 +47,11 @@ func UpdatePlayerStorage(session *network.Session, packet string, deleteSlot uin
 }
 
 func StorageExchangeMove(session *network.Session, reader *network.Reader) {
-	equip := reader.ReadUint32()
+	isEquip := reader.ReadUint32() == 1
 	deleteSlot := uint16(reader.ReadUint32())
-	inventory := reader.ReadUint32()
+	isInventory := reader.ReadUint32() == 1
 	createSlot := uint16(reader.ReadUint32())
 
-	isEquip := equip == 1
-	isInventory := inventory == 1
 	var err error = nil
 
 	if isEquip && !isInventory {

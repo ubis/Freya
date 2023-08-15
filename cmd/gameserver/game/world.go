@@ -1,7 +1,7 @@
 package game
 
 import (
-	"errors"
+	"time"
 
 	"github.com/ubis/Freya/cmd/gameserver/context"
 	"github.com/ubis/Freya/cmd/gameserver/packet/notify"
@@ -18,47 +18,52 @@ const (
 
 // World represents the game world and its grid of cells.
 type World struct {
+	manager *WorldManager
+
 	Id   byte
 	Grid [worldMapCellColumn][worldMapCellRow]*Cell
 
+	// mobs
+	mobsMove *time.Ticker
+	mobs     map[int]*Mob
+
+	// data
 	Warps []context.Warp
 }
 
 // isCellValid checks if the cell coordinates are within valid bounds.
-func isCellValid(c, r byte) bool {
-	return c < worldMapCellColumn && r < worldMapCellRow
+func isCellValid(c, r int) bool {
+	return c >= 0 && c < worldMapCellColumn && r >= 0 && r < worldMapCellRow
 }
 
 // getWorldCell calculates cell column and row by position values.
-func getWorldCell(x byte, y byte, column *byte, row *byte) error {
-	c := x >> 4
-	r := y >> 4
+func (w *World) getWorldCell(x, y int) *Cell {
+	column := x >> 4
+	row := y >> 4
 
-	if !isCellValid(c, r) {
-		return errors.New("invalid world cell")
+	if !isCellValid(column, row) {
+		return nil
 	}
 
-	*column = c
-	*row = r
-
-	return nil
+	return w.Grid[column][row]
 }
 
 // getCurrentCell retrieves the cell based on the current character position.
 func (w *World) getCurrentCell(session *network.Session) *Cell {
-	var x, y, column, row byte
+	var x, y byte
 
 	if err := context.GetCharPosition(session, &x, &y); err != nil {
 		log.Error("Failed to get character position:", err)
 		return nil
 	}
 
-	if err := getWorldCell(x, y, &column, &row); err != nil {
-		log.Error("Invalid world cell:", err)
+	cell := w.getWorldCell(int(x), int(y))
+	if cell == nil {
+		log.Error("Invalid world cell")
 		return nil
 	}
 
-	return w.Grid[column][row]
+	return cell
 }
 
 // getNearbyCells returns a slice of nearby cells based on radius.
@@ -99,19 +104,74 @@ func (w *World) sendToNearbyCells(pkt *network.Writer, column, row byte, radius 
 	}
 }
 
-// Initialize initializes the World grid with Cell instances.
-func (w *World) Initialize(wm context.WorldManagerHandler) {
+// initializeCells creates a grid of Cells to represent the game world.
+func (w *World) initializeCells() {
 	for i := byte(0); i < worldMapCellColumn; i++ {
 		for j := byte(0); j < worldMapCellRow; j++ {
-			w.Grid[i][j] = &Cell{}
-			w.Grid[i][j].Initialize(i, j)
+			cell := &Cell{column: i, row: j}
+			cell.Initialize()
+
+			w.Grid[i][j] = cell
 		}
 	}
+}
 
-	// assign data
-	w.Warps = wm.GetWarps(w.Id)
+// initializeMobs sets up the mobs in the game world using the provided list of mobs.
+func (w *World) initializeMobs(mobs []*Mob) {
+	w.mobs = make(map[int]*Mob)
+
+	for k, v := range mobs {
+		cell := w.getWorldCell(int(v.SpawnX), int(v.SpawnY))
+		if cell == nil {
+			log.Error("Invalid world cell")
+			continue
+		}
+
+		mob := mobs[k]
+		mob.Id = k + 1
+		mob.world = w
+		mob.cell = cell
+
+		if parentMob := w.manager.GetMob(mob.Species); parentMob != nil {
+			mob.Merge(parentMob)
+		}
+
+		w.mobs[mob.Id] = mob
+		mob.Initialize()
+		cell.AddMob(mob)
+	}
+}
+
+// initializeTimers sets up and starts timers user in the game world.
+func (w *World) initializeTimers() {
+	// Initialize a ticker for monster movement
+	w.mobsMove = time.NewTicker(time.Millisecond * 150)
+
+	go func() {
+		for range w.mobsMove.C {
+			for _, mob := range w.mobs {
+				mob.Update()
+			}
+		}
+	}()
+}
+
+// Initialize initializes the World grid with Cell instances.
+func (w *World) Initialize(manager *WorldManager) {
+	w.manager = manager
+
+	// load & assign data
+	w.Warps = manager.GetWarps(w.Id)
+	mobs := w.loadMobs()
 
 	log.Debugf("Loaded %d warps in %d world", len(w.Warps), w.Id)
+	log.Debugf("Loaded %d mobs in %d world", len(mobs), w.Id)
+
+	// initialize everything
+	w.initializeCells()
+	w.loadThreadMap()
+	w.initializeMobs(mobs)
+	w.initializeTimers()
 }
 
 // EnterWorld adds a player session to the current world cell.
@@ -268,4 +328,15 @@ func (w *World) FindWarp(warp byte) *context.Warp {
 	}
 
 	return nil
+}
+
+// IsMovable determines if a specific position (x, y) within the world is
+// navigable by characters or entities.
+func (w *World) IsMovable(x, y int) bool {
+	cell := w.getWorldCell(x, y)
+	if cell == nil {
+		return false
+	}
+
+	return cell.IsMovable(x, y)
 }

@@ -1,34 +1,18 @@
 package game
 
 import (
-	"os"
-	"sync"
-
 	"github.com/ubis/Freya/cmd/gameserver/context"
-	"github.com/ubis/Freya/share/directory"
 	"github.com/ubis/Freya/share/log"
-	"gopkg.in/yaml.v2"
 )
 
 // WorldManager manages world maps and their data
 type WorldManager struct {
-	mutex sync.RWMutex
-
 	Worlds []*World
 	Warps  []struct {
 		World byte
 		Warps []context.Warp
 	}
-}
-
-// load reads data from a YAML file and deserializes it into the provided data structure.
-func load(filename string, data any) error {
-	s, err := os.ReadFile(directory.Root() + "data/" + filename)
-	if err != nil {
-		return err
-	}
-
-	return yaml.Unmarshal(s, data)
+	Mobs []*Mob
 }
 
 // Initialize loads worlds, their data and initializes worlds.
@@ -47,8 +31,15 @@ func (wm *WorldManager) Initialize() {
 		return
 	}
 
+	// load mobs
+	if err := load("mobs.yml", &wm.Mobs); err != nil {
+		log.Error("Failed to load world mob data:", err.Error())
+		return
+	}
+
 	log.Infof("Loaded %d world maps\n", len(wm.Worlds))
 	log.Infof("Loaded %d warps\n", len(wm.Warps))
+	log.Infof("Loaded %d mobs\n", len(wm.Mobs))
 
 	// initialize each world
 	for _, v := range wm.Worlds {
@@ -58,9 +49,6 @@ func (wm *WorldManager) Initialize() {
 
 // FindWorld finds a world by its ID.
 func (wm *WorldManager) FindWorld(id byte) context.WorldHandler {
-	wm.mutex.RLock()
-	defer wm.mutex.RUnlock()
-
 	for _, v := range wm.Worlds {
 		if v.Id == id {
 			return v
@@ -78,6 +66,19 @@ func (wm *WorldManager) GetWarps(world byte) []context.Warp {
 		}
 
 		return v.Warps
+	}
+
+	return nil
+}
+
+// GetMob returns the mob that matches a given species ID.
+func (wm *WorldManager) GetMob(species int) *Mob {
+	for _, v := range wm.Mobs {
+		if v.Species != species {
+			continue
+		}
+
+		return v
 	}
 
 	return nil

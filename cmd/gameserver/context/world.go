@@ -21,6 +21,7 @@ type WorldHandler interface {
 	AdjustCell(session *network.Session)
 	BroadcastSessionPacket(session *network.Session, pkt *network.Writer)
 	FindWarp(warp byte) *Warp
+	IsMovable(x, y int) bool
 }
 
 // WorldManagerHandler defines the interface for interacting with a world manager.

@@ -37,7 +37,7 @@ func fillPlayerInfo(pkt *network.Writer, session *network.Session) {
 	pkt.WriteInt32(0)
 	pkt.WriteInt16(0)
 	pkt.WriteInt32(c.Style.Get())
-	pkt.WriteByte(0) // animation id aka "live style"
+	pkt.WriteByte(c.LiveStyle) // animation id aka "live style"
 	pkt.WriteInt16(0)
 
 	eq, eqlen := c.Equipment.SerializeEx()

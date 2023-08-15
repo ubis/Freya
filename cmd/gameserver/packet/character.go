@@ -3,6 +3,7 @@ package packet
 import (
 	"bytes"
 
+	"github.com/ubis/Freya/cmd/gameserver/context"
 	"github.com/ubis/Freya/cmd/gameserver/net"
 	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/models/character"
@@ -186,4 +187,79 @@ func SetCharacterSlotOrder(session *network.Session, reader *network.Reader) {
 	packet.WriteByte(0x01)
 
 	session.Send(packet)
+}
+
+func notifyChangeStyle(session *network.Session) {
+	ctx, err := context.Parse(session)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	ctx.Mutex.RLock()
+	id := ctx.Char.Id
+	style := ctx.Char.Style
+	liveStyle := ctx.Char.LiveStyle
+	ctx.Mutex.RUnlock()
+
+	pkt := network.NewWriter(net.NFY_CHANGESTYLE)
+	pkt.WriteInt32(id)
+	pkt.WriteInt32(style.Get())
+	pkt.WriteInt32(liveStyle)
+	pkt.WriteInt32(0)
+	pkt.WriteInt16(0)
+
+	ctx.World.BroadcastSessionPacket(session, pkt)
+}
+
+func ChangeStyle(session *network.Session, reader *network.Reader) {
+	_ = reader.ReadInt32() // style
+	liveStyle := reader.ReadInt32()
+	_ = reader.ReadInt32() // buffFlag?
+	_ = reader.ReadInt16() // actionFlag?
+
+	ctx, err := context.Parse(session)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	ctx.Mutex.Lock()
+	ctx.Char.LiveStyle = liveStyle
+	ctx.Mutex.Unlock()
+
+	pkt := network.NewWriter(net.CHANGESTYLE)
+	pkt.WriteByte(1)
+
+	session.Send(pkt)
+
+	notifyChangeStyle(session)
+}
+
+func SkillToActs(session *network.Session, reader *network.Reader) {
+	target := reader.ReadInt32() // self char id
+	action := reader.ReadUint16()
+	x := reader.ReadByte()
+	y := reader.ReadByte()
+
+	id, err := context.GetCharId(session)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	ctx, err := context.Parse(session)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	pkt := network.NewWriter(net.NFY_SKILLTOACTS)
+	pkt.WriteInt32(id)
+	pkt.WriteInt32(target)
+	pkt.WriteUint16(action)
+	pkt.WriteByte(x)
+	pkt.WriteByte(y)
+
+	ctx.World.BroadcastSessionPacket(session, pkt)
 }

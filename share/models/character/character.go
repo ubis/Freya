@@ -55,6 +55,7 @@ type Character struct {
 	X         byte
 	Y         byte
 	Style     Style
+	LiveStyle int32 `db:"-"`
 	Alz       uint64
 	Nation    byte
 	SwordRank byte   `db:"sword_rank"`

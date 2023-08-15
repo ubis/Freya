@@ -240,7 +240,13 @@ func (w *World) AdjustCell(session *network.Session) {
 }
 
 // BroadcastPacket broadcasts a packet to nearby cells.
-func (w *World) BroadcastPacket(session *network.Session, pkt *network.Writer) {
+func (w *World) BroadcastPacket(column, row byte, pkt *network.Writer) {
+	w.sendToNearbyCells(pkt, column, row, 2)
+}
+
+// BroadcastSessionPacket sends a packet to nearby cells centered around
+// the cell that the given session's character currently occupies.
+func (w *World) BroadcastSessionPacket(session *network.Session, pkt *network.Writer) {
 	cell := context.GetWorldCell(session)
 	if cell == nil {
 		log.Error("Unable to get current cell!")
@@ -248,7 +254,7 @@ func (w *World) BroadcastPacket(session *network.Session, pkt *network.Writer) {
 	}
 
 	column, row := cell.GetId()
-	w.sendToNearbyCells(pkt, column, row, 2)
+	w.BroadcastPacket(column, row, pkt)
 }
 
 // FindWarp finds a specific warp based on its ID.

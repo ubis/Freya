@@ -51,7 +51,7 @@ func MoveBegined(session *network.Session, reader *network.Reader) {
 	ctx.Char.EndY = endY
 	ctx.Mutex.Unlock()
 
-	ctx.World.BroadcastPacket(session, pkt)
+	ctx.World.BroadcastSessionPacket(session, pkt)
 }
 
 // MoveEnded Packet
@@ -92,7 +92,7 @@ func MoveEnded(session *network.Session, reader *network.Reader) {
 	ctx.Char.Y = byte(pntY)
 	ctx.Mutex.Unlock()
 
-	world.BroadcastPacket(session, pkt)
+	world.BroadcastSessionPacket(session, pkt)
 }
 
 // MoveChanged Packet
@@ -138,7 +138,7 @@ func MoveChanged(session *network.Session, reader *network.Reader) {
 	ctx.Char.EndY = endY
 	ctx.Mutex.Unlock()
 
-	world.BroadcastPacket(session, pkt)
+	world.BroadcastSessionPacket(session, pkt)
 }
 
 // MoveTilePos packet
@@ -188,7 +188,7 @@ func ChangeDirection(session *network.Session, reader *network.Reader) {
 	pkt.WriteInt32(id)
 	pkt.WriteUint32(direction) // float
 
-	world.BroadcastPacket(session, pkt)
+	world.BroadcastSessionPacket(session, pkt)
 }
 
 // KeyMoveBegined Packet
@@ -222,7 +222,7 @@ func KeyMoveBegined(session *network.Session, reader *network.Reader) {
 	pkt.WriteUint32(endY)
 	pkt.WriteByte(dir)
 
-	world.BroadcastPacket(session, pkt)
+	world.BroadcastSessionPacket(session, pkt)
 }
 
 // KeyMoveEnded Packet
@@ -247,7 +247,7 @@ func KeyMoveEnded(session *network.Session, reader *network.Reader) {
 	pkt.WriteInt32(pntX)
 	pkt.WriteInt32(pntY)
 
-	world.BroadcastPacket(session, pkt)
+	world.BroadcastSessionPacket(session, pkt)
 }
 
 // KeyMoveChanged Packet
@@ -281,5 +281,5 @@ func KeyMoveChanged(session *network.Session, reader *network.Reader) {
 	pkt.WriteUint32(endY)
 	pkt.WriteByte(dir)
 
-	world.BroadcastPacket(session, pkt)
+	world.BroadcastSessionPacket(session, pkt)
 }

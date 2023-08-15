@@ -291,7 +291,7 @@ func MessageEvnt(session *network.Session, reader *network.Reader) {
 	pkt.WriteByte(0)
 	pkt.WriteByte(0)
 
-	world.BroadcastPacket(session, pkt)
+	world.BroadcastSessionPacket(session, pkt)
 }
 
 // WarpCommand packet

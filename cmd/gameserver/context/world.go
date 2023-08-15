@@ -8,7 +8,6 @@ import (
 
 // CellHandler defines the interface for interacting with a world map cell.
 type CellHandler interface {
-	Initialize(column, row byte)
 	GetId() (byte, byte)
 	AddPlayer(session *network.Session)
 	RemovePlayer(session *network.Session)
@@ -17,17 +16,15 @@ type CellHandler interface {
 
 // WorldHandler defines the interface for interacting with a game world.
 type WorldHandler interface {
-	Initialize(wm WorldManagerHandler)
 	EnterWorld(session *network.Session)
 	ExitWorld(session *network.Session, reason server.DelUserType)
 	AdjustCell(session *network.Session)
-	BroadcastPacket(session *network.Session, pkt *network.Writer)
+	BroadcastSessionPacket(session *network.Session, pkt *network.Writer)
 	FindWarp(warp byte) *Warp
 }
 
 // WorldManagerHandler defines the interface for interacting with a world manager.
 type WorldManagerHandler interface {
-	Initialize()
 	FindWorld(id byte) WorldHandler
 	GetWarps(world byte) []Warp
 }

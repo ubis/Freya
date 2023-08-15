@@ -97,9 +97,9 @@ func (e *Equipment) SerializeEx() ([]byte, int) {
 	var length = 0
 
 	var equip bytes.Buffer
-	for key, value := range keys {
+	for _, value := range keys {
 		if e.Equip[value].Kind > 0 {
-			binary.Write(&equip, binary.LittleEndian, byte(key))
+			binary.Write(&equip, binary.LittleEndian, byte(e.Equip[value].Slot))
 			binary.Write(&equip, binary.LittleEndian, e.Equip[value].Kind)
 			binary.Write(&equip, binary.LittleEndian, e.Equip[value].Option)
 			length++

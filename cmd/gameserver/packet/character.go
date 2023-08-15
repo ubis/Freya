@@ -186,3 +186,26 @@ func SetCharacterSlotOrder(session *network.Session, reader *network.Reader) {
 
 	session.Send(packet)
 }
+
+func NewTargetUser(session *network.Session, reader *network.Reader) {
+	sessionId := reader.ReadUint16()
+
+	pSession := g_NetworkManager.GetSession(sessionId)
+	ctx, err := parseSessionContext(pSession)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	var packet = network.NewWriter(NEW_TARGET_USER)
+
+	g_NetworkManager.RLock()
+
+	packet.WriteByte(0x00)
+	packet.WriteInt16(ctx.char.CurrentHP)
+	packet.WriteInt16(ctx.char.MaxHP)
+
+	g_NetworkManager.RUnlock()
+
+	session.Send(packet)
+}

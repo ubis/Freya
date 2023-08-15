@@ -91,6 +91,7 @@ func RegisterPackets() {
 	pk.Register(SYSTEMMESSG, "SystemMessg", nil)
 	pk.Register(WARPCOMMAND, "WarpCommand", WarpCommand)
 	pk.Register(CHARGEINFO, "ChargeInfo", ChargeInfo)
+	pk.Register(NEW_TARGET_USER, "NewTargetUser", NewTargetUser)
 	pk.Register(CHANGEDIRECTION, "ChangeDirection", ChangeDirection)
 	pk.Register(NFY_CHANGEDIRECTION, "NotifyChangeDirection", nil)
 	pk.Register(KEYMOVEBEGINED, "KeyMoveBegined", KeyMoveBegined)

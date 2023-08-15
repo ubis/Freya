@@ -31,6 +31,8 @@ func RegisterPackets() {
 	pk.Register(net.MESSAGEEVNT, "MessageEvnt", MessageEvnt)
 	pk.Register(net.NEWUSERLIST, "NewUserList", nil)
 	pk.Register(net.DELUSERLIST, "DelUserList", nil)
+	pk.Register(net.NFY_ITEM_EQUIP, "NotifyItemEquip", nil)
+	pk.Register(net.NFY_ITEM_UNEQUIP, "NotifyItemUnEquip", nil)
 	pk.Register(net.NFY_NEWMOBSLIST, "NotifyNewMobsList", nil)
 	pk.Register(net.NFY_DELMOBSLIST, "NotifyDelMobsList", nil)
 	pk.Register(net.NFY_MOVEBEGINED, "NotifyMoveBegined", nil)
@@ -68,4 +70,5 @@ func RegisterPackets() {
 	pk.Register(net.CHANNEL_CHANGE, "ChannelChange", ChannelChange)
 	pk.Register(net.CHAR_DEL_CHK_SUBPW,
 		"CharacterDeleteCheckSubPassword", CharacterDeleteCheckSubPassword)
+	pk.Register(net.STORAGE_EXCHANGE_MOVE, "StorageExchangeMove", StorageExchangeMove)
 }

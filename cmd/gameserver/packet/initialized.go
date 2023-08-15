@@ -211,6 +211,8 @@ func Initialized(session *network.Session, reader *network.Reader) {
 	c.EndX = int16(c.X)
 	c.EndY = int16(c.Y)
 
+	c.Inventory = res.Inventory
+
 	ctx.Mutex.Lock()
 	ctx.Char = &c
 	worldManager := ctx.WorldManager

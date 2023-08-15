@@ -39,11 +39,7 @@ func handleItemEquip(id int32, ctx *context.Context, old, new uint16) *inventory
 
 	ctx.Mutex.Lock()
 	ctx.Char.Inventory.Remove(old)
-	i, l := ctx.Char.Equipment.SerializeEx()
-	log.Info("preeq", i, l)
 	ctx.Char.Equipment.Set(new, *item)
-	i, l = ctx.Char.Equipment.SerializeEx()
-	log.Info("posteq", i, l)
 	ctx.Mutex.Unlock()
 
 	return item
@@ -57,11 +53,7 @@ func handleItemUnequip(id int32, ctx *context.Context, old, new uint16) *invento
 	}
 
 	ctx.Mutex.Lock()
-	i, l := ctx.Char.Equipment.SerializeEx()
-	log.Info("preeq2", i, l)
 	ctx.Char.Equipment.Remove(old)
-	i, l = ctx.Char.Equipment.SerializeEx()
-	log.Info("posteq2", i, l)
 	ctx.Char.Inventory.Set(new, *item)
 	ctx.Mutex.Unlock()
 

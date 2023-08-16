@@ -102,8 +102,8 @@ func Initialized(session *network.Session, reader *network.Reader) {
 	pkt.WriteUint32(c.DEX)
 	pkt.WriteUint32(c.INT)
 	pkt.WriteUint32(c.PNT)
-	pkt.WriteByte(c.SwordRank)
 	pkt.WriteByte(c.MagicRank)
+	pkt.WriteByte(c.SwordRank)
 	pkt.WriteUint16(0x00) // padding for skillrank
 	pkt.WriteUint32(0x00)
 	pkt.WriteUint16(c.MaxHP)

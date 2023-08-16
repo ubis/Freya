@@ -22,7 +22,7 @@ func NewTargetUser(session *network.Session, reader *network.Reader) {
 		return
 	}
 
-	ctx.Mutex.Lock()
+	ctx.Mutex.RLock()
 	currentHP, maxHP := ctx.Char.CurrentHP, ctx.Char.MaxHP
 	ctx.Mutex.RUnlock()
 

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"time"
 
-	"github.com/ubis/Freya/cmd/gameserver/net"
 	"github.com/ubis/Freya/share/models/subpasswd"
 	"github.com/ubis/Freya/share/network"
 	"github.com/ubis/Freya/share/rpc"
@@ -20,7 +19,7 @@ func SubPasswordSet(session *network.Session, reader *network.Reader) {
 	var question = reader.ReadInt32()
 	var answer = string(bytes.Trim(reader.ReadBytes(16), "\x00"))
 
-	var packet = network.NewWriter(net.SUBPW_SET)
+	var packet = network.NewWriter(SUBPW_SET)
 
 	var sub = session.Data.SubPassword
 	var verified = &sub.Verified
@@ -86,7 +85,7 @@ func SubPasswordCheckRequest(session *network.Session, reader *network.Reader) {
 	var sub = session.Data.SubPassword
 	var left = time.Until(sub.Expires)
 
-	var packet = network.NewWriter(net.SUBPW_CHECK_REQ)
+	var packet = network.NewWriter(SUBPW_CHECK_REQ)
 
 	if sub.Password == "" {
 		// need to create first
@@ -114,7 +113,7 @@ func SubPasswordCheck(session *network.Session, reader *network.Reader) {
 	var sub = session.Data.SubPassword
 	var err = bcrypt.CompareHashAndPassword([]byte(sub.Password), []byte(password))
 
-	var packet = network.NewWriter(net.SUBPW_CHECK)
+	var packet = network.NewWriter(SUBPW_CHECK)
 
 	if hours < 0 || hours > 4 {
 		packet.WriteInt32(0x00) // failed
@@ -157,7 +156,7 @@ func SubPasswordCheck(session *network.Session, reader *network.Reader) {
 func SubPasswordFindRequest(session *network.Session, reader *network.Reader) {
 	var sub = session.Data.SubPassword
 
-	var packet = network.NewWriter(net.SUBPW_FIND_REQ)
+	var packet = network.NewWriter(SUBPW_FIND_REQ)
 	packet.WriteInt32(sub.Question)
 	packet.WriteInt32(sub.Question)
 	packet.WriteInt32(0x01)
@@ -173,7 +172,7 @@ func SubPasswordFind(session *network.Session, reader *network.Reader) {
 	var sub = session.Data.SubPassword
 	var err = bcrypt.CompareHashAndPassword([]byte(sub.Answer), []byte(answer))
 
-	var packet = network.NewWriter(net.SUBPW_FIND)
+	var packet = network.NewWriter(SUBPW_FIND)
 
 	if err != nil {
 		packet.WriteInt32(0x00) // failed
@@ -198,7 +197,7 @@ func SubPasswordDelRequest(session *network.Session, reader *network.Reader) {
 	var sub = session.Data.SubPassword
 	var err = bcrypt.CompareHashAndPassword([]byte(sub.Password), []byte(password))
 
-	var packet = network.NewWriter(net.SUBPW_DEL_REQ)
+	var packet = network.NewWriter(SUBPW_DEL_REQ)
 
 	if err != nil {
 		packet.WriteInt32(0x00) // failed
@@ -217,7 +216,7 @@ func SubPasswordDelRequest(session *network.Session, reader *network.Reader) {
 
 // SubPasswordDel Packet
 func SubPasswordDel(session *network.Session, reader *network.Reader) {
-	var packet = network.NewWriter(net.SUBPW_DEL)
+	var packet = network.NewWriter(SUBPW_DEL)
 
 	var sub = session.Data.SubPassword
 
@@ -254,7 +253,7 @@ func SubPasswordChangeQARequest(session *network.Session, reader *network.Reader
 	var sub = session.Data.SubPassword
 	var err = bcrypt.CompareHashAndPassword([]byte(sub.Password), []byte(password))
 
-	var packet = network.NewWriter(net.SUBPW_CHG_QA_REQ)
+	var packet = network.NewWriter(SUBPW_CHG_QA_REQ)
 
 	if err != nil {
 		packet.WriteInt32(0x00) // failed
@@ -277,7 +276,7 @@ func SubPasswordChangeQA(session *network.Session, reader *network.Reader) {
 	var question = reader.ReadInt32()
 	var answer = string(bytes.Trim(reader.ReadBytes(16), "\x00"))
 
-	var packet = network.NewWriter(net.SUBPW_CHG_QA)
+	var packet = network.NewWriter(SUBPW_CHG_QA)
 
 	var sub = session.Data.SubPassword
 
@@ -317,7 +316,7 @@ func CharacterDeleteCheckSubPassword(session *network.Session, reader *network.R
 	var sub = session.Data.SubPassword
 	var err = bcrypt.CompareHashAndPassword([]byte(sub.Password), []byte(password))
 
-	var packet = network.NewWriter(net.CHAR_DEL_CHK_SUBPW)
+	var packet = network.NewWriter(CHAR_DEL_CHK_SUBPW)
 
 	if err != nil {
 		packet.WriteInt32(0x00) // failed

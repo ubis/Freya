@@ -4,7 +4,6 @@ import (
 	"bytes"
 
 	"github.com/ubis/Freya/cmd/gameserver/context"
-	"github.com/ubis/Freya/cmd/gameserver/net"
 	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/models/character"
 	"github.com/ubis/Freya/share/models/subpasswd"
@@ -39,7 +38,7 @@ func GetMyChartr(session *network.Session, reader *network.Reader) {
 
 	session.Data.CharacterList = resList.List
 
-	var packet = network.NewWriter(net.GETMYCHARTR)
+	var packet = network.NewWriter(GETMYCHARTR)
 	packet.WriteInt32(subpasswdExist)
 	packet.WriteBytes(make([]byte, 10))
 	packet.WriteInt32(resList.LastId)
@@ -80,7 +79,7 @@ func NewMyChartr(session *network.Session, reader *network.Reader) {
 	var newStyle = character.Style{}
 	newStyle.Set(style)
 
-	var packet = network.NewWriter(net.NEWMYCHARTR)
+	var packet = network.NewWriter(NEWMYCHARTR)
 
 	if !newStyle.Verify() || slot > 5 || nameLength > 16 {
 		// invalid style, slot or nameLength
@@ -164,7 +163,7 @@ func DelMyChartr(session *network.Session, reader *network.Reader) {
 		}
 	}
 
-	var packet = network.NewWriter(net.DELMYCHARTR)
+	var packet = network.NewWriter(DELMYCHARTR)
 	packet.WriteByte(res.Result + 1)
 	packet.WriteByte(0x00)
 
@@ -183,7 +182,7 @@ func SetCharacterSlotOrder(session *network.Session, reader *network.Reader) {
 	var res = character.SetOrderRes{}
 	g_RPCHandler.Call(rpc.SetSlotOrder, req, &res)
 
-	var packet = network.NewWriter(net.SET_CHAR_SLOT_ORDER)
+	var packet = network.NewWriter(SET_CHAR_SLOT_ORDER)
 	packet.WriteByte(0x01)
 
 	session.Send(packet)
@@ -202,7 +201,7 @@ func notifyChangeStyle(session *network.Session) {
 	liveStyle := ctx.Char.LiveStyle
 	ctx.Mutex.RUnlock()
 
-	pkt := network.NewWriter(net.NFY_CHANGESTYLE)
+	pkt := network.NewWriter(NFY_CHANGESTYLE)
 	pkt.WriteInt32(id)
 	pkt.WriteInt32(style.Get())
 	pkt.WriteInt32(liveStyle)
@@ -228,7 +227,7 @@ func ChangeStyle(session *network.Session, reader *network.Reader) {
 	ctx.Char.LiveStyle = liveStyle
 	ctx.Mutex.Unlock()
 
-	pkt := network.NewWriter(net.CHANGESTYLE)
+	pkt := network.NewWriter(CHANGESTYLE)
 	pkt.WriteByte(1)
 
 	session.Send(pkt)
@@ -254,7 +253,7 @@ func SkillToActs(session *network.Session, reader *network.Reader) {
 		return
 	}
 
-	pkt := network.NewWriter(net.NFY_SKILLTOACTS)
+	pkt := network.NewWriter(NFY_SKILLTOACTS)
 	pkt.WriteInt32(id)
 	pkt.WriteInt32(target)
 	pkt.WriteUint16(action)

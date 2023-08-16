@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/ubis/Freya/cmd/gameserver/context"
-	"github.com/ubis/Freya/cmd/gameserver/net"
 	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/network"
 )
@@ -36,7 +35,7 @@ func MoveBegined(session *network.Session, reader *network.Reader) {
 		return
 	}
 
-	pkt := network.NewWriter(net.NFY_MOVEBEGINED)
+	pkt := network.NewWriter(NFY_MOVEBEGINED)
 	pkt.WriteInt32(id)
 	pkt.WriteUint32(time.Now().Unix()) // move begin time
 	pkt.WriteInt16(startX)
@@ -77,7 +76,7 @@ func MoveEnded(session *network.Session, reader *network.Reader) {
 		return
 	}
 
-	pkt := network.NewWriter(net.NFY_MOVEENDED00)
+	pkt := network.NewWriter(NFY_MOVEENDED00)
 	pkt.WriteInt32(id)
 	pkt.WriteInt16(pntX)
 	pkt.WriteInt16(pntY)
@@ -123,7 +122,7 @@ func MoveChanged(session *network.Session, reader *network.Reader) {
 		return
 	}
 
-	pkt := network.NewWriter(net.NFY_MOVECHANGED)
+	pkt := network.NewWriter(NFY_MOVECHANGED)
 	pkt.WriteInt32(id)
 	pkt.WriteUint32(time.Now().Unix()) // move begin time
 	pkt.WriteInt16(startX)
@@ -184,7 +183,7 @@ func ChangeDirection(session *network.Session, reader *network.Reader) {
 		return
 	}
 
-	pkt := network.NewWriter(net.NFY_CHANGEDIRECTION)
+	pkt := network.NewWriter(NFY_CHANGEDIRECTION)
 	pkt.WriteInt32(id)
 	pkt.WriteUint32(direction) // float
 
@@ -213,7 +212,7 @@ func KeyMoveBegined(session *network.Session, reader *network.Reader) {
 		return
 	}
 
-	pkt := network.NewWriter(net.NFY_KEYMOVEBEGINED)
+	pkt := network.NewWriter(NFY_KEYMOVEBEGINED)
 	pkt.WriteInt32(id)
 	pkt.WriteUint32(time.Now().Unix()) // move begin time
 	pkt.WriteUint32(startX)
@@ -242,7 +241,7 @@ func KeyMoveEnded(session *network.Session, reader *network.Reader) {
 		return
 	}
 
-	pkt := network.NewWriter(net.NFY_KEYMOVEENDED00)
+	pkt := network.NewWriter(NFY_KEYMOVEENDED00)
 	pkt.WriteInt32(id)
 	pkt.WriteInt32(pntX)
 	pkt.WriteInt32(pntY)
@@ -272,7 +271,7 @@ func KeyMoveChanged(session *network.Session, reader *network.Reader) {
 		return
 	}
 
-	pkt := network.NewWriter(net.NFY_KEYMOVECHANGED)
+	pkt := network.NewWriter(NFY_KEYMOVECHANGED)
 	pkt.WriteInt32(id)
 	pkt.WriteUint32(time.Now().Unix()) // move begin time
 	pkt.WriteUint32(startX)

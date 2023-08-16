@@ -2,12 +2,11 @@ package packet
 
 import (
 	"github.com/ubis/Freya/cmd/gameserver/context"
-	"github.com/ubis/Freya/cmd/gameserver/net"
 	"github.com/ubis/Freya/share/network"
 )
 
 func NewMobsList(mobs []context.MobHandler) *network.Writer {
-	pkt := network.NewWriter(net.NFY_NEWMOBSLIST)
+	pkt := network.NewWriter(NFY_NEWMOBSLIST)
 
 	pkt.WriteByte(len(mobs)) // count
 
@@ -33,7 +32,7 @@ func NewMobsList(mobs []context.MobHandler) *network.Writer {
 }
 
 func MobMoveBegin(mob context.MobHandler) *network.Writer {
-	pkt := network.NewWriter(net.NFY_MOBSMOVEBGN)
+	pkt := network.NewWriter(NFY_MOBSMOVEBGN)
 
 	id := mob.GetId()
 	pos := mob.GetPosition()
@@ -49,7 +48,7 @@ func MobMoveBegin(mob context.MobHandler) *network.Writer {
 }
 
 func MobMoveEnd(mob context.MobHandler) *network.Writer {
-	pkt := network.NewWriter(net.NFY_MOBSMOVEEND)
+	pkt := network.NewWriter(NFY_MOBSMOVEEND)
 
 	id := mob.GetId()
 	pos := mob.GetPosition()

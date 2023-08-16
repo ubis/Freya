@@ -2,10 +2,10 @@ package packet
 
 import (
 	"github.com/ubis/Freya/cmd/gameserver/context"
-	"github.com/ubis/Freya/cmd/gameserver/net"
 	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/models/character"
 	"github.com/ubis/Freya/share/models/inventory"
+	"github.com/ubis/Freya/share/models/server"
 	"github.com/ubis/Freya/share/network"
 	"github.com/ubis/Freya/share/rpc"
 )
@@ -91,7 +91,7 @@ func handleItemMove(id int32, ctx *context.Context, old, new uint16) *inventory.
 }
 
 func notifyStorageExchange(session *network.Session, result byte) {
-	packet := network.NewWriter(net.STORAGE_EXCHANGE_MOVE)
+	packet := network.NewWriter(STORAGE_EXCHANGE_MOVE)
 	packet.WriteByte(result)
 	packet.WriteInt32(0)
 
@@ -99,7 +99,7 @@ func notifyStorageExchange(session *network.Session, result byte) {
 }
 
 func notifyItemEquip(id int32, item *inventory.Item) *network.Writer {
-	pkt := network.NewWriter(net.NFY_ITEM_EQUIP)
+	pkt := network.NewWriter(NFY_ITEM_EQUIP)
 	pkt.WriteInt32(id)
 	pkt.WriteInt32(item.Kind)
 	pkt.WriteInt16(item.Slot)
@@ -110,7 +110,7 @@ func notifyItemEquip(id int32, item *inventory.Item) *network.Writer {
 }
 
 func notifyItemUnequip(id int32, slot uint16) *network.Writer {
-	pkt := network.NewWriter(net.NFY_ITEM_UNEQUIP)
+	pkt := network.NewWriter(NFY_ITEM_UNEQUIP)
 	pkt.WriteInt32(id)
 	pkt.WriteInt16(slot)
 
@@ -186,4 +186,100 @@ func StorageExchangeMove(session *network.Session, reader *network.Reader) {
 	}
 
 	notifyStorageExchange(session, 1)
+}
+
+func fillPlayerInfo(pkt *network.Writer, session *network.Session) {
+	ctx, err := context.Parse(session)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	ctx.Mutex.RLock()
+	defer ctx.Mutex.RUnlock()
+
+	c := ctx.Char
+
+	if c == nil {
+		// client is not ready
+		return
+	}
+
+	pkt.WriteUint32(c.Id)
+	pkt.WriteUint32(session.UserIdx)
+	pkt.WriteUint32(c.Level)
+	pkt.WriteInt32(0x01C2)    // might be dwMoveBgnTime
+	pkt.WriteUint16(c.BeginX) // start
+	pkt.WriteUint16(c.BeginY)
+	pkt.WriteUint16(c.EndX) // end
+	pkt.WriteUint16(c.EndY)
+	pkt.WriteByte(0)
+	pkt.WriteInt32(0)
+	pkt.WriteInt16(0)
+	pkt.WriteInt32(c.Style.Get())
+	pkt.WriteByte(c.LiveStyle) // animation id aka "live style"
+	pkt.WriteInt16(0)
+
+	eq, eqlen := c.Equipment.SerializeEx()
+	pkt.WriteInt16(eqlen)
+	pkt.WriteInt16(0x00)
+
+	for i := 0; i < 21; i++ {
+		pkt.WriteByte(0)
+	}
+
+	pkt.WriteByte(len(c.Name) + 1)
+	pkt.WriteString(c.Name)
+	pkt.WriteByte(0) // guild name len
+	// pkt.WriteString("guild name")
+
+	pkt.WriteBytes(eq)
+}
+
+func NewUserSingle(session *network.Session, reason server.NewUserType) *network.Writer {
+	pkt := network.NewWriter(NEWUSERLIST)
+	pkt.WriteByte(1) // player num
+	pkt.WriteByte(byte(reason))
+
+	fillPlayerInfo(pkt, session)
+
+	return pkt
+}
+
+func NewUserList(players map[uint16]*network.Session, reason server.NewUserType) *network.Writer {
+	online := len(players)
+
+	pkt := network.NewWriter(NEWUSERLIST)
+	pkt.WriteByte(online)
+	pkt.WriteByte(byte(reason))
+
+	for _, v := range players {
+		fillPlayerInfo(pkt, v)
+	}
+
+	return pkt
+}
+
+// DelUserList to all already connected players
+func DelUserList(session *network.Session, reason server.DelUserType) *network.Writer {
+	charId, err := context.GetCharId(session)
+	if err != nil {
+		log.Error(err.Error())
+		return nil
+	}
+
+	pkt := network.NewWriter(DELUSERLIST)
+	pkt.WriteUint32(charId)
+	pkt.WriteByte(byte(reason)) // type
+
+	/* types:
+	 * dead = 0x10
+	 * warp = 0x11
+	 * logout = 0x12
+	 * retn = 0x13
+	 * dissapear = 0x14
+	 * nfsdead = 0x15
+	 */
+
+	return pkt
 }

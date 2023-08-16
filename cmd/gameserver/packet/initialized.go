@@ -2,7 +2,6 @@ package packet
 
 import (
 	"github.com/ubis/Freya/cmd/gameserver/context"
-	"github.com/ubis/Freya/cmd/gameserver/net"
 	"github.com/ubis/Freya/share/models/character"
 	"github.com/ubis/Freya/share/models/server"
 	"github.com/ubis/Freya/share/network"
@@ -76,7 +75,7 @@ func Initialized(session *network.Session, reader *network.Reader) {
 	sk, sklen := res.Skills.Serialize()
 	sl, sllen := res.Links.Serialize()
 
-	pkt := network.NewWriter(net.INITIALIZED)
+	pkt := network.NewWriter(INITIALIZED)
 	pkt.WriteBytes(make([]byte, 57))
 	pkt.WriteByte(0x00)
 	pkt.WriteByte(0x14)
@@ -244,7 +243,7 @@ func Uninitialze(session *network.Session, reader *network.Reader) {
 		return
 	}
 
-	pkt := network.NewWriter(net.UNINITIALZE)
+	pkt := network.NewWriter(UNINITIALZE)
 	pkt.WriteByte(0) // result
 
 	// complete - 0x00
@@ -278,7 +277,7 @@ func MessageEvnt(session *network.Session, reader *network.Reader) {
 		return
 	}
 
-	pkt := network.NewWriter(net.NFY_MESSAGEEVNT)
+	pkt := network.NewWriter(NFY_MESSAGEEVNT)
 	pkt.WriteUint32(id)
 	pkt.WriteByte(0) // 0x03 = [GM] prefix
 	pkt.WriteByte(unk1)
@@ -330,7 +329,7 @@ func WarpCommand(session *network.Session, reader *network.Reader) {
 		return
 	}
 
-	pkt := network.NewWriter(net.WARPCOMMAND)
+	pkt := network.NewWriter(WARPCOMMAND)
 	pkt.WriteInt16(warp.Location[0].X) // pos x
 	pkt.WriteInt16(warp.Location[0].Y) // pos y
 	pkt.WriteInt32(0)                  // exp

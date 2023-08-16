@@ -3,7 +3,6 @@ package packet
 import (
 	"bytes"
 
-	"github.com/ubis/Freya/cmd/gameserver/net"
 	"github.com/ubis/Freya/share/models/account"
 	"github.com/ubis/Freya/share/network"
 	"github.com/ubis/Freya/share/rpc"
@@ -11,7 +10,7 @@ import (
 
 // ChargeInfo Packet
 func ChargeInfo(session *network.Session, reader *network.Reader) {
-	var packet = network.NewWriter(net.CHARGEINFO)
+	var packet = network.NewWriter(CHARGEINFO)
 	packet.WriteInt32(0x00)
 	packet.WriteInt32(0x00)  // service kind
 	packet.WriteUint32(0x00) // service expire
@@ -30,7 +29,7 @@ func CheckUserPrivacyData(session *network.Session, reader *network.Reader) {
 	var res = account.AuthCheckRes{}
 	g_RPCHandler.Call(rpc.PasswdCheck, req, &res)
 
-	var packet = network.NewWriter(net.CHECK_USR_PDATA)
+	var packet = network.NewWriter(CHECK_USR_PDATA)
 
 	if res.Result {
 		// password verified

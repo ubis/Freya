@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/ubis/Freya/cmd/gameserver/context"
-	"github.com/ubis/Freya/cmd/gameserver/packet/notify"
+	"github.com/ubis/Freya/cmd/gameserver/packet"
 	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/models/server"
 	"github.com/ubis/Freya/share/network"
@@ -191,7 +191,7 @@ func (w *World) EnterWorld(session *network.Session) {
 	column, row := cell.GetId()
 
 	// notify other nearby cells about new player with radius of -2/+2
-	pkt := notify.NewUserSingle(session, server.NewUserInit)
+	pkt := packet.NewUserSingle(session, server.NewUserInit)
 	w.sendToNearbyCells(pkt, column, row, 2)
 
 	// notify player about nearby cell states
@@ -237,7 +237,7 @@ func (w *World) ExitWorld(session *network.Session, reason server.DelUserType) {
 	cell.RemovePlayer(session)
 
 	// notify other players about leaving player
-	pkt := notify.DelUserList(session, reason)
+	pkt := packet.DelUserList(session, reason)
 	if pkt == nil {
 		return
 	}
@@ -281,7 +281,7 @@ func (w *World) AdjustCell(session *network.Session) {
 	// get column and row from new cell
 	nc, nr := newCell.GetId()
 
-	pkt := notify.NewUserSingle(session, server.NewUserMove)
+	pkt := packet.NewUserSingle(session, server.NewUserMove)
 	if pkt == nil {
 		log.Error("Failed to create NewUserSingle packet!")
 		return

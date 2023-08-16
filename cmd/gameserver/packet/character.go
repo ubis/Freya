@@ -11,6 +11,30 @@ import (
 	"github.com/ubis/Freya/share/rpc"
 )
 
+// NewTargetUser Packet
+func NewTargetUser(session *network.Session, reader *network.Reader) {
+	sessionId := reader.ReadUint16()
+
+	pSession := g_NetworkManager.GetSession(sessionId)
+	ctx, err := context.Parse(pSession)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	ctx.Mutex.RLock()
+	currentHP, maxHP := ctx.Char.CurrentHP, ctx.Char.MaxHP
+	ctx.Mutex.RUnlock()
+
+	var packet = network.NewWriter(NEW_TARGET_USER)
+
+	packet.WriteByte(0x00)
+	packet.WriteInt16(currentHP)
+	packet.WriteInt16(maxHP)
+
+	session.Send(packet)
+}
+
 // GetMyChartr Packet
 func GetMyChartr(session *network.Session, reader *network.Reader) {
 	if !session.Data.Verified {

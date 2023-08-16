@@ -9,6 +9,7 @@ var g_ServerConfig = def.ServerConfig
 var g_ServerSettings = def.ServerSettings
 var g_PacketHandler = def.PacketHandler
 var g_RPCHandler = def.RPCHandler
+var g_NetworkManager = def.NetworkManager
 
 // Registers network packets
 func RegisterPackets() {
@@ -47,6 +48,7 @@ func RegisterPackets() {
 	pk.Register(CHANGESTYLE, "ChangeStyle", ChangeStyle)
 	pk.Register(NFY_CHANGESTYLE, "NotifyChangeStyle", nil)
 	pk.Register(CHARGEINFO, "ChargeInfo", ChargeInfo)
+	pk.Register(NEW_TARGET_USER, "NewTargetUser", NewTargetUser)
 	pk.Register(CHANGEDIRECTION, "ChangeDirection", ChangeDirection)
 	pk.Register(NFY_CHANGEDIRECTION, "NotifyChangeDirection", nil)
 	pk.Register(KEYMOVEBEGINED, "KeyMoveBegined", KeyMoveBegined)

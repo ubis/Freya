@@ -2,6 +2,7 @@ package packet
 
 import (
 	"github.com/ubis/Freya/cmd/gameserver/context"
+	"github.com/ubis/Freya/share/event"
 	"github.com/ubis/Freya/share/models/character"
 	"github.com/ubis/Freya/share/models/server"
 	"github.com/ubis/Freya/share/network"
@@ -229,6 +230,7 @@ func Initialized(session *network.Session, reader *network.Reader) {
 	}
 
 	world.EnterWorld(session)
+	event.Trigger(event.PlayerJoin, session)
 }
 
 // Uninitialze Packet

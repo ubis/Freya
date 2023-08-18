@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ubis/Freya/cmd/loginserver/rsa"
+	"github.com/ubis/Freya/share/event"
 	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/models/account"
 	"github.com/ubis/Freya/share/models/message"
@@ -84,6 +85,8 @@ func AuthAccount(session *network.Session, reader *network.Reader) {
 		session.Data.AccountId = r.Id
 		session.Data.LoggedIn = true
 
+		event.Trigger(event.PlayerLogin, session, name, true)
+
 		// send url's
 		URLToClient(session)
 
@@ -110,5 +113,6 @@ func AuthAccount(session *network.Session, reader *network.Reader) {
 		log.Infof("User `%s` double login attempt.", name)
 	} else {
 		log.Infof("User `%s` failed to log in.", name)
+		event.Trigger(event.PlayerLogin, session, name, false)
 	}
 }

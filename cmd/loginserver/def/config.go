@@ -19,6 +19,8 @@ type Config struct {
 
 	MasterIp   string
 	MasterPort int
+
+	ScriptDirectory string
 }
 
 // Attempts to read server configuration file
@@ -45,4 +47,6 @@ func (c *Config) Read() {
 
 	c.MasterIp = conf.GetString("master", "ip", "1270.0.1")
 	c.MasterPort = conf.GetInt("master", "port", 9001)
+
+	c.ScriptDirectory = conf.GetString("script", "directory", "")
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/ubis/Freya/cmd/loginserver/packet"
 	"github.com/ubis/Freya/cmd/loginserver/rpc"
 	"github.com/ubis/Freya/share/log"
+	"github.com/ubis/Freya/share/script"
 
 	"github.com/ubis/Freya/cmd/loginserver/def"
 )
@@ -33,6 +34,12 @@ func main() {
 
 	// register packets
 	packet.RegisterPackets()
+
+	// register scripting engine
+	script.Initialize(g_ServerConfig.ScriptDirectory)
+
+	// register scripting functions
+	packet.RegisterFunc()
 
 	// init RPC handler
 	g_RPCHandler.Init()

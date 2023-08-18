@@ -14,7 +14,7 @@ import (
 // LuaCallable represents an interface for objects that can be
 // called within a Lua state.
 type LuaCallable interface {
-	Call(L *lua.LState)
+	Call(L *lua.LState) []lua.LValue
 }
 
 // script encapsulates a single loaded Lua script, including its state,
@@ -79,8 +79,13 @@ func RegisterFunc(funcName string, callable LuaCallable) {
 		L1 := script.state
 
 		L1.SetGlobal(funcName, L1.NewFunction(func(L *lua.LState) int {
-			callable.Call(L)
-			return 0
+			args := callable.Call(L)
+
+			for _, val := range args {
+				L.Push(val)
+			}
+
+			return len(args)
 		}))
 	}
 }

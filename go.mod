@@ -9,4 +9,5 @@ require (
 	golang.org/x/crypto v0.9.0
 	gopkg.in/yaml.v2 v2.4.0
 	github.com/beefsack/go-astar v0.0.0-20200827232313-4ecf9e304482
+	github.com/yuin/gopher-lua v1.1.0
 )

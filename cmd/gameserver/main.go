@@ -6,6 +6,7 @@ import (
 	"github.com/ubis/Freya/cmd/gameserver/packet"
 	"github.com/ubis/Freya/cmd/gameserver/rpc"
 	"github.com/ubis/Freya/share/log"
+	"github.com/ubis/Freya/share/script"
 )
 
 // globals
@@ -29,6 +30,12 @@ func main() {
 
 	// register events
 	RegisterEvents(game)
+
+	// register scripting engine
+	script.Initialize(g_ServerConfig.ScriptDirectory)
+
+	// register scripting functions
+	packet.RegisterFunc()
 
 	// init packet handler
 	g_PacketHandler.Init()

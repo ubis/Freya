@@ -1,12 +1,15 @@
 package packet
 
 import (
+	"strings"
+
 	"github.com/ubis/Freya/cmd/gameserver/context"
 	"github.com/ubis/Freya/share/event"
 	"github.com/ubis/Freya/share/models/character"
 	"github.com/ubis/Freya/share/models/server"
 	"github.com/ubis/Freya/share/network"
 	"github.com/ubis/Freya/share/rpc"
+	"github.com/ubis/Freya/share/script"
 
 	"github.com/ubis/Freya/share/log"
 )
@@ -264,8 +267,20 @@ func MessageEvnt(session *network.Session, reader *network.Reader) {
 	unk1 := reader.ReadInt16()
 	msglen := reader.ReadInt16()
 	_ = reader.ReadInt16()
-	mtype := reader.ReadByte() // 0xA0 = normal; 0xA1 = trade
-	msg := reader.ReadString(int(msglen))
+	mtype := reader.ReadByte() // 0xA0 = normal; 0xA1 = trade; 0xA4 = roll dice
+	msg := reader.ReadString(int(msglen) - 3)
+
+	if strings.HasPrefix(msg, "#") {
+		parts := strings.Split(msg, " ")
+		command := parts[0][1:] // remove the '#'
+		args := parts[1:]
+
+		if err := script.ExecCommand(command, args, session); err != nil {
+			log.Error("Failed to execute Lua command:", err)
+		}
+
+		return
+	}
 
 	world := context.GetWorld(session)
 	if world == nil {
@@ -455,6 +470,36 @@ func DelUserList(session *network.Session, reason server.DelUserType) *network.W
 	 * dissapear = 0x14
 	 * nfsdead = 0x15
 	 */
+
+	return pkt
+}
+
+func SendMessage(session *network.Session, msg string) *network.Writer {
+	id, err := context.GetCharId(session)
+	if err != nil {
+		log.Error(err.Error())
+		return nil
+	}
+
+	pkt := network.NewWriter(NFY_MESSAGEEVNT)
+	pkt.WriteInt32(id)
+	pkt.WriteByte(0) // 0x03 = [GM] prefix
+	pkt.WriteByte(0x3F)
+	pkt.WriteByte(0)
+	pkt.WriteByte(len(msg) + 3)
+	pkt.WriteByte(0)
+	pkt.WriteByte(254)
+	pkt.WriteByte(254)
+
+	// normal = 0xA0;
+	// trade  = 0xA1;
+	// sys msg(right side) = 0xA3;
+	// roll dice = 0xA4
+	pkt.WriteByte(0xA4)
+	pkt.WriteString(msg)
+	pkt.WriteByte(0)
+	pkt.WriteByte(0)
+	pkt.WriteByte(0)
 
 	return pkt
 }

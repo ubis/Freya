@@ -3,6 +3,7 @@ package packet
 import (
 	"github.com/ubis/Freya/cmd/gameserver/def"
 	"github.com/ubis/Freya/share/log"
+	"github.com/ubis/Freya/share/script"
 )
 
 var g_ServerConfig = def.ServerConfig
@@ -76,4 +77,8 @@ func RegisterPackets() {
 	pk.Register(CHAR_DEL_CHK_SUBPW,
 		"CharacterDeleteCheckSubPassword", CharacterDeleteCheckSubPassword)
 	pk.Register(STORAGE_EXCHANGE_MOVE, "StorageExchangeMove", StorageExchangeMove)
+}
+
+func RegisterFunc() {
+	script.RegisterFunc("sendClientMessage", clientMessageFunc{Fn: SendMessage})
 }

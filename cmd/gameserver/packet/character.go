@@ -286,3 +286,44 @@ func SkillToActs(session *network.Session, reader *network.Reader) {
 
 	ctx.World.BroadcastSessionPacket(session, pkt)
 }
+
+func GetPlayerLevel(session *network.Session) int {
+	ctx, err := context.Parse(session)
+	if err != nil {
+		log.Error(err.Error())
+		return 0
+	}
+
+	ctx.Mutex.RLock()
+	defer ctx.Mutex.RUnlock()
+
+	return int(ctx.Char.Level)
+}
+
+func SetPlayerLevel(session *network.Session, level int) {
+	ctx, err := context.Parse(session)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	ctx.Mutex.RLock()
+	ctx.Char.Level = uint16(level)
+	id := ctx.Char.Id
+	ctx.Mutex.RUnlock()
+
+	pkt := network.NewWriter(288)
+	pkt.WriteByte(1) // 1 = level up; 2 = rank up
+	pkt.WriteInt32(id)
+
+	ctx.World.BroadcastSessionPacket(session, pkt)
+
+	pkt = network.NewWriter(287)
+	pkt.WriteByte(10) // 10 = level up
+	for i := 0; i < 14; i++ {
+		pkt.WriteByte(0)
+	}
+	pkt.WriteInt64(level)
+
+	session.Send(pkt)
+}

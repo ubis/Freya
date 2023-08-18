@@ -81,4 +81,7 @@ func RegisterPackets() {
 
 func RegisterFunc() {
 	script.RegisterFunc("sendClientMessage", clientMessageFunc{Fn: SendMessage})
+
+	script.RegisterFunc("getPlayerLevel", playerGetLevelFunc{Fn: GetPlayerLevel})
+	script.RegisterFunc("setPlayerLevel", playerSetLevelFunc{Fn: SetPlayerLevel})
 }

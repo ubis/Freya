@@ -14,8 +14,13 @@ func RegisterEvents() {
 }
 
 // OnSyncConnect event informs server about new connection
-func OnSyncConnect(event event.Event) {
-	if c, ok := event.(*rpc.Client); !ok {
+func OnSyncConnect(event *event.Event) {
+	rawClient, ok := event.Get()
+	if !ok {
+		return
+	}
+
+	if c, ok := rawClient.(*rpc.Client); !ok {
 		log.Error("Cannot parse onSyncConnect event!")
 	} else {
 		log.Infof("Client %s connected to the Master Server", c.GetEndPnt())
@@ -23,8 +28,13 @@ func OnSyncConnect(event event.Event) {
 }
 
 // OnSyncDisconnect event informs server about connection close
-func OnSyncDisconnect(event event.Event) {
-	if c, ok := event.(*rpc.Client); !ok {
+func OnSyncDisconnect(event *event.Event) {
+	rawClient, ok := event.Get()
+	if !ok {
+		return
+	}
+
+	if c, ok := rawClient.(*rpc.Client); !ok {
 		log.Error("Cannot parse onSyncDisconnect event!")
 	} else {
 		g_ServerManager.RemoveServer(c.GetEndPnt())

@@ -7,14 +7,30 @@ import (
 )
 
 // Event interface, which is later parsed into some struct
-type Event interface {
+type Event struct {
+	data  []any
+	index int
 }
 
 // Event handler func
-type Handler func(Event)
+type Handler func(*Event)
 
 var handlers = map[string][]Handler{}
-var lock sync.Mutex
+var lock sync.RWMutex
+
+func (e *Event) Gett() int {
+	return e.index
+}
+
+func (e *Event) Get() (interface{}, bool) {
+	if e.index >= len(e.data) {
+		return nil, false
+	}
+
+	result := e.data[e.index]
+	e.index++
+	return result, true
+}
 
 // Registers a new server event
 func Register(t string, h Handler) {
@@ -25,12 +41,12 @@ func Register(t string, h Handler) {
 }
 
 // Triggers server event in a goroutine
-func Trigger(t string, e Event) {
-	lock.Lock()
+func Trigger(t string, data ...any) {
+	lock.RLock()
 	hs := handlers[t]
-	lock.Unlock()
+	lock.RUnlock()
 
 	for _, h := range hs {
-		go h(e)
+		go h(&Event{data: data})
 	}
 }

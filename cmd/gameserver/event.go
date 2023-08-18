@@ -17,7 +17,7 @@ import (
 func RegisterEvents(wm *game.WorldManager) {
 	log.Info("Registering events...")
 
-	event.Register(event.ClientConnectEvent, event.Handler(func(e event.Event) {
+	event.Register(event.ClientConnectEvent, event.Handler(func(e *event.Event) {
 		OnClientConnect(e, wm)
 	}))
 
@@ -29,21 +29,30 @@ func RegisterEvents(wm *game.WorldManager) {
 }
 
 // OnClientConnect event informs server about new connected client
-func OnClientConnect(e event.Event, wm *game.WorldManager) {
-	if s, ok := e.(*network.Session); !ok {
-		log.Error("Cannot parse onClientConnect event!")
-	} else {
-		s.DataEx = &context.Context{WorldManager: wm}
-
-		log.Infof("Client `%s` connected to the GameServer", s.GetEndPnt())
+func OnClientConnect(e *event.Event, wm *game.WorldManager) {
+	rawSession, ok := e.Get()
+	if !ok {
+		return
 	}
+
+	s, ok := rawSession.(*network.Session)
+	if !ok {
+		return
+	}
+
+	s.DataEx = &context.Context{WorldManager: wm}
+	log.Infof("Client `%s` connected to the GameServer", s.GetEndPnt())
 }
 
 // OnClientDisconnect event informs server about disconnected client
-func OnClientDisconnect(e event.Event) {
-	s, ok := e.(*network.Session)
+func OnClientDisconnect(e *event.Event) {
+	rawSession, ok := e.Get()
 	if !ok {
-		log.Error("Cannot parse onClientDisconnect event!")
+		return
+	}
+
+	s, ok := rawSession.(*network.Session)
+	if !ok {
 		return
 	}
 
@@ -57,32 +66,44 @@ func OnClientDisconnect(e event.Event) {
 }
 
 // OnPacketReceive event informs server about received packet
-func OnPacketReceive(e event.Event) {
-	if a, ok := e.(*network.PacketArgs); !ok {
-		log.Error("Cannot parse onPacketReceive event!")
-	} else {
-		log.Debugf("Received Packet `%s` (Len: %d, type: %d, src: %s)",
-			g_PacketHandler.Name(a.Type), a.Length, a.Type, a.Session.GetEndPnt(),
-		)
-
-		// let it handle
-		g_PacketHandler.Handle(a)
+func OnPacketReceive(e *event.Event) {
+	rawPacket, ok := e.Get()
+	if !ok {
+		return
 	}
+
+	a, ok := rawPacket.(*network.PacketArgs)
+	if !ok {
+		return
+	}
+
+	log.Debugf("Received Packet `%s` (Len: %d, type: %d, src: %s)",
+		g_PacketHandler.Name(a.Type), a.Length, a.Type, a.Session.GetEndPnt(),
+	)
+
+	// let it handle
+	g_PacketHandler.Handle(a)
 }
 
 // OnPacketSend event informs server about sent packet
-func OnPacketSend(e event.Event) {
-	if a, ok := e.(*network.PacketArgs); !ok {
-		log.Error("Cannot parse onPacketSent event!")
-	} else {
-		log.Debugf("Sent Packet `%s` (Len: %d, type: %d, src: %s)",
-			g_PacketHandler.Name(a.Type), a.Length, a.Type, a.Session.GetEndPnt(),
-		)
+func OnPacketSend(e *event.Event) {
+	rawPacket, ok := e.Get()
+	if !ok {
+		return
 	}
+
+	a, ok := rawPacket.(*network.PacketArgs)
+	if !ok {
+		return
+	}
+
+	log.Debugf("Sent Packet `%s` (Len: %d, type: %d, src: %s)",
+		g_PacketHandler.Name(a.Type), a.Length, a.Type, a.Session.GetEndPnt(),
+	)
 }
 
 // OnSyncConnect event informs server about successful connection with the Master Server
-func OnSyncConnect(event event.Event) {
+func OnSyncConnect(event *event.Event) {
 	log.Info("Established connection with the Master Server!")
 
 	// register this server
@@ -102,6 +123,6 @@ func OnSyncConnect(event event.Event) {
 }
 
 // OnSyncDisconnect event informs server about lost connection with the Master Server
-func OnSyncDisconnect(event event.Event) {
+func OnSyncDisconnect(event *event.Event) {
 	log.Info("Lost connection with the Master Server! Reconnecting...")
 }

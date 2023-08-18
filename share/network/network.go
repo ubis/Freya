@@ -178,15 +178,18 @@ func (n *Network) CloseUser(i uint16) bool {
 }
 
 // onClientDisconnect event informs server about disconnected client
-func (n *Network) onClientDisconnect(event event.Event) {
-	var session, err = event.(*Session)
-	if err != true {
-		log.Error("Couldn't parse onClientDisconnect event!")
+func (n *Network) onClientDisconnect(e *event.Event) {
+	rawSession, ok := e.Get()
+	if !ok {
+		return
+	}
+
+	session, ok := rawSession.(*Session)
+	if !ok {
 		return
 	}
 
 	n.lock.Lock()
 	delete(n.clients, session.UserIdx)
-	session = nil
 	n.lock.Unlock()
 }

@@ -135,6 +135,7 @@ func (c *Client) readLoop() {
 	c.mutex.Lock()
 	c.shutdown = true
 	closing := c.closing
+	c.connected = false
 	if err == io.EOF {
 		if closing {
 			err = ErrShutdown
@@ -148,7 +149,6 @@ func (c *Client) readLoop() {
 	}
 	c.mutex.Unlock()
 	c.sending.Unlock()
-	c.connected = false
 	event.Trigger(event.SyncDisconnectEvent, c)
 }
 

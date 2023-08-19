@@ -6,6 +6,7 @@ import (
 
 	"github.com/ubis/Freya/share/event"
 	"github.com/ubis/Freya/share/log"
+	"github.com/ubis/Freya/share/network"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -29,6 +30,22 @@ func eventToLuaValue(evt *event.Event, L *lua.LState) []lua.LValue {
 			luaValues = append(luaValues, lua.LNumber(v))
 		case bool:
 			luaValues = append(luaValues, lua.LBool(v))
+		case *network.PacketArgs:
+			ud := L.NewUserData()
+			ud.Value = v.Session
+			luaValues = append(luaValues, ud)
+
+			tbl := L.NewTable()
+			tbl.RawSetString("length", lua.LNumber(v.Length))
+			tbl.RawSetString("type", lua.LNumber(v.Type))
+
+			pkt := L.NewTable()
+			for i, b := range v.Data {
+				pkt.RawSetInt(i+1, lua.LNumber(b))
+			}
+
+			tbl.RawSetString("data", pkt)
+			luaValues = append(luaValues, tbl)
 		default:
 			ud := L.NewUserData()
 			ud.Value = v

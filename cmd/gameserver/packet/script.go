@@ -1,6 +1,8 @@
 package packet
 
 import (
+	"github.com/ubis/Freya/cmd/gameserver/context"
+	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/network"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -18,6 +20,8 @@ type playerGetLevelFunc struct {
 type playerSetLevelFunc struct {
 	Fn func(*network.Session, int)
 }
+
+type playerPositionFunc struct{}
 
 func (cmf sessionPacketFunc) Call(L *lua.LState) []lua.LValue {
 	ud := L.CheckUserData(1) // session
@@ -88,4 +92,21 @@ func (cmf playerSetLevelFunc) Call(L *lua.LState) []lua.LValue {
 	cmf.Fn(session, level)
 
 	return nil
+}
+
+func (cmd playerPositionFunc) Call(L *lua.LState) []lua.LValue {
+	ud := L.CheckUserData(1)
+	session, ok := ud.Value.(*network.Session)
+	if !ok {
+		return nil
+	}
+
+	var x, y byte
+
+	if err := context.GetCharPosition(session, &x, &y); err != nil {
+		log.Error(err.Error())
+		return nil
+	}
+
+	return []lua.LValue{lua.LNumber(x), lua.LNumber(y)}
 }

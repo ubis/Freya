@@ -85,4 +85,5 @@ func RegisterFunc() {
 
 	script.RegisterFunc("getPlayerLevel", playerGetLevelFunc{Fn: GetPlayerLevel})
 	script.RegisterFunc("setPlayerLevel", playerSetLevelFunc{Fn: SetPlayerLevel})
+	script.RegisterFunc("getPlayerPosition", playerPositionFunc{})
 }

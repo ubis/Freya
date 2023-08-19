@@ -19,23 +19,15 @@ func UserVerify(c *rpc.Client, r *account.VerifyReq, s *account.VerifyRes) error
 		return nil
 	}
 
-	// session is verified, send server list periodically
-	t := time.NewTicker(time.Second * 5)
-	go func(id uint16) {
-		for {
-			session := g_NetworkManager.GetSession(id)
-			if session == nil {
-				break
-			}
+	session := g_NetworkManager.GetSession(r.UserIdx)
 
-			pkt := packet.ServerSate(session)
-			if !g_NetworkManager.SendToUser(id, pkt) {
-				break
-			}
+	// session is verified
+	// create new periodic task to send server list periodically
+	task := network.NewPeriodicTask(time.Second*5, func() {
+		session.Send(packet.ServerSate(session))
+	})
 
-			<-t.C
-		}
-	}(r.UserIdx)
+	session.AddJob("ServerState", task)
 
 	return nil
 }

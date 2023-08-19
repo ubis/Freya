@@ -4,6 +4,7 @@ import (
 	"io"
 	"net"
 	"strings"
+	"sync"
 
 	"github.com/ubis/Freya/share/encryption"
 	"github.com/ubis/Freya/share/event"
@@ -22,7 +23,6 @@ type Session struct {
 	Encryption encryption.Encryption
 	UserIdx    uint16
 	AuthKey    uint32
-	Connected  bool
 	DataEx     any
 	Data       struct {
 		AccountId     int32 // database account id
@@ -32,14 +32,17 @@ type Session struct {
 		SubPassword   *subpasswd.Details
 		CharacterList []character.Character
 	}
+
+	PeriodicJobs map[string]*PeriodicTask
+	jobMutex     sync.Mutex
 }
 
 // Starts session goroutine
 func (s *Session) Start(table encryption.XorKeyTable) {
 	// create new receiving buffer
 	s.buffer = make([]byte, MAX_RECV_BUFFER_SIZE)
-
-	s.Connected = true
+	// create map to store periodic tasks
+	s.PeriodicJobs = make(map[string]*PeriodicTask)
 
 	// init encryption
 	s.Encryption = encryption.Encryption{}
@@ -155,7 +158,40 @@ func (s *Session) IsLocal() bool {
 
 // Closes session socket
 func (s *Session) Close() {
-	s.Connected = false
+	s.RemoveAllJobs()
 	s.socket.Close()
 	event.Trigger(event.ClientDisconnectEvent, s)
+}
+
+// AddJob adds a periodic task to the session's job list in a thread-safe manner.
+// The job can be referenced and managed by its name.
+func (s *Session) AddJob(name string, task *PeriodicTask) {
+	s.jobMutex.Lock()
+	defer s.jobMutex.Unlock()
+
+	s.PeriodicJobs[name] = task
+}
+
+// RemoveJob stops and removes a periodic task from the session's job list
+// based on its name in a thread-safe manner.
+func (s *Session) RemoveJob(name string) {
+	s.jobMutex.Lock()
+	defer s.jobMutex.Unlock()
+
+	if job, exists := s.PeriodicJobs[name]; exists {
+		job.Stop()
+		delete(s.PeriodicJobs, name)
+	}
+}
+
+// RemoveAllJobs stops all periodic tasks and clears the job list
+// for the session in a thread-safe manner.
+func (s *Session) RemoveAllJobs() {
+	s.jobMutex.Lock()
+	defer s.jobMutex.Unlock()
+
+	for name, job := range s.PeriodicJobs {
+		job.Stop()
+		delete(s.PeriodicJobs, name)
+	}
 }

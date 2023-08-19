@@ -93,18 +93,12 @@ func AuthAccount(session *network.Session, reader *network.Reader) {
 		// send normal system message
 		session.Send(SystemMessg(message.Normal, 0))
 
-		// send server list periodically
-		var t = time.NewTicker(time.Second * 5)
-		go func(s *network.Session) {
-			for {
-				if !s.Connected {
-					break
-				}
+		// create new periodic task to send server list periodically
+		task := network.NewPeriodicTask(time.Second*5, func() {
+			session.Send(ServerSate(session))
+		})
 
-				s.Send(ServerSate(s))
-				<-t.C
-			}
-		}(session)
+		session.AddJob("ServerState", task)
 	} else if r.Status == account.Online {
 		session.Data.AccountId = r.Id
 		log.Infof("User `%s` double login attempt.", name)

@@ -136,14 +136,14 @@ func (n *Network) VerifyUser(i uint16, k uint32, ip string, db_idx int32) bool {
 // Sends packet to session by it's index
 func (n *Network) SendToUser(i uint16, writer *Writer) bool {
 	n.lock.RLock()
-	var session = n.clients[i]
-	if session != nil && session.Connected {
+	defer n.lock.RUnlock()
+
+	session, ok := n.clients[i]
+	if ok {
 		session.Send(writer)
-		n.lock.RUnlock()
 		return true
 	}
 
-	n.lock.RUnlock()
 	return false
 }
 

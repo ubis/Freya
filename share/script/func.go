@@ -63,6 +63,14 @@ func reloadScripts(L *lua.LState) int {
 	for _, f := range scripts {
 		log.Debugf("Reloading %s script...", f.file)
 
+		for eventName, handler := range f.registeredEvents {
+			event.Unregister(eventName, handler)
+		}
+
+		for key := range f.commandHandlers {
+			delete(f.commandHandlers, key)
+		}
+
 		if err := L.DoFile(f.file); err != nil {
 			log.Errorf("Error loading script %s: %v", f.file, err)
 		}
@@ -105,7 +113,10 @@ func addEventHandler(L *lua.LState) int {
 	eventName := L.CheckString(1)
 	handler := L.CheckFunction(2)
 
-	event.Register(eventName, func(e *event.Event) {
+	eventHandler := event.Register(eventName, func(e *event.Event) {
+		lock.Lock()
+		defer lock.Unlock()
+
 		args := eventToLuaValue(e, L)
 
 		if err := L.CallByParam(lua.P{
@@ -116,6 +127,13 @@ func addEventHandler(L *lua.LState) int {
 			log.Error("Error calling Lua function: ", err)
 		}
 	})
+
+	// store the registered handler
+	for _, script := range scripts {
+		if script.state == L {
+			script.registeredEvents[eventName] = eventHandler
+		}
+	}
 
 	return 0
 }

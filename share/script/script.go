@@ -5,7 +5,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
+	"github.com/ubis/Freya/share/event"
 	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/network"
 	lua "github.com/yuin/gopher-lua"
@@ -20,13 +22,15 @@ type LuaCallable interface {
 // script encapsulates a single loaded Lua script, including its state,
 // file path, and any registered command handlers.
 type script struct {
-	state           *lua.LState
-	file            string
-	commandHandlers map[string]*lua.LFunction
+	state            *lua.LState
+	file             string
+	commandHandlers  map[string]*lua.LFunction
+	registeredEvents map[string]event.HandlerId
 }
 
 // scripts is a global slice containing all loaded Lua scripts.
 var scripts []script
+var lock sync.Mutex
 
 // loadScript loads a Lua script from the provided file path.
 // It initializes a new Lua state for the script and registers
@@ -35,9 +39,10 @@ func loadScript(file string) {
 	L := lua.NewState()
 
 	scripts = append(scripts, script{
-		state:           L,
-		file:            file,
-		commandHandlers: make(map[string]*lua.LFunction),
+		state:            L,
+		file:             file,
+		commandHandlers:  make(map[string]*lua.LFunction),
+		registeredEvents: make(map[string]event.HandlerId),
 	})
 
 	registerFunctions(L)
@@ -94,32 +99,42 @@ func RegisterFunc(funcName string, callable LuaCallable) {
 // It searches for the command handler across all loaded scripts and
 // executes the first match found.
 func ExecCommand(command string, args []string, session *network.Session) error {
+	var fn *lua.LFunction
+	var file *script
+
+	lock.Lock()
+	defer lock.Unlock()
+
 	for _, script := range scripts {
 		handler, exists := script.commandHandlers[command]
-		if !exists {
-			continue
+		if exists {
+			fn = handler
+			file = &script
+			break
 		}
-
-		L := script.state
-
-		ud := L.NewUserData()
-		ud.Value = session
-		L.SetMetatable(ud, L.GetTypeMetatable("session_ud"))
-
-		luaArgs := make([]lua.LValue, len(args)+1)
-		luaArgs[0] = ud
-		for i, arg := range args {
-			luaArgs[i+1] = lua.LString(arg)
-		}
-
-		err := L.CallByParam(lua.P{
-			Fn:      handler,
-			NRet:    0,
-			Protect: true,
-		}, luaArgs...)
-
-		return err
 	}
 
-	return fmt.Errorf("command %s not found", command)
+	if fn == nil || file == nil {
+		return fmt.Errorf("command %s not found", command)
+	}
+
+	L := file.state
+
+	ud := L.NewUserData()
+	ud.Value = session
+	L.SetMetatable(ud, L.GetTypeMetatable("session_ud"))
+
+	luaArgs := make([]lua.LValue, len(args)+1)
+	luaArgs[0] = ud
+	for i, arg := range args {
+		luaArgs[i+1] = lua.LString(arg)
+	}
+
+	err := L.CallByParam(lua.P{
+		Fn:      fn,
+		NRet:    0,
+		Protect: true,
+	}, luaArgs...)
+
+	return err
 }

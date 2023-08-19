@@ -14,8 +14,10 @@ type Event struct {
 
 // Event handler func
 type Handler func(*Event)
+type HandlerId uint64
 
-var handlers = map[string][]Handler{}
+var handlers = map[string]map[HandlerId]Handler{}
+var nextHandlerId HandlerId = 1
 var lock sync.RWMutex
 
 func (e *Event) Gett() int {
@@ -32,21 +34,52 @@ func (e *Event) Get() (interface{}, bool) {
 	return result, true
 }
 
-// Registers a new server event
-func Register(t string, h Handler) {
-	log.Debugf("Registered `%s` event", t)
+// Registers a new server event and returns HandlerId.
+// It is possible to unregister event via Unregisted with such HandlerId.
+func Register(t string, h Handler) HandlerId {
+	log.Debugf("Registering `%s` event", t)
+
 	lock.Lock()
-	handlers[t] = append(handlers[t], h)
-	lock.Unlock()
+	defer lock.Unlock()
+
+	if handlers[t] == nil {
+		handlers[t] = make(map[HandlerId]Handler)
+	}
+
+	id := nextHandlerId
+	handlers[t][id] = h
+	nextHandlerId++
+
+	return id
+}
+
+// Unregister removes a specific handler from the given event type.
+func Unregister(t string, id HandlerId) {
+	log.Debugf("Unregistering `%s` event", t)
+
+	lock.Lock()
+	defer lock.Unlock()
+
+	if hs, ok := handlers[t]; ok {
+		delete(hs, id)
+		if len(hs) == 0 {
+			delete(handlers, t)
+		}
+	}
 }
 
 // Triggers server event in a goroutine
 func Trigger(t string, data ...any) {
 	lock.RLock()
-	hs := handlers[t]
-	lock.RUnlock()
+	defer lock.RUnlock()
+
+	hs, ok := handlers[t]
+	if !ok {
+		return
+	}
 
 	for _, h := range hs {
-		go h(&Event{data: data})
+		e := &Event{data: append([]any(nil), data...)}
+		go h(e)
 	}
 }

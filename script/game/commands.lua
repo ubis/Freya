@@ -3,6 +3,7 @@ addCommandHandler('help', function(session)
     sendClientMessage(session, ' #reload - reload scripts')
     sendClientMessage(session, ' #getlevel - get current level')
     sendClientMessage(session, ' #setlevel <new_level> - set new level')
+    sendClientMessage(session, ' #drop <kind> <opt> - drop an item')
 end)
 
 addCommandHandler('reload', function(session)

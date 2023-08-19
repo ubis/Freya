@@ -82,7 +82,13 @@ func (s *Session) Start(table encryption.XorKeyTable) {
 			var reader = NewReader(data)
 
 			// create new packet event argument
-			var arg = &PacketArgs{s, int(reader.Size), int(reader.Type), reader}
+			arg := &PacketArgs{
+				Session: s,
+				Length:  int(reader.Size),
+				Type:    int(reader.Type),
+				Data:    data,
+				Reader:  reader,
+			}
 
 			// trigger packet received event
 			event.Trigger(event.PacketReceiveEvent, arg)
@@ -94,22 +100,30 @@ func (s *Session) Start(table encryption.XorKeyTable) {
 
 // Sends specified data to the client
 func (s *Session) Send(writer *Writer) {
+	data := writer.Finalize()
+
 	// encrypt data
-	var encrypt, err = s.Encryption.Encrypt(writer.Finalize())
+	encrypt, err := s.Encryption.Encrypt(data)
 	if err != nil {
 		log.Error("Error encrypting packet: " + err.Error())
 		return
 	}
 
 	// send it...
-	var length, err2 = s.socket.Write(encrypt)
-	if err2 != nil {
-		log.Error("Error sending packet: " + err2.Error())
+	length, err := s.socket.Write(encrypt)
+	if err != nil {
+		log.Error("Error sending packet: " + err.Error())
 		return
 	}
 
 	// create new packet event argument
-	var arg = &PacketArgs{s, length, writer.Type, nil}
+	arg := &PacketArgs{
+		Session: s,
+		Length:  length,
+		Type:    writer.Type,
+		Data:    data,
+		Reader:  nil,
+	}
 
 	// trigger packet sent event
 	event.Trigger(event.PacketSendEvent, arg)

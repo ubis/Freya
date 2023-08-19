@@ -50,18 +50,18 @@ func (pk *PacketHandler) Handle(args *PacketArgs) {
 		}
 	}()
 
-	if pk.packets[args.Packet.Type] == nil {
+	if pk.packets[args.Reader.Type] == nil {
 		// unknown packet received
 		log.Errorf("Unknown packet received (Len: %d, type: %d, src: %s)",
-			args.Packet.Size, args.Packet.Type, args.Session.GetEndPnt(),
+			args.Reader.Size, args.Reader.Type, args.Session.GetEndPnt(),
 		)
 
-		DumpPacket(args.Packet)
+		DumpPacket(args.Reader)
 
 		return
 	}
 
-	var invoke = pk.packets[args.Packet.Type].Method
+	var invoke = pk.packets[args.Reader.Type].Method
 	if invoke == nil {
 		log.Errorf("Trying to access procedure `%s` (Type: %d, src: %s, id: %d)",
 			pk.Name(args.Type), args.Type, args.Session.GetEndPnt(), args.Session.Data.AccountId,
@@ -71,7 +71,7 @@ func (pk *PacketHandler) Handle(args *PacketArgs) {
 	}
 
 	// invoke packets function
-	invoke.(func(*Session, *Reader))(args.Session, args.Packet)
+	invoke.(func(*Session, *Reader))(args.Session, args.Reader)
 }
 
 // Returns packet's name by packet type

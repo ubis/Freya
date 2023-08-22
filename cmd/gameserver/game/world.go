@@ -270,6 +270,11 @@ func (w *World) AdjustCell(session *network.Session) {
 		return
 	}
 
+	// no update is needed
+	if cell == newCell {
+		return
+	}
+
 	// remove player from the cell
 	cell.RemovePlayer(session)
 

@@ -10,6 +10,7 @@ const (
 	INITIALIZED           = 142
 	UNINITIALZE           = 143
 	GETSVRTIME            = 148
+	SKILLTOUSER           = 175
 	MOVEBEGINED           = 190
 	MOVEENDED00           = 191
 	MOVECHANGED           = 192
@@ -27,6 +28,7 @@ const (
 	NFY_MOBSMOVEBGN       = 213
 	NFY_MOBSMOVEEND       = 214
 	NFY_MESSAGEEVNT       = 217
+	NFY_SKILLTOUSER       = 221
 	SYSTEMMESSG           = 241
 	WARPCOMMAND           = 244
 	SKILLTOACTS           = 310

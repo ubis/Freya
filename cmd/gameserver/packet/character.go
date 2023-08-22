@@ -287,6 +287,99 @@ func SkillToActs(session *network.Session, reader *network.Reader) {
 	ctx.World.BroadcastSessionPacket(session, pkt)
 }
 
+func SkillToUser(session *network.Session, reader *network.Reader) {
+	// seems like there are 2 types of messages
+	switch reader.Size {
+	case 19:
+		// astral & style related
+		handleStyleSkill(session, reader)
+	case 17:
+		// dash/fade & movement related
+		handleMoveSkill(session, reader)
+	}
+}
+
+func handleStyleSkill(session *network.Session, reader *network.Reader) {
+	skill := reader.ReadUint16()
+	_ = reader.ReadByte() // slot
+	unk1 := reader.ReadInt16()
+	unk2 := reader.ReadInt32()
+
+	ctx, err := context.Parse(session)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	ctx.Mutex.RLock()
+	id := ctx.Char.Id
+	mp := ctx.Char.CurrentMP
+	style := ctx.Char.Style.Get()
+	liveStyle := ctx.Char.LiveStyle
+	ctx.Mutex.RUnlock()
+
+	pkt := network.NewWriter(SKILLTOUSER)
+	pkt.WriteUint16(skill)
+	pkt.WriteUint16(mp)
+	pkt.WriteInt16(unk1)
+	pkt.WriteInt32(unk2)
+
+	session.Send(pkt)
+
+	pkt = network.NewWriter(NFY_SKILLTOUSER)
+	pkt.WriteUint16(skill)
+	pkt.WriteUint32(id)
+	pkt.WriteUint32(style)
+	pkt.WriteByte(liveStyle)
+	pkt.WriteByte(0x02)
+	pkt.WriteInt16(unk1)
+	pkt.WriteInt32(unk2)
+
+	ctx.World.BroadcastSessionPacket(session, pkt)
+}
+
+func handleMoveSkill(session *network.Session, reader *network.Reader) {
+	skill := reader.ReadUint16()
+	_ = reader.ReadByte() // slot
+	x := reader.ReadInt16()
+	y := reader.ReadInt16()
+
+	ctx, err := context.Parse(session)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	ctx.Mutex.RLock()
+	id := ctx.Char.Id
+	mp := ctx.Char.CurrentMP
+	ctx.Char.X = byte(x)
+	ctx.Char.Y = byte(y)
+	ctx.Char.BeginX = x
+	ctx.Char.BeginY = y
+	ctx.Char.EndX = x
+	ctx.Char.EndY = y
+	ctx.Mutex.RUnlock()
+
+	pkt := network.NewWriter(SKILLTOUSER)
+	pkt.WriteUint16(skill)
+	pkt.WriteInt32(0)
+	pkt.WriteUint16(mp)
+
+	session.Send(pkt)
+
+	pkt = network.NewWriter(NFY_SKILLTOUSER)
+	pkt.WriteUint16(skill)
+	pkt.WriteUint32(id)
+	pkt.WriteUint16(session.UserIdx)
+	pkt.WriteInt16(0x1000)
+	pkt.WriteInt16(x)
+	pkt.WriteInt16(y)
+
+	ctx.World.BroadcastSessionPacket(session, pkt)
+	ctx.World.AdjustCell(session)
+}
+
 func GetPlayerLevel(session *network.Session) int {
 	ctx, err := context.Parse(session)
 	if err != nil {

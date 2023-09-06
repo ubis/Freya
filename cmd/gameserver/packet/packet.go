@@ -25,6 +25,7 @@ func RegisterPackets() {
 	pk.Register(INITIALIZED, "Initialized", Initialized)
 	pk.Register(UNINITIALZE, "Uninitialze", Uninitialze)
 	pk.Register(GETSVRTIME, "GetSvrTime", GetSvrTime)
+	pk.Register(ITEMLOOTING, "ItemLooting", ItemLooting)
 	pk.Register(SKILLTOUSER, "SkillToUser", SkillToUser)
 	pk.Register(MOVEBEGINED, "MoveBegined", MoveBegined)
 	pk.Register(MOVEENDED00, "MoveEnded", MoveEnded)
@@ -37,6 +38,8 @@ func RegisterPackets() {
 	pk.Register(NFY_ITEM_UNEQUIP, "NotifyItemUnEquip", nil)
 	pk.Register(NFY_NEWMOBSLIST, "NotifyNewMobsList", nil)
 	pk.Register(NFY_DELMOBSLIST, "NotifyDelMobsList", nil)
+	pk.Register(NFY_NEWITEMLIST, "NotifyNewItemList", nil)
+	pk.Register(NFY_DELITEMLIST, "NotifyDelItemList", nil)
 	pk.Register(NFY_MOVEBEGINED, "NotifyMoveBegined", nil)
 	pk.Register(NFY_MOVEENDED00, "NotifyMoveEnded", nil)
 	pk.Register(NFY_MOVECHANGED, "NotifyMoveChanged", nil)
@@ -88,4 +91,5 @@ func RegisterFunc() {
 	script.RegisterFunc("getPlayerLevel", playerGetLevelFunc{Fn: GetPlayerLevel})
 	script.RegisterFunc("setPlayerLevel", playerSetLevelFunc{Fn: SetPlayerLevel})
 	script.RegisterFunc("getPlayerPosition", playerPositionFunc{})
+	script.RegisterFunc("dropItem", playerDropItemFunc{})
 }

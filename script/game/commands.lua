@@ -83,3 +83,15 @@ addCommandHandler('drop', function(session, kind, opt)
 
     sendClientPacket(session, opcode, bytes)
 end)
+
+addCommandHandler('drop2', function(session, kind, opt)
+    local kind_id = tonumber(kind)
+    local opt_id = tonumber(opt)
+
+    if not kind_id or not opt_id then
+        sendClientMessage(session, 'Invalid command usage: #drop <kind> <opt>')
+        return
+    end
+
+    dropItem(session, kind_id, opt_id)
+end)

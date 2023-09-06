@@ -3,6 +3,7 @@ package packet
 import (
 	"github.com/ubis/Freya/cmd/gameserver/context"
 	"github.com/ubis/Freya/share/log"
+	"github.com/ubis/Freya/share/models/inventory"
 	"github.com/ubis/Freya/share/network"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -22,6 +23,7 @@ type playerSetLevelFunc struct {
 }
 
 type playerPositionFunc struct{}
+type playerDropItemFunc struct{}
 
 func (cmf sessionPacketFunc) Call(L *lua.LState) []lua.LValue {
 	ud := L.CheckUserData(1) // session
@@ -109,4 +111,39 @@ func (cmd playerPositionFunc) Call(L *lua.LState) []lua.LValue {
 	}
 
 	return []lua.LValue{lua.LNumber(x), lua.LNumber(y)}
+}
+
+func (cmd playerDropItemFunc) Call(L *lua.LState) []lua.LValue {
+	ud := L.CheckUserData(1)
+	kind := L.CheckNumber(2)
+	option := L.CheckNumber(3)
+
+	session, ok := ud.Value.(*network.Session)
+	if !ok {
+		return nil
+	}
+
+	ctx, err := context.Parse(session)
+	if err != nil {
+		log.Error(err.Error())
+		return nil
+	}
+
+	ctx.Mutex.RLock()
+	world := ctx.World
+	id := ctx.Char.Id
+	x := int(ctx.Char.X)
+	y := int(ctx.Char.Y)
+	ctx.Mutex.RUnlock()
+
+	item := &inventory.Item{
+		Kind:   uint32(kind),
+		Option: int32(option),
+	}
+
+	if !world.DropItem(item, id, x, y) {
+		log.Error("unable to drop new item", item)
+	}
+
+	return nil
 }

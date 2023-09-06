@@ -10,6 +10,7 @@ const (
 	INITIALIZED           = 142
 	UNINITIALZE           = 143
 	GETSVRTIME            = 148
+	ITEMLOOTING           = 153
 	SKILLTOUSER           = 175
 	MOVEBEGINED           = 190
 	MOVEENDED00           = 191
@@ -20,6 +21,8 @@ const (
 	DELUSERLIST           = 201
 	NFY_NEWMOBSLIST       = 202
 	NFY_DELMOBSLIST       = 203
+	NFY_NEWITEMLIST       = 204
+	NFY_DELITEMLIST       = 205
 	NFY_ITEM_EQUIP        = 206
 	NFY_ITEM_UNEQUIP      = 207
 	NFY_MOVEBEGINED       = 210

@@ -21,6 +21,9 @@ type Cell struct {
 	mobs   map[int]*Mob
 	mmutex sync.RWMutex
 
+	items  map[int32]*Item
+	imutex sync.RWMutex
+
 	attribute [worldMapCellColumn * worldMapCellRow]uint32
 }
 
@@ -63,15 +66,45 @@ func (c *Cell) sendMobs(session *network.Session) {
 	}
 }
 
+// sendItems sends a packet containing information about all items in the cell
+// to a specified session.
+func (c *Cell) sendItems(session *network.Session) {
+	c.imutex.RLock()
+	defer c.imutex.RUnlock()
+
+	if len(c.items) == 0 {
+		return
+	}
+
+	var items []context.ItemHandler
+
+	for _, v := range c.items {
+		items = append(items, v)
+	}
+
+	pkt := packet.NewItemList(items)
+	if pkt != nil {
+		session.Send(pkt)
+	}
+}
+
 // Initialize initializes a Cell with its column and row coordinates.
 func (c *Cell) Initialize() {
 	c.players = make(map[uint16]*network.Session)
 	c.mobs = make(map[int]*Mob)
+	c.items = make(map[int32]*Item)
 }
 
 // GetId returns the column and row values of the cell.
 func (c *Cell) GetId() (byte, byte) {
 	return c.column, c.row
+}
+
+func (c *Cell) GetItemCount() int32 {
+	c.imutex.RLock()
+	defer c.imutex.RUnlock()
+
+	return int32(len(c.items))
 }
 
 // AddPlayer adds a player's session to the cell.
@@ -120,10 +153,32 @@ func (c *Cell) RemoveMob(mob *Mob) {
 	c.mmutex.Unlock()
 }
 
+// AddItem adds an item to the cell.
+func (c *Cell) AddItem(item *Item) {
+	c.imutex.Lock()
+	c.items[item.Id] = item
+	c.imutex.Unlock()
+}
+
+// RemoveItem removes an item from the cell.
+func (c *Cell) RemoveItem(item *Item) {
+	c.imutex.Lock()
+	delete(c.items, item.Id)
+	c.imutex.Unlock()
+}
+
+func (c *Cell) FindItem(id int32) *Item {
+	c.imutex.RLock()
+	defer c.imutex.RUnlock()
+
+	return c.items[id]
+}
+
 // SendState sends the state of the cell to a specified session.
 func (c *Cell) SendState(session *network.Session) {
 	c.sendPlayers(session)
 	c.sendMobs(session)
+	c.sendItems(session)
 }
 
 // Send sends a network packet to all players in the cell.

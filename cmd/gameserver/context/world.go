@@ -2,6 +2,7 @@ package context
 
 import (
 	"github.com/ubis/Freya/share/log"
+	"github.com/ubis/Freya/share/models/inventory"
 	"github.com/ubis/Freya/share/models/server"
 	"github.com/ubis/Freya/share/network"
 )
@@ -22,6 +23,9 @@ type WorldHandler interface {
 	BroadcastSessionPacket(session *network.Session, pkt *network.Writer)
 	FindWarp(warp byte) *Warp
 	IsMovable(x, y int) bool
+	DropItem(item *inventory.Item, owner int32, x, y int) bool
+	PickItem(id int32) *inventory.Item
+	PeekItem(id int32, key uint16) ItemHandler
 }
 
 // WorldManagerHandler defines the interface for interacting with a world manager.

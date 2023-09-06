@@ -6,6 +6,7 @@ import (
 	"github.com/ubis/Freya/cmd/gameserver/context"
 	"github.com/ubis/Freya/cmd/gameserver/packet"
 	"github.com/ubis/Freya/share/log"
+	"github.com/ubis/Freya/share/models/inventory"
 	"github.com/ubis/Freya/share/models/server"
 	"github.com/ubis/Freya/share/network"
 )
@@ -101,6 +102,16 @@ func (w *World) sendToNearbyCells(pkt *network.Writer, column, row byte, radius 
 
 	for _, v := range cells {
 		v.Send(pkt)
+	}
+}
+
+func (w *World) iterateCells(fn func(i, j byte, c *Cell) bool) {
+	for i := byte(0); i < worldMapCellColumn; i++ {
+		for j := byte(0); j < worldMapCellRow; j++ {
+			if fn(i, j, w.Grid[i][j]) {
+				return
+			}
+		}
 	}
 }
 
@@ -344,4 +355,65 @@ func (w *World) IsMovable(x, y int) bool {
 	}
 
 	return cell.IsMovable(x, y)
+}
+
+func (w *World) DropItem(item *inventory.Item, owner int32, x, y int) bool {
+	cell := w.getWorldCell(x, y)
+	if cell == nil {
+		return false
+	}
+
+	var id int32
+
+	w.iterateCells(func(i, j byte, c *Cell) bool {
+		id += c.GetItemCount()
+		return false
+	})
+
+	id++
+
+	i := NewItem(item, id, owner, x, y)
+
+	pkt := packet.NewItemSingle(i, true)
+	column, row := cell.GetId()
+	w.sendToNearbyCells(pkt, column, row, 2)
+
+	cell.AddItem(i)
+
+	return true
+}
+
+func (w *World) PeekItem(id int32, key uint16) context.ItemHandler {
+	var item *Item
+
+	w.iterateCells(func(i, j byte, c *Cell) bool {
+		item = c.FindItem(id)
+		return item != nil && item.GetKey() == key
+	})
+
+	return item
+}
+
+func (w *World) PickItem(id int32) *inventory.Item {
+	var item *Item
+	var cell *Cell
+
+	w.iterateCells(func(i, j byte, c *Cell) bool {
+		item = c.FindItem(id)
+		cell = c
+
+		return item != nil
+	})
+
+	if item == nil {
+		return nil
+	}
+
+	pkt := packet.DelItemList(item.Id, 0x30)
+	column, row := cell.GetId()
+	w.sendToNearbyCells(pkt, column, row, 2)
+
+	cell.RemoveItem(item)
+
+	return item.Item
 }

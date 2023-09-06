@@ -96,6 +96,16 @@ type DataRes struct {
 	Links     skills.Links
 }
 
+type ItemPickRequest struct {
+	Server byte
+	Id     int32
+	Item   inventory.Item
+}
+
+type ItemPickResponse struct {
+	Result bool
+}
+
 type ItemMoveReq struct {
 	Server     byte
 	Id         int32

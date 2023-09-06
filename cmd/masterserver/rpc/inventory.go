@@ -157,3 +157,21 @@ func ChangeInventoryItemSlot(c *rpc.Client, r *character.ItemMoveReq, s *charact
 	s.Result = err
 	return nil
 }
+
+func PickItem(c *rpc.Client, r *character.ItemPickRequest, s *character.ItemPickResponse) error {
+	var db = g_DatabaseManager.Get(r.Server)
+
+	s.Result = false
+
+	_, err := db.MustExec("INSERT INTO characters_inventory "+
+		"(id, kind, serials, opt, slot, expire) "+
+		"VALUES (?, ?, ?, ?, ?, ?)",
+		r.Id, r.Item.Kind, r.Item.Serials, r.Item.Option, r.Item.Slot, r.Item.Expire).RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	s.Result = true
+
+	return nil
+}

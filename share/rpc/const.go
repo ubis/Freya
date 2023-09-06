@@ -36,4 +36,5 @@ const (
 	UnEquipItem             = "UnEquipItem"
 	EquipItem               = "EquipItem"
 	ChangeInventoryItemSlot = "ChangeInventoryItemSlot"
+	PickItem                = "PickItem"
 )

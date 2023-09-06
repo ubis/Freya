@@ -113,6 +113,17 @@ func (w *Writer) getType(obj interface{}, length int) []byte {
 	return tmp[:length]
 }
 
+// Writes a bool
+func (w *Writer) WriteBool(data bool) {
+	value := 0
+	if data {
+		value = 1
+	}
+
+	w.buffer[w.index] = byte(value)
+	w.index++
+}
+
 // Writes an signed byte
 func (w *Writer) WriteSbyte(data interface{}) {
 	var t = w.getType(data, 1)

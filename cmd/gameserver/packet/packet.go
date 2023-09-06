@@ -82,6 +82,7 @@ func RegisterPackets() {
 	pk.Register(CHAR_DEL_CHK_SUBPW,
 		"CharacterDeleteCheckSubPassword", CharacterDeleteCheckSubPassword)
 	pk.Register(STORAGE_EXCHANGE_MOVE, "StorageExchangeMove", StorageExchangeMove)
+	pk.Register(STORAGE_ITEM_DROP, "StorageItemDrop", StorageItemDrop)
 }
 
 func RegisterFunc() {

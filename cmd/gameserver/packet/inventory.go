@@ -186,3 +186,51 @@ func StorageExchangeMove(session *network.Session, reader *network.Reader) {
 
 	notifyStorageExchange(session, 1)
 }
+
+func StorageItemDrop(session *network.Session, reader *network.Reader) {
+	_ = reader.ReadInt32() // unk
+	slot := reader.ReadUint16()
+
+	ctx, err := context.Parse(session)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	ctx.Mutex.RLock()
+	charId := ctx.Char.Id
+	item := ctx.Char.Inventory.Get(slot)
+	world := ctx.World
+	x := int(ctx.Char.X)
+	y := int(ctx.Char.Y)
+	ctx.Mutex.RUnlock()
+
+	if item.Kind == 0 {
+		// not found
+		return
+	}
+
+	if world == nil {
+		log.Error("Unable to get current world!")
+		return
+	}
+
+	state, err := syncInventory(charId, rpc.DropItem, &item)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	pkt := network.NewWriter(STORAGE_ITEM_DROP)
+	pkt.WriteBool(state)
+
+	session.Send(pkt)
+
+	if state {
+		ctx.Mutex.RLock()
+		ctx.Char.Inventory.Remove(slot)
+		ctx.Mutex.RUnlock()
+
+		world.DropItem(&item, charId, x, y)
+	}
+}

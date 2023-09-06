@@ -175,3 +175,20 @@ func PickItem(c *rpc.Client, r *character.ItemPickRequest, s *character.ItemPick
 
 	return nil
 }
+
+func DropItem(c *rpc.Client, r *character.ItemPickRequest, s *character.ItemPickResponse) error {
+	var db = g_DatabaseManager.Get(r.Server)
+
+	s.Result = false
+
+	_, err := db.MustExec(
+		"DELETE FROM characters_inventory WHERE id = ? AND slot = ?",
+		r.Id, r.Item.Slot).RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	s.Result = true
+
+	return nil
+}

@@ -28,6 +28,9 @@ type World struct {
 	mobsMove *time.Ticker
 	mobs     map[int]*Mob
 
+	// tickers
+	itemTicker *time.Ticker
+
 	// data
 	Warps []context.Warp
 }
@@ -120,7 +123,7 @@ func (w *World) initializeCells() {
 	for i := byte(0); i < worldMapCellColumn; i++ {
 		for j := byte(0); j < worldMapCellRow; j++ {
 			cell := &Cell{column: i, row: j}
-			cell.Initialize()
+			cell.Initialize(w)
 
 			w.Grid[i][j] = cell
 		}
@@ -157,12 +160,23 @@ func (w *World) initializeMobs(mobs []*Mob) {
 func (w *World) initializeTimers() {
 	// Initialize a ticker for monster movement
 	w.mobsMove = time.NewTicker(time.Millisecond * 150)
+	// Initialize a ticker for item expiration
+	w.itemTicker = time.NewTicker(time.Second)
 
 	go func() {
 		for range w.mobsMove.C {
 			for _, mob := range w.mobs {
 				mob.Update()
 			}
+		}
+	}()
+
+	go func() {
+		for range w.itemTicker.C {
+			w.iterateCells(func(i, j byte, c *Cell) bool {
+				c.Schedule()
+				return false
+			})
 		}
 	}()
 }
@@ -372,7 +386,7 @@ func (w *World) DropItem(item *inventory.Item, owner int32, x, y int) bool {
 
 	id++
 
-	i := NewItem(item, id, owner, x, y)
+	i := NewItem(item, id, owner, x, y, true)
 
 	pkt := packet.NewItemSingle(i, true)
 	column, row := cell.GetId()

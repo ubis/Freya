@@ -2,6 +2,7 @@ package game
 
 import (
 	"sync"
+	"time"
 
 	"github.com/ubis/Freya/cmd/gameserver/context"
 	"github.com/ubis/Freya/cmd/gameserver/packet"
@@ -12,6 +13,7 @@ import (
 
 // Cell represents a cell in the world grid.
 type Cell struct {
+	world  *World
 	column byte
 	row    byte
 
@@ -89,7 +91,8 @@ func (c *Cell) sendItems(session *network.Session) {
 }
 
 // Initialize initializes a Cell with its column and row coordinates.
-func (c *Cell) Initialize() {
+func (c *Cell) Initialize(world *World) {
+	c.world = world
 	c.players = make(map[uint16]*network.Session)
 	c.mobs = make(map[int]*Mob)
 	c.items = make(map[int32]*Item)
@@ -179,6 +182,31 @@ func (c *Cell) SendState(session *network.Session) {
 	c.sendPlayers(session)
 	c.sendMobs(session)
 	c.sendItems(session)
+}
+
+func (c *Cell) Schedule() {
+	c.imutex.Lock()
+	defer c.imutex.Unlock()
+
+	now := time.Now()
+
+	// run through all items to check expiration
+	for k, v := range c.items {
+		expire := v.Created.Add(v.Expire)
+
+		if !now.After(expire) {
+			continue
+		}
+
+		// item has expired
+		delete(c.items, k)
+
+		// broadcast info
+		pkt := packet.DelItemList(v.Id, 0x14)
+		if pkt != nil {
+			c.world.sendToNearbyCells(pkt, c.column, c.row, 2)
+		}
+	}
 }
 
 // Send sends a network packet to all players in the cell.

@@ -80,8 +80,19 @@ func ItemLooting(session *network.Session, reader *network.Reader) {
 	}
 
 	// todo: verify looting range
-	// todo: verify ownership
 	// todo: verify inventory space
+
+	// owner pick-up duration was not expired yet
+	if !item.IsOwnerExpired() && item.GetOwner() != charId {
+		pkt := network.NewWriter(ITEMLOOTING)
+		pkt.WriteByte(statusOwnerFail)
+		pkt.WriteUint32(0)
+		pkt.WriteInt32(0)
+		pkt.WriteUint16(0)
+		pkt.WriteUint32(0)
+		session.Send(pkt)
+		return
+	}
 
 	invItem := world.PickItem(id)
 	if invItem == nil {

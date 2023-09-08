@@ -7,4 +7,5 @@ type ItemHandler interface {
 	GetOption() int32
 	GetPosition() (uint16, uint16)
 	GetKey() uint16
+	IsOwnerExpired() bool
 }

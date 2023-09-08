@@ -102,6 +102,13 @@ type ItemPickRequest struct {
 	Item   inventory.Item
 }
 
+type ItemSwapRequest struct {
+	Server byte
+	Id     int32
+	Old    inventory.Item
+	New    inventory.Item
+}
+
 type ItemPickResponse struct {
 	Result bool
 }

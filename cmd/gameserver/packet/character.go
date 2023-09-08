@@ -350,7 +350,7 @@ func handleMoveSkill(session *network.Session, reader *network.Reader) {
 		return
 	}
 
-	ctx.Mutex.RLock()
+	ctx.Mutex.Lock()
 	id := ctx.Char.Id
 	mp := ctx.Char.CurrentMP
 	ctx.Char.X = byte(x)
@@ -359,7 +359,7 @@ func handleMoveSkill(session *network.Session, reader *network.Reader) {
 	ctx.Char.BeginY = y
 	ctx.Char.EndX = x
 	ctx.Char.EndY = y
-	ctx.Mutex.RUnlock()
+	ctx.Mutex.Unlock()
 
 	pkt := network.NewWriter(SKILLTOUSER)
 	pkt.WriteUint16(skill)

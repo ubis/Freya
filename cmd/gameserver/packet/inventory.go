@@ -187,6 +187,54 @@ func StorageExchangeMove(session *network.Session, reader *network.Reader) {
 	notifyStorageExchange(session, 1)
 }
 
+func StorageItemSwap(session *network.Session, reader *network.Reader) {
+	_ = reader.ReadInt32() // unk
+	oldSlot := reader.ReadInt32()
+	_ = reader.ReadInt32() // unk
+	newSlot := reader.ReadInt32()
+
+	ctx, err := context.Parse(session)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	ctx.Mutex.RLock()
+	charId := ctx.Char.Id
+	itemOld := ctx.Char.Inventory.Get(uint16(oldSlot))
+	itemNew := ctx.Char.Inventory.Get(uint16(newSlot))
+	ctx.Mutex.RUnlock()
+
+	if itemOld.Kind == 0 || itemNew.Kind == 0 {
+		// not found
+		return
+	}
+
+	// update slot
+	itemOld.Slot = uint16(newSlot)
+	itemNew.Slot = uint16(oldSlot)
+
+	state, err := syncItemSwap(charId, rpc.SwapItem, &itemOld, &itemNew)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	pkt := network.NewWriter(STORAGE_ITEM_SWAP)
+	pkt.WriteBool(state)
+
+	session.Send(pkt)
+
+	if state {
+		ctx.Mutex.Lock()
+		ctx.Char.Inventory.Remove(uint16(oldSlot))
+		ctx.Char.Inventory.Remove(uint16(newSlot))
+		ctx.Char.Inventory.Set(uint16(newSlot), itemOld)
+		ctx.Char.Inventory.Set(uint16(oldSlot), itemNew)
+		ctx.Mutex.Unlock()
+	}
+}
+
 func StorageItemDrop(session *network.Session, reader *network.Reader) {
 	_ = reader.ReadInt32() // unk
 	slot := reader.ReadUint16()
@@ -227,9 +275,9 @@ func StorageItemDrop(session *network.Session, reader *network.Reader) {
 	session.Send(pkt)
 
 	if state {
-		ctx.Mutex.RLock()
+		ctx.Mutex.Lock()
 		ctx.Char.Inventory.Remove(slot)
-		ctx.Mutex.RUnlock()
+		ctx.Mutex.Unlock()
 
 		world.DropItem(&item, charId, x, y)
 	}

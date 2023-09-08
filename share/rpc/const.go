@@ -38,4 +38,5 @@ const (
 	ChangeInventoryItemSlot = "ChangeInventoryItemSlot"
 	PickItem                = "PickItem"
 	DropItem                = "DropItem"
+	SwapItem                = "SwapItem"
 )

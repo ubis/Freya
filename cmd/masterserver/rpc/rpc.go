@@ -39,4 +39,5 @@ func RegisterPackets() {
 	g_RPCHandler.Register(rpc.ChangeInventoryItemSlot, ChangeInventoryItemSlot)
 	g_RPCHandler.Register(rpc.PickItem, PickItem)
 	g_RPCHandler.Register(rpc.DropItem, DropItem)
+	g_RPCHandler.Register(rpc.SwapItem, SwapItem)
 }

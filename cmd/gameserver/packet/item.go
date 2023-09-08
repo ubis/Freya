@@ -25,6 +25,23 @@ func syncInventory(id int32, cmd string, item *inventory.Item) (bool, error) {
 	return res.Result, nil
 }
 
+func syncItemSwap(id int32, cmd string, old *inventory.Item, new *inventory.Item) (bool, error) {
+
+	req := character.ItemSwapRequest{
+		Server: byte(g_ServerSettings.ServerId),
+		Id:     id,
+		Old:    *old,
+		New:    *new,
+	}
+
+	res := character.ItemPickResponse{}
+	if err := g_RPCHandler.Call(cmd, &req, &res); err != nil {
+		return false, err
+	}
+
+	return res.Result, nil
+}
+
 func ItemLooting(session *network.Session, reader *network.Reader) {
 	id := reader.ReadInt32()
 	key := reader.ReadUint16()

@@ -27,12 +27,12 @@ addCommandHandler('setlevel', function(session, arg)
     sendClientMessage(session, 'Your level is set to '..level)
 end)
 
-addCommandHandler('drop', function(session, kind, opt)
+addCommandHandler('drop2', function(session, kind, opt)
     local kind_id = tonumber(kind)
     local opt_id = tonumber(opt)
 
     if not kind_id or not opt_id then
-        sendClientMessage(session, 'Invalid command usage: #drop <kind> <opt>')
+        sendClientMessage(session, 'Invalid command usage: #drop2 <kind> <opt>')
         return
     end
 
@@ -84,7 +84,7 @@ addCommandHandler('drop', function(session, kind, opt)
     sendClientPacket(session, opcode, bytes)
 end)
 
-addCommandHandler('drop2', function(session, kind, opt)
+addCommandHandler('drop', function(session, kind, opt)
     local kind_id = tonumber(kind)
     local opt_id = tonumber(opt)
 

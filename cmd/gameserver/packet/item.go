@@ -66,6 +66,8 @@ func ItemLooting(session *network.Session, reader *network.Reader) {
 	ctx.Mutex.RLock()
 	charId := ctx.Char.Id
 	world := ctx.World
+	currentItem := ctx.Char.Inventory.Get(slot)
+	x, y := ctx.Char.X, ctx.Char.Y
 	ctx.Mutex.RUnlock()
 
 	if world == nil {
@@ -79,13 +81,36 @@ func ItemLooting(session *network.Session, reader *network.Reader) {
 		return
 	}
 
-	// todo: verify looting range
-	// todo: verify inventory space
+	// check looting position
+	itemX, itemY := item.GetPosition()
+	distX, distY := int(x)-int(itemX), int(y)-int(itemY)
+	if distX < -10 || distX > 10 || distY < -10 || distY > 10 {
+		pkt := network.NewWriter(ITEMLOOTING)
+		pkt.WriteByte(statusOutOfRange)
+		pkt.WriteUint32(0)
+		pkt.WriteInt32(0)
+		pkt.WriteUint16(0)
+		pkt.WriteUint32(0)
+		session.Send(pkt)
+		return
+	}
 
 	// owner pick-up duration was not expired yet
 	if !item.IsOwnerExpired() && item.GetOwner() != charId {
 		pkt := network.NewWriter(ITEMLOOTING)
 		pkt.WriteByte(statusOwnerFail)
+		pkt.WriteUint32(0)
+		pkt.WriteInt32(0)
+		pkt.WriteUint16(0)
+		pkt.WriteUint32(0)
+		session.Send(pkt)
+		return
+	}
+
+	// check inventory slot is already in use
+	if currentItem.Kind != 0 {
+		pkt := network.NewWriter(ITEMLOOTING)
+		pkt.WriteByte(statusAlreadyUseSlot)
 		pkt.WriteUint32(0)
 		pkt.WriteInt32(0)
 		pkt.WriteUint16(0)

@@ -177,7 +177,7 @@ func Initialized(session *network.Session, reader *network.Reader) {
 	pkt.WriteBytes(make([]byte, 16)) // Craft Flags
 	pkt.WriteUint32(0x00)            // Craft Type
 
-	pkt.WriteInt32(0x00) // Help Window Index
+	pkt.WriteInt32(0x10) // Help Window Index
 	pkt.WriteBytes(make([]byte, 163))
 
 	pkt.WriteUint32(0x00) // TotalPoints

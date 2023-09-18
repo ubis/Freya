@@ -131,7 +131,7 @@ func VerifyLinks(session *network.Session, reader *network.Reader) {
 	var server = reader.ReadByte()
 	var magickey = reader.ReadInt32()
 
-	if magickey != int32(g_ServerConfig.MagicKey) {
+	if !g_ServerConfig.IgnoreVersionCheck && magickey != int32(g_ServerConfig.MagicKey) {
 		log.Errorf("Invalid MagicKey (Required: %d, detected: %d, id: %d, src: %s",
 			g_ServerConfig.MagicKey, magickey, session.Data.AccountId, session.GetEndPnt(),
 		)

@@ -22,18 +22,24 @@ func Connect2Svr(session *network.Session, reader *network.Reader) {
 func CheckVersion(session *network.Session, reader *network.Reader) {
 	var version1 = reader.ReadInt32()
 
+	targetVersion := int32(g_ServerConfig.Version)
+
+	if g_ServerConfig.IgnoreVersionCheck {
+		targetVersion = version1
+	}
+
 	session.Data.Verified = true
 
-	if version1 != int32(g_ServerConfig.Version) {
+	if version1 != targetVersion {
 		log.Errorf("Client version mismatch (Client: %d, server: %d, src: %s)",
-			version1, g_ServerConfig.Version, session.GetEndPnt(),
+			version1, targetVersion, session.GetEndPnt(),
 		)
 
 		session.Data.Verified = false
 	}
 
 	var packet = network.NewWriter(CHECKVERSION)
-	packet.WriteInt32(g_ServerConfig.Version)
+	packet.WriteInt32(targetVersion)
 	packet.WriteInt32(0x00) // debug
 	packet.WriteInt32(0x00) // reserved
 	packet.WriteInt32(0x00) // reserved

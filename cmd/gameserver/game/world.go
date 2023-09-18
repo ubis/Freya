@@ -181,6 +181,24 @@ func (w *World) initializeTimers() {
 	}()
 }
 
+// difference returns cells present in a but not in b
+func difference(a, b []*Cell) []*Cell {
+	m := make(map[*Cell]bool)
+	diff := []*Cell{}
+
+	for _, cell := range b {
+		m[cell] = true
+	}
+
+	for _, cell := range a {
+		if !m[cell] {
+			diff = append(diff, cell)
+		}
+	}
+
+	return diff
+}
+
 // Initialize initializes the World grid with Cell instances.
 func (w *World) Initialize(manager *WorldManager) {
 	w.manager = manager
@@ -300,6 +318,20 @@ func (w *World) AdjustCell(session *network.Session) {
 		return
 	}
 
+	// get column and row from old and new cell
+	oc, or := cell.GetId()
+	nc, nr := newCell.GetId()
+
+	old := w.getNearbyCells(oc, or, 1)
+	new := w.getNearbyCells(nc, nr, 1)
+
+	// determine the cells that are unique to the new vicinity
+	cells := difference(new, old)
+
+	for _, v := range cells {
+		v.SendState(session)
+	}
+
 	// remove player from the cell
 	cell.RemovePlayer(session)
 
@@ -308,9 +340,6 @@ func (w *World) AdjustCell(session *network.Session) {
 	ctx.Cell = newCell
 	ctx.Mutex.Unlock()
 
-	// get column and row from new cell
-	nc, nr := newCell.GetId()
-
 	pkt := packet.NewUserSingle(session, server.NewUserMove)
 	if pkt == nil {
 		log.Error("Failed to create NewUserSingle packet!")
@@ -318,12 +347,6 @@ func (w *World) AdjustCell(session *network.Session) {
 	}
 
 	w.sendToNearbyCells(pkt, nc, nr, 2)
-
-	// notify player about nearby cell states
-	cells := w.getNearbyCells(nc, nr, 2)
-	for _, v := range cells {
-		v.SendState(session)
-	}
 
 	// add player to the new cell
 	newCell.AddPlayer(session)

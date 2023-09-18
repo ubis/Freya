@@ -108,6 +108,8 @@ func ItemLooting(session *network.Session, reader *network.Reader) {
 	}
 
 	// check inventory slot is already in use
+	// note: this disables stacking items (cannot pick up potions etc)
+	// todo: add item stacking
 	if currentItem.Kind != 0 {
 		pkt := network.NewWriter(ITEMLOOTING)
 		pkt.WriteByte(statusAlreadyUseSlot)

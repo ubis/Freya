@@ -82,26 +82,18 @@ func SubPasswordSet(session *network.Session, reader *network.Reader) {
 
 // SubPasswordCheckRequest Packet
 func SubPasswordCheckRequest(session *network.Session, reader *network.Reader) {
-	var sub = session.Data.SubPassword
-	var left = time.Until(sub.Expires)
+	sub := session.Data.SubPassword
+	left := time.Until(sub.Expires)
+	state := 1 // 1 - verification is needed; 0 - not needed
 
-	var packet = network.NewWriter(SUBPW_CHECK_REQ)
+	pkt := network.NewWriter(SUBPW_CHECK_REQ)
 
-	if sub.Password == "" {
-		// need to create first
-		packet.WriteInt32(0x00)
-	} else {
-		// now check actual time
-		if left.Seconds() > 0 {
-			// no verification needed
-			packet.WriteInt32(0x00)
-		} else {
-			// verification is needed
-			packet.WriteInt32(0x01)
-		}
+	if g_ServerConfig.IgnoreSubPassword || left.Seconds() > 0 {
+		state = 0
 	}
 
-	session.Send(packet)
+	pkt.WriteInt32(state)
+	session.Send(pkt)
 }
 
 // SubPasswordCheck Packet

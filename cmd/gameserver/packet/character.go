@@ -51,7 +51,7 @@ func GetMyChartr(session *network.Session, reader *network.Reader) {
 	session.Data.SubPassword = &res.Details
 
 	var subpasswdExist = 0
-	if res.Password != "" {
+	if g_ServerConfig.IgnoreSubPassword || res.Password != "" {
 		subpasswdExist = 1
 	}
 

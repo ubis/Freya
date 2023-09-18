@@ -239,5 +239,9 @@ func (w *Writer) Finalize() []byte {
 	w.buffer[2] = byte(length)
 	w.buffer[3] = byte(length >> 8)
 
-	return w.buffer[:length]
+	// create a new slice and copy the data
+	result := make([]byte, length)
+	copy(result, w.buffer[:length])
+
+	return result
 }

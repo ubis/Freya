@@ -3,44 +3,8 @@ package packet
 import (
 	"github.com/ubis/Freya/cmd/gameserver/context"
 	"github.com/ubis/Freya/share/log"
-	"github.com/ubis/Freya/share/models/character"
-	"github.com/ubis/Freya/share/models/inventory"
 	"github.com/ubis/Freya/share/network"
-	"github.com/ubis/Freya/share/rpc"
 )
-
-func syncInventory(id int32, cmd string, item *inventory.Item) (bool, error) {
-
-	req := character.ItemPickRequest{
-		Server: byte(g_ServerSettings.ServerId),
-		Id:     id,
-		Item:   *item,
-	}
-
-	res := character.ItemPickResponse{}
-	if err := g_RPCHandler.Call(cmd, &req, &res); err != nil {
-		return false, err
-	}
-
-	return res.Result, nil
-}
-
-func syncItemSwap(id int32, cmd string, old *inventory.Item, new *inventory.Item) (bool, error) {
-
-	req := character.ItemSwapRequest{
-		Server: byte(g_ServerSettings.ServerId),
-		Id:     id,
-		Old:    *old,
-		New:    *new,
-	}
-
-	res := character.ItemPickResponse{}
-	if err := g_RPCHandler.Call(cmd, &req, &res); err != nil {
-		return false, err
-	}
-
-	return res.Result, nil
-}
 
 func ItemLooting(session *network.Session, reader *network.Reader) {
 	id := reader.ReadInt32()
@@ -130,15 +94,13 @@ func ItemLooting(session *network.Session, reader *network.Reader) {
 	// update slot
 	invItem.Slot = slot
 
-	state, err := syncInventory(charId, rpc.PickItem, invItem)
+	ctx.Mutex.Lock()
+	state, err := ctx.Char.Inventory.Set(slot, *invItem)
+	ctx.Mutex.Unlock()
+
 	if err != nil {
 		log.Error(err.Error())
-		return
 	}
-
-	ctx.Mutex.Lock()
-	ctx.Char.Inventory.Set(slot, *invItem)
-	ctx.Mutex.Unlock()
 
 	pkt := network.NewWriter(ITEMLOOTING)
 

@@ -73,7 +73,7 @@ type Character struct {
 	Exp       uint64
 	WarExp    uint64 `db:"war_exp"`
 	Equipment inventory.Equipment
-	Inventory inventory.Inventory
+	Inventory *inventory.Inventory
 	Skills    skills.SkillList
 	Links     skills.Links
 	Created   time.Time
@@ -94,33 +94,4 @@ type DataRes struct {
 	Inventory inventory.Inventory
 	Skills    skills.SkillList
 	Links     skills.Links
-}
-
-type ItemPickRequest struct {
-	Server byte
-	Id     int32
-	Item   inventory.Item
-}
-
-type ItemSwapRequest struct {
-	Server byte
-	Id     int32
-	Old    inventory.Item
-	New    inventory.Item
-}
-
-type ItemPickResponse struct {
-	Result bool
-}
-
-type ItemMoveReq struct {
-	Server     byte
-	Id         int32
-	DeleteSlot uint16
-	CreateSlot uint16
-}
-
-type ItemMoveRes struct {
-	Item   inventory.Item
-	Result error
 }

@@ -32,11 +32,11 @@ const (
 )
 
 const (
-	ChangeEquipItemSlot     = "ChangeEquipItemSlot"
-	UnEquipItem             = "UnEquipItem"
-	EquipItem               = "EquipItem"
-	ChangeInventoryItemSlot = "ChangeInventoryItemSlot"
-	PickItem                = "PickItem"
-	DropItem                = "DropItem"
-	SwapItem                = "SwapItem"
+	EquipItem         = "EquipItem"
+	UnEquipItem       = "UnEquipItem"
+	MoveEquipmentItem = "MoveEquipmentItem"
+	AddItem           = "AddItem"
+	RemoveItem        = "RemoveItem"
+	SwapItem          = "SwapItem"
+	MoveItem          = "MoveItem"
 )

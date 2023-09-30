@@ -1,164 +1,66 @@
 package rpc
 
 import (
-	"context"
+	"errors"
 
-	"github.com/ubis/Freya/share/models/character"
 	"github.com/ubis/Freya/share/models/inventory"
 	"github.com/ubis/Freya/share/rpc"
 )
 
-func UnEquipItem(c *rpc.Client, r *character.ItemMoveReq, s *character.ItemMoveRes) error {
+func EquipItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
 	var db = g_DatabaseManager.Get(r.Server)
 
-	var item inventory.Item
-	query := db.QueryRow("SELECT kind, serials, opt, slot, expire "+
-		"FROM characters_equipment WHERE id = ? AND slot = ?", r.Id, r.DeleteSlot)
-	err := query.Scan(&item.Kind, &item.Serials, &item.Option, &item.Slot, &item.Expire)
-	if err != nil {
-		s.Result = err
-		return err
-	}
+	s.Result = false
 
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		s.Result = err
-		return err
-	}
-
-	_, err = tx.ExecContext(ctx, "DELETE FROM characters_equipment WHERE id = ? AND slot = ?", r.Id, item.Slot)
-	if err != nil {
-		_ = tx.Rollback()
-		s.Result = err
-		return err
-	}
-
-	item.Slot = r.CreateSlot
-
-	_, err = tx.ExecContext(ctx, "INSERT INTO characters_inventory "+
+	_, err := db.MustExec("INSERT INTO characters_equipment "+
 		"(id, kind, serials, opt, slot, expire) "+
 		"VALUES (?, ?, ?, ?, ?, ?)",
-		r.Id, item.Kind, item.Serials, item.Option, r.CreateSlot, item.Expire)
+		r.Id, r.Item.Kind, r.Item.Serials, r.Item.Option, r.Item.Slot, r.Item.Expire).RowsAffected()
 	if err != nil {
-		_ = tx.Rollback()
-		s.Result = err
 		return err
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		s.Result = err
-		return err
-	}
-
-	s.Item = item
-	s.Result = nil
+	s.Result = true
 
 	return nil
 }
 
-func EquipItem(c *rpc.Client, r *character.ItemMoveReq, s *character.ItemMoveRes) error {
+func UnEquipItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
 	var db = g_DatabaseManager.Get(r.Server)
 
-	var item inventory.Item
-	query := db.QueryRow("SELECT kind, serials, opt, slot, expire "+
-		"FROM characters_inventory WHERE id = ? AND slot = ?", r.Id, r.DeleteSlot)
-	err := query.Scan(&item.Kind, &item.Serials, &item.Option, &item.Slot, &item.Expire)
+	s.Result = false
+
+	_, err := db.MustExec(
+		"DELETE FROM characters_equipment WHERE id = ? AND slot = ?",
+		r.Id, r.Item.Slot).RowsAffected()
 	if err != nil {
-		s.Result = err
 		return err
 	}
 
-	ctx := context.Background()
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		s.Result = err
-		return err
-	}
-
-	_, err = tx.ExecContext(ctx, "DELETE FROM characters_inventory WHERE id = ? AND slot = ?", r.Id, item.Slot)
-	if err != nil {
-		_ = tx.Rollback()
-		s.Result = err
-		return err
-	}
-
-	item.Slot = r.CreateSlot
-
-	_, err = tx.ExecContext(ctx, "INSERT INTO characters_equipment "+
-		"(id, kind, serials, opt, slot, expire) "+
-		"VALUES (?, ?, ?, ?, ?, ?)",
-		r.Id, item.Kind, item.Serials, item.Option, r.CreateSlot, item.Expire)
-	if err != nil {
-		_ = tx.Rollback()
-		s.Result = err
-		return err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		s.Result = err
-		return err
-	}
-
-	s.Item = item
-	s.Result = nil
+	s.Result = true
 
 	return nil
 }
 
-func ChangeEquipItemSlot(c *rpc.Client, r *character.ItemMoveReq, s *character.ItemMoveRes) error {
+func MoveEquipmentItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
 	var db = g_DatabaseManager.Get(r.Server)
 
-	var item inventory.Item
-	query := db.QueryRow("SELECT kind, serials, opt, slot, expire "+
-		"FROM characters_equipment WHERE id = ? AND slot = ?", r.Id, r.DeleteSlot)
-	err := query.Scan(&item.Kind, &item.Serials, &item.Option, &item.Slot, &item.Expire)
+	s.Result = false
+
+	_, err := db.MustExec(
+		"UPDATE characters_equipment SET slot = ? "+
+			"WHERE id = ? AND slot = ?",
+		r.NewItem.Slot, r.Id, r.Item.Slot).RowsAffected()
 	if err != nil {
-		s.Result = err
 		return err
 	}
 
-	affected, err := db.MustExec("UPDATE characters_equipment SET slot = ? "+
-		" WHERE id = ? AND slot = ?", r.CreateSlot, r.Id, item.Slot).RowsAffected()
-	if err == nil && affected > 0 {
-		s.Item = item
-		s.Result = nil
+	s.Result = true
 
-		return nil
-	}
-
-	s.Result = err
 	return nil
 }
 
-func ChangeInventoryItemSlot(c *rpc.Client, r *character.ItemMoveReq, s *character.ItemMoveRes) error {
-	var db = g_DatabaseManager.Get(r.Server)
-
-	var item inventory.Item
-	query := db.QueryRow("SELECT kind, serials, opt, slot, expire "+
-		"FROM characters_inventory WHERE id = ? AND slot = ?", r.Id, r.DeleteSlot)
-	err := query.Scan(&item.Kind, &item.Serials, &item.Option, &item.Slot, &item.Expire)
-	if err != nil {
-		s.Result = err
-		return err
-	}
-
-	affected, err := db.MustExec("UPDATE characters_inventory SET slot = ? "+
-		"WHERE id = ? AND slot = ?", r.CreateSlot, r.Id, item.Slot).RowsAffected()
-	if err == nil && affected > 0 {
-		s.Item = item
-		s.Result = nil
-
-		return nil
-	}
-
-	s.Result = err
-	return nil
-}
-
-func PickItem(c *rpc.Client, r *character.ItemPickRequest, s *character.ItemPickResponse) error {
+func AddItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
 	var db = g_DatabaseManager.Get(r.Server)
 
 	s.Result = false
@@ -176,7 +78,7 @@ func PickItem(c *rpc.Client, r *character.ItemPickRequest, s *character.ItemPick
 	return nil
 }
 
-func DropItem(c *rpc.Client, r *character.ItemPickRequest, s *character.ItemPickResponse) error {
+func RemoveItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
 	var db = g_DatabaseManager.Get(r.Server)
 
 	s.Result = false
@@ -193,10 +95,14 @@ func DropItem(c *rpc.Client, r *character.ItemPickRequest, s *character.ItemPick
 	return nil
 }
 
-func SwapItem(c *rpc.Client, r *character.ItemSwapRequest, s *character.ItemPickResponse) error {
+func SwapItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
 	var db = g_DatabaseManager.Get(r.Server)
 
 	s.Result = false
+
+	if r.NewItem == nil {
+		return errors.New("target item is not set!")
+	}
 
 	tx, err := db.Beginx()
 	if err != nil {
@@ -207,8 +113,8 @@ func SwapItem(c *rpc.Client, r *character.ItemSwapRequest, s *character.ItemPick
 	defer tx.Rollback()
 
 	// slots were swapped before
-	oldSlot := r.New.Slot
-	newSlot := r.Old.Slot
+	newSlot := r.Item.Slot
+	oldSlot := r.NewItem.Slot
 
 	// since id + slot is primary key, we need to switch to temp slot
 	// slot is uint16, so use it's max value
@@ -239,6 +145,24 @@ func SwapItem(c *rpc.Client, r *character.ItemSwapRequest, s *character.ItemPick
 	}
 
 	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	s.Result = true
+
+	return nil
+}
+
+func MoveItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
+	var db = g_DatabaseManager.Get(r.Server)
+
+	s.Result = false
+
+	_, err := db.MustExec(
+		"UPDATE characters_inventory SET slot = ? "+
+			"WHERE id = ? AND slot = ?",
+		r.NewItem.Slot, r.Id, r.Item.Slot).RowsAffected()
 	if err != nil {
 		return err
 	}

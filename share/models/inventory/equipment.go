@@ -162,16 +162,16 @@ func (e *Equipment) MoveItem(old, new uint16) (bool, error) {
 		return ok, errors.New("such item already exists in the equipment")
 	}
 
-	// swap slots
-	oldItem.Slot = new
-	newItem.Slot = old
+	// set up new slot
+	newItem.Slot = new
 
 	ok, err := e.sync(rpc.MoveEquipmentItem, &oldItem, &newItem)
 	if err == nil {
 		delete(e.Equip, int(old))
-		delete(e.Equip, int(new))
+
+		// swap slot
+		oldItem.Slot = new
 		e.Equip[int(oldItem.Slot)] = oldItem
-		e.Equip[int(newItem.Slot)] = newItem
 	}
 
 	return ok, err

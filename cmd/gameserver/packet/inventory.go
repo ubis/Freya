@@ -53,6 +53,16 @@ func StorageExchangeMove(session *network.Session, reader *network.Reader) {
 		pkt.WriteInt16(deleteSlot)
 
 		ctx.World.BroadcastSessionPacket(session, pkt)
+
+		// with one-handed dual weapons we need to move from right hand to
+		// the left, if left-hand weapon was removed
+		// todo: check for dual-handed weapons and ignore
+		if deleteSlot == 4 { // fixme: need enum of equipment types
+			// switch weapon
+			ctx.Mutex.Lock()
+			ctx.Char.Equipment.MoveItem(5, 4) // fixme: need enum of equipment types
+			ctx.Mutex.Unlock()
+		}
 	case isInventory && !isEquip:
 		// from inventory to equipment
 		ctx.Mutex.Lock()

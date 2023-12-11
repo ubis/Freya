@@ -42,6 +42,65 @@ func UnEquipItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemRespo
 	return nil
 }
 
+func SwapEquipmentItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
+	var db = g_DatabaseManager.Get(r.Server)
+
+	s.Result = false
+
+	if r.NewItem == nil {
+		return errors.New("target item is not set")
+	}
+
+	tx, err := db.Beginx()
+	if err != nil {
+		return err
+	}
+
+	// the rollback will be ignored if the tx has been committed later in the function
+	defer tx.Rollback()
+
+	// slots were swapped before
+	newSlot := r.Item.Slot
+	oldSlot := r.NewItem.Slot
+
+	// since id + slot is primary key, we need to switch to temp slot
+	// slot is uint16, so use it's max value
+	tempSlot := 65535
+
+	_, err = tx.Exec(
+		"UPDATE characters_equipment SET slot = ? WHERE id = ? AND slot = ?",
+		tempSlot, r.Id, oldSlot,
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(
+		"UPDATE characters_equipment SET slot = ? WHERE id = ? AND slot = ?",
+		oldSlot, r.Id, newSlot,
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(
+		"UPDATE characters_equipment SET slot = ? WHERE id = ? AND slot = ?",
+		newSlot, r.Id, tempSlot,
+	)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	s.Result = true
+
+	return nil
+}
+
 func MoveEquipmentItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
 	var db = g_DatabaseManager.Get(r.Server)
 

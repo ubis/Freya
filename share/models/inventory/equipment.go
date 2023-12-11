@@ -150,6 +150,33 @@ func (e *Equipment) UnEquipItem(old, new uint16, i *Inventory) (bool, error) {
 	return ok, err
 }
 
+// Swap inventory item by slot
+func (e *Equipment) Swap(old, new uint16) (bool, error) {
+	oldItem, ok := e.Equip[int(old)]
+	if !ok {
+		return ok, errors.New("such item does not exist in the equipment")
+	}
+
+	newItem, ok := e.Equip[int(new)]
+	if !ok {
+		return ok, errors.New("such item does not exist in the equipment")
+	}
+
+	// swap slots
+	oldItem.Slot = new
+	newItem.Slot = old
+
+	ok, err := e.sync(rpc.SwapEquipmentItem, &oldItem, &newItem)
+	if err == nil {
+		delete(e.Equip, int(old))
+		delete(e.Equip, int(new))
+		e.Equip[int(oldItem.Slot)] = oldItem
+		e.Equip[int(newItem.Slot)] = newItem
+	}
+
+	return ok, err
+}
+
 func (e *Equipment) MoveItem(old, new uint16) (bool, error) {
 	// take from equipment (old) and move into equipment(new)
 	oldItem, ok := e.Equip[int(old)]

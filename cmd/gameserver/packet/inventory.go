@@ -130,9 +130,10 @@ func StorageExchangeMove(session *network.Session, reader *network.Reader) {
 }
 
 func StorageItemSwap(session *network.Session, reader *network.Reader) {
-	_ = reader.ReadInt32() // unk
+	network.DumpPacket(reader)
+	isEquipA := reader.ReadUint32() == 1
 	oldSlot := reader.ReadInt32()
-	_ = reader.ReadInt32() // unk
+	isEquipB := reader.ReadUint32() == 1
 	newSlot := reader.ReadInt32()
 
 	ctx, err := context.Parse(session)
@@ -141,8 +142,14 @@ func StorageItemSwap(session *network.Session, reader *network.Reader) {
 		return
 	}
 
+	state, err := false, nil
+
 	ctx.Mutex.Lock()
-	state, err := ctx.Char.Inventory.Swap(uint16(oldSlot), uint16(newSlot))
+	if isEquipA && isEquipB {
+		state, err = ctx.Char.Equipment.Swap(uint16(oldSlot), uint16(newSlot))
+	} else {
+		state, err = ctx.Char.Inventory.Swap(uint16(oldSlot), uint16(newSlot))
+	}
 	ctx.Mutex.Unlock()
 
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"sort"
 
 	"github.com/ubis/Freya/share/rpc"
@@ -103,7 +104,20 @@ func (e *Equipment) EquipItem(old, new uint16, i *Inventory) (bool, error) {
 	// update slot
 	item.Slot = new
 
-	return e.Set(new, item)
+	ok, err := e.Set(new, item)
+	if ok {
+		return ok, nil
+	}
+
+	// attempt to rollback
+	// todo: actually we should do this in a single transaction, like before
+	item.Slot = old
+	if ok, err2 := i.Set(old, item); !ok {
+		return ok, fmt.Errorf("unable to rollback: %s and %s",
+			err.Error(), err2.Error())
+	}
+
+	return ok, err
 }
 
 func (e *Equipment) UnEquipItem(old, new uint16, i *Inventory) (bool, error) {
@@ -120,7 +134,20 @@ func (e *Equipment) UnEquipItem(old, new uint16, i *Inventory) (bool, error) {
 	// update slot
 	item.Slot = new
 
-	return i.Set(new, item)
+	ok, err := i.Set(new, item)
+	if ok {
+		return ok, nil
+	}
+
+	// attempt to rollback
+	// todo: actually we should do this in a single transaction, like before
+	item.Slot = old
+	if ok, err2 := i.Set(old, item); !ok {
+		return ok, fmt.Errorf("unable to rollback: %s and %s",
+			err.Error(), err2.Error())
+	}
+
+	return ok, err
 }
 
 func (e *Equipment) MoveItem(old, new uint16) (bool, error) {

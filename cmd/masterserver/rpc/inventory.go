@@ -78,6 +78,24 @@ func AddItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse)
 	return nil
 }
 
+func StackItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
+	var db = g_DatabaseManager.Get(r.Server)
+
+	s.Result = false
+
+	_, err := db.MustExec("UPDATE characters_inventory "+
+		"SET opt = ? "+
+		"WHERE id = ? AND kind = ?",
+		r.Item.Option, r.Id, r.Item.Kind).RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	s.Result = true
+
+	return nil
+}
+
 func RemoveItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
 	var db = g_DatabaseManager.Get(r.Server)
 

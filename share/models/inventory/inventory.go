@@ -64,6 +64,21 @@ func (e *Inventory) Set(slot uint16, item Item) (bool, error) {
 	return ok, err
 }
 
+// Stack inventory item
+func (e *Inventory) Stack(slot uint16, total int32) (bool, error) {
+	// update amount
+	item := e.Get(slot)
+	item.Option = total
+
+	ok, err := e.sync(rpc.StackItem, &item, nil)
+	if err == nil {
+		delete(e.Inv, int(slot))
+		e.Inv[int(slot)] = item
+	}
+
+	return ok, err
+}
+
 // Returns inventory item by slot
 func (e *Inventory) Get(slot uint16) Item {
 	if value, ok := e.Inv[int(slot)]; ok {

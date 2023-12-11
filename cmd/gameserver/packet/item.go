@@ -3,8 +3,33 @@ package packet
 import (
 	"github.com/ubis/Freya/cmd/gameserver/context"
 	"github.com/ubis/Freya/share/log"
+	"github.com/ubis/Freya/share/models/inventory"
 	"github.com/ubis/Freya/share/network"
 )
+
+func StackItem(dst *inventory.Item, src context.ItemHandler) bool {
+	// should not be stacked: no items with this kind index
+	if dst.Kind == 0 {
+		return false
+	}
+
+	// should not be stacked: item kinds are different
+	if dst.Kind != src.GetKind() {
+		return false
+	}
+
+	// todo: check stackable option
+	// todo: check quest items
+
+	amount := src.GetOption()
+	total := dst.Option + amount
+
+	// todo: check total amount based on item type
+
+	dst.Option = total
+
+	return true
+}
 
 func ItemLooting(session *network.Session, reader *network.Reader) {
 	id := reader.ReadInt32()
@@ -72,9 +97,9 @@ func ItemLooting(session *network.Session, reader *network.Reader) {
 	}
 
 	// check inventory slot is already in use
-	// note: this disables stacking items (cannot pick up potions etc)
-	// todo: add item stacking
-	if currentItem.Kind != 0 {
+	// also check if it should be stacked
+	isStacked := StackItem(&currentItem, item)
+	if !isStacked && currentItem.Kind != 0 {
 		pkt := network.NewWriter(ITEMLOOTING)
 		pkt.WriteByte(statusAlreadyUseSlot)
 		pkt.WriteUint32(0)
@@ -94,8 +119,18 @@ func ItemLooting(session *network.Session, reader *network.Reader) {
 	// update slot
 	invItem.Slot = slot
 
+	if isStacked {
+		invItem.Option = currentItem.Option
+	}
+
+	state, err := false, nil
+
 	ctx.Mutex.Lock()
-	state, err := ctx.Char.Inventory.Set(slot, *invItem)
+	if isStacked {
+		state, err = ctx.Char.Inventory.Stack(slot, currentItem.Option)
+	} else {
+		state, err = ctx.Char.Inventory.Set(slot, *invItem)
+	}
 	ctx.Mutex.Unlock()
 
 	if err != nil {

@@ -7,6 +7,13 @@ import (
 	"github.com/ubis/Freya/share/network"
 )
 
+type StorageType int
+
+const (
+	Inventory StorageType = iota
+	Equipment
+)
+
 func notifyStorageExchange(session *network.Session, result bool) {
 	packet := network.NewWriter(STORAGE_EXCHANGE_MOVE)
 	packet.WriteBool(result)
@@ -131,10 +138,10 @@ func StorageExchangeMove(session *network.Session, reader *network.Reader) {
 }
 
 func StorageItemSwap(session *network.Session, reader *network.Reader) {
-	isEquipA := reader.ReadUint32() == 1
-	oldSlot := reader.ReadInt32()
-	isEquipB := reader.ReadUint32() == 1
-	newSlot := reader.ReadInt32()
+	src := StorageType(reader.ReadInt32())
+	srcSlot := uint16(reader.ReadInt32())
+	dst := StorageType(reader.ReadInt32())
+	dstSlot := uint16(reader.ReadInt32())
 
 	ctx, err := context.Parse(session)
 	if err != nil {
@@ -145,10 +152,25 @@ func StorageItemSwap(session *network.Session, reader *network.Reader) {
 	state, err := false, nil
 
 	ctx.Mutex.Lock()
-	if isEquipA && isEquipB {
-		state, err = ctx.Char.Equipment.Swap(uint16(oldSlot), uint16(newSlot))
-	} else {
-		state, err = ctx.Char.Inventory.Swap(uint16(oldSlot), uint16(newSlot))
+	inv := ctx.Char.Inventory
+	eq := &ctx.Char.Equipment
+
+	switch src {
+	case Inventory:
+		switch dst {
+		case Inventory:
+			state, err = inv.Swap(srcSlot, dstSlot)
+		case Equipment:
+			state, err = eq.SwapEquipItem(srcSlot, dstSlot, inv)
+		}
+	case Equipment:
+		switch dst {
+		case Inventory:
+			/* do nothing */
+			return
+		case Equipment:
+			state, err = eq.Swap(srcSlot, dstSlot)
+		}
 	}
 	ctx.Mutex.Unlock()
 

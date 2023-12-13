@@ -120,6 +120,39 @@ func (e *Equipment) EquipItem(old, new uint16, i *Inventory) (bool, error) {
 	return ok, err
 }
 
+func (e *Equipment) SwapEquipItem(old, new uint16, i *Inventory) (bool, error) {
+	// swap equipment item from the inventory
+	oldItem := e.Get(new)
+	newItem := i.Get(old)
+
+	if oldItem.Kind == 0 {
+		return false, errors.New("such item does not exist in the equipment")
+	}
+
+	if newItem.Kind == 0 {
+		return false, errors.New("such item does not exist in the inventory")
+	}
+
+	// remove new item from the inventory
+	if ok, err := i.Remove(old); !ok {
+		return ok, err
+	}
+
+	if ok, err := e.UnEquipItem(new, old, i); !ok {
+		// todo: attempt to rollback
+		return ok, err
+	}
+
+	newItem.Slot = new
+	ok, err := e.Set(new, newItem)
+	if !ok {
+		// todo: attempt to rollback
+		return ok, err
+	}
+
+	return ok, err
+}
+
 func (e *Equipment) UnEquipItem(old, new uint16, i *Inventory) (bool, error) {
 	// take from equipment (old) and move into inventory(new)
 	item, ok := e.Equip[int(old)]

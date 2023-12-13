@@ -64,6 +64,7 @@ func RegisterPackets() {
 	pk.Register(KEYMOVECHANGED, "KeyMoveChanged", KeyMoveChanged)
 	pk.Register(NFY_KEYMOVECHANGED, "NotifyKeyMoveChanged", nil)
 	pk.Register(SERVERENV, "ServerEnv", ServerEnv)
+	pk.Register(ACCESSORY_EQUIP, "AccessoryEquip", AccessoryEquip)
 	pk.Register(CHECK_USR_PDATA, "CheckUserPrivacyData", CheckUserPrivacyData)
 	pk.Register(BACK_TO_CHAR_LOBBY, "BackToCharLobby", BackToCharLobby)
 	pk.Register(SUBPW_SET, "SubPasswordSet", SubPasswordSet)

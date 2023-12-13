@@ -49,6 +49,7 @@ const (
 	KEYMOVECHANGED        = 405
 	NFY_KEYMOVECHANGED    = 406
 	SERVERENV             = 464
+	ACCESSORY_EQUIP       = 486
 	CHECK_USR_PDATA       = 800
 	BACK_TO_CHAR_LOBBY    = 985
 	SUBPW_SET             = 1030

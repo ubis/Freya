@@ -1,5 +1,32 @@
 package inventory
 
+type EquipmentType int
+
+const (
+	Helmet = iota
+	Suit
+	Gloves
+	Boots
+	RightHand
+	LeftHand
+	Epaulet
+	Amulet
+	Ring1
+	Ring2
+	Vehicle
+	Pet
+	Unknown
+	LeftEarring
+	RightEarring
+	LeftBracelet
+	RightBracelet
+	Ring3
+	Ring4
+	Belt
+
+	Invalid = -1
+)
+
 var eqTypes = map[int]string{
 	0:  "helmet",
 	1:  "suit",
@@ -13,14 +40,14 @@ var eqTypes = map[int]string{
 	9:  "finger2",
 	10: "vehicle",
 	11: "pet",
-	12: "left_ear",
-	13: "right_ear",
-	14: "left_bracelet",
-	15: "right_bracelet",
-	16: "finger3",
-	17: "finger4",
-	18: "belt",
-	19: "extended_pet",
+	12: "unk",
+	13: "left_ear",
+	14: "right_ear",
+	15: "left_bracelet",
+	16: "right_bracelet",
+	17: "finger3",
+	18: "finger4",
+	19: "belt",
 }
 
 // Returns equipment slot id by given name

@@ -34,6 +34,7 @@ const (
 const (
 	EquipItem         = "EquipItem"
 	UnEquipItem       = "UnEquipItem"
+	SwapEquipmentItem = "SwapEquipmentItem"
 	MoveEquipmentItem = "MoveEquipmentItem"
 	AddItem           = "AddItem"
 	StackItem         = "StackItem"

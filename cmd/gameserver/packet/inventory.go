@@ -3,6 +3,7 @@ package packet
 import (
 	"github.com/ubis/Freya/cmd/gameserver/context"
 	"github.com/ubis/Freya/share/log"
+	"github.com/ubis/Freya/share/models/inventory"
 	"github.com/ubis/Freya/share/network"
 )
 
@@ -54,13 +55,13 @@ func StorageExchangeMove(session *network.Session, reader *network.Reader) {
 
 		ctx.World.BroadcastSessionPacket(session, pkt)
 
-		// with one-handed dual weapons we need to move from right hand to
-		// the left, if left-hand weapon was removed
+		// with one-handed dual weapons we need to move from left hand to
+		// the right, if right-hand weapon was removed
 		// todo: check for dual-handed weapons and ignore
-		if deleteSlot == 4 { // fixme: need enum of equipment types
+		if deleteSlot == inventory.RightHand {
 			// switch weapon
 			ctx.Mutex.Lock()
-			ctx.Char.Equipment.MoveItem(5, 4) // fixme: need enum of equipment types
+			ctx.Char.Equipment.MoveItem(inventory.LeftHand, inventory.RightHand)
 			ctx.Mutex.Unlock()
 		}
 	case isInventory && !isEquip:
@@ -130,7 +131,6 @@ func StorageExchangeMove(session *network.Session, reader *network.Reader) {
 }
 
 func StorageItemSwap(session *network.Session, reader *network.Reader) {
-	network.DumpPacket(reader)
 	isEquipA := reader.ReadUint32() == 1
 	oldSlot := reader.ReadInt32()
 	isEquipB := reader.ReadUint32() == 1
@@ -201,4 +201,61 @@ func StorageItemDrop(session *network.Session, reader *network.Reader) {
 	if state {
 		world.DropItem(&item, charId, x, y)
 	}
+}
+
+func AccessoryEquip(session *network.Session, reader *network.Reader) {
+	type AccessoryType int
+
+	const (
+		Earring AccessoryType = iota + 1
+		Bracelet
+		Ring
+	)
+
+	slot := uint16(reader.ReadUint32())
+	reader.ReadInt32() // seem to be identical to slot
+	accyType := AccessoryType(reader.ReadInt32())
+
+	ctx, err := context.Parse(session)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+
+	// we need to un-equip last type
+	// then switch 1st to 2nd, 2nd to 3rd, 3rd to 4th
+	// and equip the one from inventory in the 1st type
+	var slots []inventory.EquipmentType
+
+	switch accyType {
+	case Earring:
+		slots = []inventory.EquipmentType{
+			inventory.LeftEarring, inventory.RightEarring,
+		}
+	case Bracelet:
+		slots = []inventory.EquipmentType{
+			inventory.LeftBracelet, inventory.RightBracelet,
+		}
+
+	case Ring:
+		slots = []inventory.EquipmentType{
+			inventory.Ring1, inventory.Ring2, inventory.Ring3, inventory.Ring4,
+		}
+	default:
+		log.Error("Unknown accessory type:", accyType)
+		return
+	}
+
+	ctx.Mutex.Lock()
+	ok, err := ctx.Char.Equipment.EquipAccessory(slot, slots, ctx.Char.Inventory)
+	ctx.Mutex.Unlock()
+
+	if err != nil {
+		log.Error(err.Error())
+	}
+
+	pkt := network.NewWriter(ACCESSORY_EQUIP)
+	pkt.WriteBool(ok)
+
+	session.Send(pkt)
 }

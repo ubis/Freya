@@ -204,6 +204,56 @@ func (e *Equipment) MoveItem(old, new uint16) (bool, error) {
 	return ok, err
 }
 
+func (e *Equipment) EquipAccessory(old uint16, slots []EquipmentType, i *Inventory) (bool, error) {
+	// primary accessory slot is empty
+	// no need to do any shifting
+	if item := e.Get(uint16(slots[0])); item.Kind == 0 {
+		return e.EquipItem(old, uint16(slots[0]), i)
+	}
+
+	item := i.Get(old)
+
+	// first remove item we want to equip from inventory
+	ok, err := i.Remove(old)
+	if !ok {
+		return ok, err
+	}
+
+	total := len(slots)
+	first := uint16(slots[0])
+	last := uint16(slots[total-1])
+
+	// if last slot is used, then un-equip and put it in the `old` slot
+	if e.Get(last).Kind != 0 {
+		ok, err := e.UnEquipItem(last, old, i)
+		if !ok {
+			// attempt to rollback
+			// todo: actually we should do this in a single transaction
+			if ok, err2 := i.Set(old, item); !ok {
+				return ok, fmt.Errorf("unable to rollback: %s and %s",
+					err.Error(), err2.Error())
+			}
+			return ok, err
+		}
+	}
+
+	// now attempt to move from left to the right
+	for i := total - 2; i >= 0; i-- {
+		e.MoveItem(uint16(slots[i]), uint16(slots[i+1])) // fixme
+	}
+
+	// finally equip to the primary slot
+	item.Slot = first
+	ok, err = e.Set(item.Slot, item)
+	if !ok {
+		// fixme
+		// attempt to rollback
+		return ok, err
+	}
+
+	return ok, err
+}
+
 // Serializes equipment into byte array
 func (e *Equipment) Serialize() ([]byte, int) {
 	// collect keys for sorted iteration

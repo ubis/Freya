@@ -24,6 +24,8 @@ func RegisterPackets() {
 	pk.Register(VERIFYLINKS, "VerifyLinks", VerifyLinks)
 	pk.Register(INITIALIZED, "Initialized", Initialized)
 	pk.Register(UNINITIALZE, "Uninitialze", Uninitialze)
+	pk.Register(QUICKLINKSET, "QuickLinkSet", QuickLinkSet)
+	pk.Register(QUICKLINKSWAP, "QuickLinkSwap", QuickLinkSwap)
 	pk.Register(GETSVRTIME, "GetSvrTime", GetSvrTime)
 	pk.Register(ITEMLOOTING, "ItemLooting", ItemLooting)
 	pk.Register(SKILLTOUSER, "SkillToUser", SkillToUser)

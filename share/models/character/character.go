@@ -75,7 +75,7 @@ type Character struct {
 	Equipment inventory.Equipment
 	Inventory *inventory.Inventory
 	Skills    skills.SkillList
-	Links     skills.Links
+	Links     *skills.Links
 	Created   time.Time
 
 	// movement data

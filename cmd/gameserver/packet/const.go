@@ -9,6 +9,8 @@ const (
 	VERIFYLINKS           = 141
 	INITIALIZED           = 142
 	UNINITIALZE           = 143
+	QUICKLINKSET          = 146
+	QUICKLINKSWAP         = 147
 	GETSVRTIME            = 148
 	ITEMLOOTING           = 153
 	SKILLTOUSER           = 175

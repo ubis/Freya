@@ -31,6 +31,7 @@ const (
 	LoadCharacterData = "LoadCharacterData"
 )
 
+// Inventory related RPC's
 const (
 	EquipItem         = "EquipItem"
 	UnEquipItem       = "UnEquipItem"
@@ -41,4 +42,11 @@ const (
 	RemoveItem        = "RemoveItem"
 	SwapItem          = "SwapItem"
 	MoveItem          = "MoveItem"
+)
+
+// Skill related RPC's
+const (
+	QuickLinkSet    = "QuickLinkSet"
+	QuickLinkRemove = "QuickLinkRemove"
+	QuickLinkSwap   = "QuickLinkSwap"
 )

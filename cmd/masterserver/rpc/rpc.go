@@ -43,4 +43,8 @@ func RegisterPackets() {
 	g_RPCHandler.Register(rpc.RemoveItem, RemoveItem)
 	g_RPCHandler.Register(rpc.SwapItem, SwapItem)
 	g_RPCHandler.Register(rpc.MoveItem, MoveItem)
+
+	g_RPCHandler.Register(rpc.QuickLinkSet, QuickLinkSet)
+	g_RPCHandler.Register(rpc.QuickLinkRemove, QuickLinkRemove)
+	g_RPCHandler.Register(rpc.QuickLinkSwap, QuickLinkSwap)
 }

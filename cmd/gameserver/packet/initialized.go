@@ -214,14 +214,18 @@ func Initialized(session *network.Session, reader *network.Reader) {
 	c.EndX = int16(c.X)
 	c.EndY = int16(c.Y)
 
-	// set-up inventory
+	// set-up inventory and links
 	c.Inventory = &res.Inventory
+	c.Links = &res.Links
 
 	// set-up RPC and data inside inventory to sync with the database
 	c.Inventory.Setup(g_RPCHandler, c.Id, byte(g_ServerSettings.ChannelId))
 
 	// set-up RPC and data inside equipment to sync with the database
 	c.Equipment.Setup(g_RPCHandler, c.Id, byte(g_ServerSettings.ChannelId))
+
+	// set-up RPC and data inside links to sync with the database
+	c.Links.Setup(g_RPCHandler, c.Id, byte(g_ServerSettings.ChannelId))
 
 	ctx.Mutex.Lock()
 	ctx.Char = &c

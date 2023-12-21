@@ -5,12 +5,14 @@ import (
 	"encoding/binary"
 	"errors"
 	"sort"
+	"sync"
 
 	"github.com/ubis/Freya/share/rpc"
 )
 
 type Inventory struct {
-	Inv map[int]Item
+	Inv   map[int]Item
+	mutex sync.RWMutex
 
 	rpcHandler *rpc.Client
 	character  int32
@@ -56,6 +58,9 @@ func (e *Inventory) Setup(rpc *rpc.Client, id int32, server byte) {
 
 // Sets inventory item by slot
 func (e *Inventory) Set(slot uint16, item Item) (bool, error) {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
 	ok, err := e.sync(rpc.AddItem, &item, nil)
 	if err == nil {
 		e.Inv[int(slot)] = item
@@ -70,6 +75,9 @@ func (e *Inventory) Stack(slot uint16, total int32) (bool, error) {
 	item := e.Get(slot)
 	item.Option = total
 
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
 	ok, err := e.sync(rpc.StackItem, &item, nil)
 	if err == nil {
 		delete(e.Inv, int(slot))
@@ -81,6 +89,9 @@ func (e *Inventory) Stack(slot uint16, total int32) (bool, error) {
 
 // Returns inventory item by slot
 func (e *Inventory) Get(slot uint16) Item {
+	e.mutex.RLock()
+	defer e.mutex.RUnlock()
+
 	if value, ok := e.Inv[int(slot)]; ok {
 		return value
 	}
@@ -90,6 +101,9 @@ func (e *Inventory) Get(slot uint16) Item {
 
 // Removes inventory item by slot
 func (e *Inventory) Remove(slot uint16) (bool, error) {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
 	item, ok := e.Inv[int(slot)]
 	if !ok {
 		return ok, errors.New("such item does not exist in the inventory")
@@ -105,6 +119,9 @@ func (e *Inventory) Remove(slot uint16) (bool, error) {
 
 // Removes inventory item by slot
 func (e *Inventory) Swap(old, new uint16) (bool, error) {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
 	oldItem, ok := e.Inv[int(old)]
 	if !ok {
 		return ok, errors.New("such item does not exist in the inventory")
@@ -132,6 +149,9 @@ func (e *Inventory) Swap(old, new uint16) (bool, error) {
 
 // Move item to a new slot in inventory
 func (e *Inventory) Move(old, new uint16) (bool, error) {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
 	oldItem, ok := e.Inv[int(old)]
 	if !ok {
 		return ok, errors.New("such item does not exist in the inventory")
@@ -156,6 +176,9 @@ func (e *Inventory) Move(old, new uint16) (bool, error) {
 
 // Serializes inventory into byte array
 func (e *Inventory) Serialize() ([]byte, int) {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
 	// collect keys for sorted iteration
 	var keys []int
 	for k := range e.Inv {

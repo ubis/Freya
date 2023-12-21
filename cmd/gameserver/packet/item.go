@@ -55,9 +55,10 @@ func ItemLooting(session *network.Session, reader *network.Reader) {
 	ctx.Mutex.RLock()
 	charId := ctx.Char.Id
 	world := ctx.World
-	currentItem := ctx.Char.Inventory.Get(slot)
 	x, y := ctx.Char.X, ctx.Char.Y
 	ctx.Mutex.RUnlock()
+
+	currentItem := ctx.Char.Inventory.Get(slot)
 
 	if world == nil {
 		log.Error("Unable to get current world!")
@@ -125,13 +126,11 @@ func ItemLooting(session *network.Session, reader *network.Reader) {
 
 	state, err := false, nil
 
-	ctx.Mutex.Lock()
 	if isStacked {
 		state, err = ctx.Char.Inventory.Stack(slot, currentItem.Option)
 	} else {
 		state, err = ctx.Char.Inventory.Set(slot, *invItem)
 	}
-	ctx.Mutex.Unlock()
 
 	if err != nil {
 		log.Error(err.Error())

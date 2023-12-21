@@ -87,6 +87,9 @@ func (e *Links) Swap(old, new uint16) (bool, error) {
 	oldLink.Slot = new
 	newLink.Slot = old
 
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
 	ok, err := e.sync(rpc.QuickLinkSwap, oldLink, newLink)
 	if err == nil {
 		delete(e.List, int(old))

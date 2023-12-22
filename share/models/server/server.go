@@ -14,6 +14,7 @@ type RegisterReq struct {
 	ChannelId    byte
 	PublicIp     uint32
 	PublicPort   uint16
+	UseLocalIp   bool
 	CurrentUsers uint16
 	MaxUsers     uint16
 }
@@ -45,6 +46,7 @@ type ChannelItem struct {
 	Type         byte
 	Ip           uint32
 	Port         uint16
+	UseLocalIp   bool
 	CurrentUsers uint16
 	MaxUsers     uint16
 }

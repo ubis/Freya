@@ -152,7 +152,7 @@ func ChannelList(session *network.Session, reader *network.Reader) {
 		// this helps during development when you have local & remote clients
 		// however, here we assume that locally all servers will run on the
 		// same IP
-		if session.IsLocal() {
+		if session.IsLocal() && v.UseLocalIp {
 			ip := nnet.ParseIP(session.GetLocalEndPntIp())[12:16]
 			pkt.WriteUint32(binary.LittleEndian.Uint32(ip))
 		} else {

@@ -71,12 +71,13 @@ func (sm *ServerManager) GetGameServerList() []server.ServerItem {
 		}
 
 		var chn = server.ChannelItem{
-			value.ChannelId,
-			value.Type,
-			value.PublicIp,
-			value.PublicPort,
-			value.CurrentUsers,
-			value.MaxUsers,
+			Id:           value.ChannelId,
+			Type:         value.Type,
+			Ip:           value.PublicIp,
+			Port:         value.PublicPort,
+			UseLocalIp:   value.UseLocalIp,
+			CurrentUsers: value.CurrentUsers,
+			MaxUsers:     value.MaxUsers,
 		}
 
 		var svr = &server.ServerItem{Id: value.ServerId}

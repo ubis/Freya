@@ -7,9 +7,10 @@ import (
 )
 
 type Config struct {
-	PublicIp string
-	Port     int
-	MaxUsers int
+	PublicIp   string
+	Port       int
+	MaxUsers   int
+	UseLocalIp bool
 
 	ServerType        int
 	IgnoreSubPassword bool
@@ -36,6 +37,7 @@ func (c *Config) Read() {
 	c.PublicIp = conf.GetString("network", "ip", "127.0.0.1")
 	c.Port = conf.GetInt("network", "port", 38111)
 	c.MaxUsers = conf.GetInt("network", "max_users", 100)
+	c.UseLocalIp = conf.GetBool("network", "use_local_ip", false)
 
 	c.ServerType = conf.GetInt("server", "server_type", 0)
 	c.IgnoreSubPassword = conf.GetBool("server", "ignore_sub_password", false)

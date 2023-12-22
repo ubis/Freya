@@ -114,6 +114,7 @@ func OnSyncConnect(event *event.Event) {
 		ChannelId:    byte(g_ServerSettings.ChannelId),
 		PublicIp:     binary.LittleEndian.Uint32(net.ParseIP(g_ServerConfig.PublicIp)[12:16]),
 		PublicPort:   uint16(g_ServerConfig.Port),
+		UseLocalIp:   g_ServerConfig.UseLocalIp,
 		CurrentUsers: uint16(g_NetworkManager.GetOnlineUsers()),
 		MaxUsers:     uint16(g_ServerConfig.MaxUsers),
 	}

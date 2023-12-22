@@ -108,7 +108,7 @@ func ServerSate(session *network.Session) *network.Writer {
 			// this helps during development when you have local & remote clients
 			// however, here we assume that locally all servers will run on the
 			// same IP
-			if session.IsLocal() {
+			if session.IsLocal() && c.UseLocalIp {
 				ip := net.ParseIP(session.GetLocalEndPntIp())[12:16]
 				packet.WriteUint32(binary.LittleEndian.Uint32(ip))
 			} else {

@@ -8,62 +8,73 @@ import (
 )
 
 // Connect2Svr Packet
-func Connect2Svr(session *network.Session, reader *network.Reader) {
-	var packet = network.NewWriter(CONNECT2SVR)
-	packet.WriteUint32(session.Encryption.Key.Seed2nd)
-	packet.WriteUint32(session.AuthKey)
-	packet.WriteUint16(session.UserIdx)
-	packet.WriteUint16(session.Encryption.RecvXorKeyIdx)
+func Connect2Svr(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateUnknown) {
+		return
+	}
 
-	session.Send(packet)
+	session.state = StateConnected
+
+	pkt := network.NewWriter(CSCConnect2Svr)
+	pkt.WriteUint32(session.GetSeed())
+	pkt.WriteUint32(session.GetAuthKey())
+	pkt.WriteUint16(session.GetUserIdx())
+	pkt.WriteUint16(session.GetKeyIdx())
+
+	session.Send(pkt)
 }
 
 // CheckVersion Packet
-func CheckVersion(session *network.Session, reader *network.Reader) {
-	var version1 = reader.ReadInt32()
+func CheckVersion(session *Session, reader *network.Reader) {
+	version1 := reader.ReadInt32()
 
-	targetVersion := int32(g_ServerConfig.Version)
+	conf := session.ServerConfig
 
-	if g_ServerConfig.IgnoreVersionCheck {
+	targetVersion := int32(conf.Version)
+	if conf.IgnoreVersionCheck {
 		targetVersion = version1
 	}
 
-	session.Data.Verified = true
+	session.state = StateVerified
 
 	if version1 != targetVersion {
 		log.Errorf("Client version mismatch (Client: %d, server: %d, src: %s)",
-			version1, targetVersion, session.GetEndPnt(),
-		)
+			version1, targetVersion, session.GetEndPnt())
 
-		session.Data.Verified = false
+		session.state = StateConnected
 	}
 
-	var packet = network.NewWriter(CHECKVERSION)
-	packet.WriteInt32(targetVersion)
-	packet.WriteInt32(0x00) // debug
-	packet.WriteInt32(0x00) // reserved
-	packet.WriteInt32(0x00) // reserved
+	pkt := network.NewWriter(CSCCheckVersion)
+	pkt.WriteInt32(targetVersion)
+	pkt.WriteInt32(0x00) // debug
+	pkt.WriteInt32(0x00) // reserved
+	pkt.WriteInt32(0x00) // reserved
 
-	session.Send(packet)
+	session.Send(pkt)
 }
 
-// FDisconnect Packet
-func FDisconnect(session *network.Session, reader *network.Reader) {
-	var idx = reader.ReadInt32()
+// ForceDisconnect Packet
+func ForceDisconnect(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateVerified) {
+		return
+	}
 
-	var packet = network.NewWriter(FDISCONNECT)
-	if idx != session.Data.AccountId {
+	idx := reader.ReadInt32()
+
+	packet := network.NewWriter(CSCForceDisconnect)
+
+	if idx != session.Account {
 		// wooops invalid account id
 		packet.WriteByte(0x00) // failed
-	} else {
-		var res = account.OnlineRes{}
-		g_RPCHandler.Call(rpc.ForceDisconnect, account.OnlineReq{idx, true}, &res)
-		if res.Result {
-			packet.WriteByte(0x01) // success
-		} else {
-			packet.WriteByte(0x00) // failed
-		}
+		session.Send(packet)
+		return
 	}
+
+	req := account.OnlineReq{Account: idx, Kick: true}
+	res := account.OnlineRes{}
+	session.RPC.Call(rpc.ForceDisconnect, &req, &res)
+
+	packet.WriteBool(res.Result)
 
 	session.Send(packet)
 }

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"time"
 
-	"github.com/ubis/Freya/cmd/loginserver/rsa"
+	"github.com/ubis/Freya/cmd/loginserver/server"
 	"github.com/ubis/Freya/share/event"
 	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/models/account"
@@ -14,23 +14,25 @@ import (
 )
 
 // PublicKey Packet
-func PublicKey(session *network.Session, reader *network.Reader) {
-	var rsa = g_ServerSettings.RSA
-	var key = rsa.PublicKey
+func PublicKey(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateVerified) {
+		return
+	}
 
-	var packet = network.NewWriter(PUBLIC_KEY)
-	packet.WriteByte(0x01)
-	packet.WriteUint16(len(key))
-	packet.WriteBytes(key[:])
+	rsa := session.ServerInstance.RSA
+	key := rsa.PublicKey
 
-	session.Send(packet)
+	pkt := network.NewWriter(CSCPublicKey)
+	pkt.WriteBool(true)
+	pkt.WriteUint16(len(key))
+	pkt.WriteBytes(key[:])
+
+	session.Send(pkt)
 }
 
 // AuthAccount Packet
-func AuthAccount(session *network.Session, reader *network.Reader) {
-	if session.Data.Verified != true {
-		log.Errorf("Session version is not verified! Src: %s", session.GetEndPnt())
-		session.Close()
+func AuthAccount(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateVerified) {
 		return
 	}
 
@@ -38,8 +40,8 @@ func AuthAccount(session *network.Session, reader *network.Reader) {
 	reader.ReadUint16()
 
 	// read and decrypt RSA block
-	var loginData = reader.ReadBytes(rsa.RSA_LOGIN_LENGTH)
-	var data, err = g_ServerSettings.RSA.Decrypt(loginData[:])
+	loginData := reader.ReadBytes(server.RSA_LOGIN_LENGTH)
+	data, err := session.ServerInstance.RSA.Decrypt(loginData[:])
 	if err != nil {
 		log.Errorf("%s; Src: %s", err.Error(), session.GetEndPnt())
 		session.Close()
@@ -47,51 +49,50 @@ func AuthAccount(session *network.Session, reader *network.Reader) {
 	}
 
 	// extract name and pass
-	var name = string(bytes.Trim(data[:32], "\x00"))
-	var pass = string(bytes.Trim(data[32:], "\x00"))
+	name := string(bytes.Trim(data[:32], "\x00"))
+	pass := string(bytes.Trim(data[32:], "\x00"))
 
-	var r = account.AuthResponse{Status: account.None}
-	err = g_RPCHandler.Call(rpc.AuthCheck, account.AuthRequest{name, pass}, &r)
+	req := account.AuthRequest{UserId: name, Password: pass}
+	res := account.AuthResponse{Status: account.None}
+	err = session.RPC.Call(rpc.AuthCheck, &req, &res)
 
 	// if server is down...
 	if err != nil {
-		r.Status = account.OutOfService
+		res.Status = account.OutOfService
 	}
 
-	var packet = network.NewWriter(AUTHACCOUNT)
-	packet.WriteByte(r.Status)
-	packet.WriteInt32(r.Id)
-	packet.WriteInt16(0x00)
-	packet.WriteByte(len(r.CharList)) // server count
-	packet.WriteInt64(0x00)
-	packet.WriteInt32(0x00) // premium service id
-	packet.WriteInt32(0x00) // premium service expire date
-	packet.WriteByte(0x00)
-	packet.WriteByte(r.SubPassChar) // subpassword exists for character
-	packet.WriteBytes(make([]byte, 7))
-	packet.WriteInt32(0x00) // language
-	packet.WriteString(r.AuthKey + "\x00")
+	pkt := network.NewWriter(CSCAuthAccount)
+	pkt.WriteByte(res.Status)
+	pkt.WriteInt32(res.Id)
+	pkt.WriteInt16(0x00)
+	pkt.WriteByte(len(res.CharList)) // server count
+	pkt.WriteInt64(0x00)
+	pkt.WriteInt32(0x00) // premium service id
+	pkt.WriteInt32(0x00) // premium service expire date
+	pkt.WriteByte(0x00)
+	pkt.WriteByte(res.SubPassChar) // subpassword exists for character
+	pkt.WriteBytes(make([]byte, 7))
+	pkt.WriteInt32(0x00) // language
+	pkt.WriteString(res.AuthKey + "\x00")
 
-	for _, value := range r.CharList {
-		packet.WriteByte(value.Server)
-		packet.WriteByte(value.Count)
+	for _, value := range res.CharList {
+		pkt.WriteByte(value.Server)
+		pkt.WriteByte(value.Count)
 	}
 
-	session.Send(packet)
+	session.Send(pkt)
 
-	if r.Status == account.Normal {
+	if res.Status == account.Normal {
 		log.Infof("User `%s` successfully logged in.", name)
 
-		session.Data.AccountId = r.Id
-		session.Data.LoggedIn = true
-
+		session.Account = res.Id
 		event.Trigger(event.PlayerLogin, session, name, true)
 
 		// send url's
 		URLToClient(session)
 
 		// send normal system message
-		session.Send(SystemMessg(message.Normal, 0))
+		session.Send(SystemMessage(message.Normal, 0))
 
 		// create new periodic task to send server list periodically
 		task := network.NewPeriodicTask(time.Second*5, func() {
@@ -99,8 +100,8 @@ func AuthAccount(session *network.Session, reader *network.Reader) {
 		})
 
 		session.AddJob("ServerState", task)
-	} else if r.Status == account.Online {
-		session.Data.AccountId = r.Id
+	} else if res.Status == account.Online {
+		session.Account = res.Id
 		log.Infof("User `%s` double login attempt.", name)
 	} else {
 		log.Infof("User `%s` failed to log in.", name)

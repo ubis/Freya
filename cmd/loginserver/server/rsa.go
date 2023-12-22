@@ -1,4 +1,4 @@
-package rsa
+package server
 
 import (
 	"crypto/rand"

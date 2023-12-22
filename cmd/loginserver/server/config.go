@@ -1,4 +1,4 @@
-package def
+package server
 
 import (
 	"github.com/ubis/Freya/share/conf"

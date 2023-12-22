@@ -6,26 +6,24 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ubis/Freya/share/encryption"
 	"github.com/ubis/Freya/share/event"
 	"github.com/ubis/Freya/share/log"
-	"github.com/ubis/Freya/share/models/server"
 )
 
 type Network struct {
-	lock     sync.RWMutex
-	clients  map[uint16]*Session
-	userIdx  uint16
-	settings *server.Settings
+	lock    sync.RWMutex
+	clients map[uint16]*Session
+	userIdx uint16
 }
 
 // Network initialization
-func (n *Network) Init(port int, s *server.Settings) {
+func (n *Network) Init(port int, xor *encryption.XorKeyTable) {
 	log.Info("Configuring network...")
 
 	n.lock = sync.RWMutex{}
 	n.clients = make(map[uint16]*Session)
 	n.userIdx = 0
-	n.settings = s
 
 	// register client disconnect event
 	event.Register(event.ClientDisconnectEvent, event.Handler(n.onClientDisconnect))
@@ -90,7 +88,7 @@ func (n *Network) Init(port int, s *server.Settings) {
 		event.Trigger(event.ClientConnectEvent, &session)
 
 		// handle new client session
-		go session.Start(n.settings.XorKeyTable)
+		go session.Start(xor)
 	}
 }
 
@@ -148,18 +146,18 @@ func (n *Network) SendToUser(i uint16, writer *Writer) bool {
 }
 
 // Checks if account is online and returns user index
-func (n *Network) IsOnline(account int32) uint16 {
+func (n *Network) IsOnline(account int32) (bool, uint16) {
 	n.lock.RLock()
 	for _, s := range n.clients {
 		if s.Data.AccountId == account && s.Data.Verified && s.Data.LoggedIn {
 			var index = s.UserIdx
 			n.lock.RUnlock()
-			return index
+			return true, index
 		}
 	}
 
 	n.lock.RUnlock()
-	return INVALID_USER_INDEX
+	return false, 0
 }
 
 // Closes session connection by it's index

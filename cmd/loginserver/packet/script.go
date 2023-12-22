@@ -16,7 +16,7 @@ func (cmf sessionPacketFunc) Call(L *lua.LState) []lua.LValue {
 	num := L.CheckNumber(2)  // opcode
 	tbl := L.CheckTable(3)   // byte array
 
-	session, ok := ud.Value.(*network.Session)
+	session, ok := ud.Value.(*Session)
 	if !ok {
 		return nil
 	}
@@ -44,7 +44,7 @@ func (cmf clientMessageFunc) Call(L *lua.LState) []lua.LValue {
 	ud := L.CheckUserData(1)
 	msg := L.CheckString(2)
 
-	session, ok := ud.Value.(*network.Session)
+	session, ok := ud.Value.(*Session)
 	if !ok {
 		return nil
 	}

@@ -18,9 +18,10 @@ jobs:
 
     - name: Build
       run: |
-        GOOS=linux make && mv bin bin_linux
-        GOOS=windows make && mv bin bin_windows
-        GOOS=darwin make && mv bin bin_darwin
+        HOST_OS=linux make && mv bin bin_linux
+        HOST_OS=windows make && mv bin bin_windows
+        HOST_OS=darwin make && mv bin bin_darwin
+        HOST_OS=freebsd make && mv bin bin_freebsd
 
     - name: Upload Linux Build
       uses: actions/upload-artifact@v2
@@ -39,3 +40,9 @@ jobs:
       with:
         name: freya-darwin
         path: ./bin_darwin
+
+    - name: Upload FreeBSD Build
+      uses: actions/upload-artifact@v2
+      with:
+        name: freya-freebsd
+        path: ./bin_freebsd

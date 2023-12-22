@@ -6,11 +6,11 @@ local function getRuntimeOS()
     elseif os.execute("uname -s >/dev/null") then
         local uname = io.popen("uname -s"):read("*l")
 
-        if uname == "Linux" then
-            return "Linux"
-        elseif uname == "Darwin" then
+        if uname == "Darwin" then
             return "macOS"
         end
+
+        return uname
     end
 
     return "Unknown"

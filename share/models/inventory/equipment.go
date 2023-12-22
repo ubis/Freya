@@ -6,12 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"sync"
 
 	"github.com/ubis/Freya/share/rpc"
 )
 
 type Equipment struct {
-	Equip map[int]Item
+	Equip    map[int]Item
+	mutex    sync.RWMutex
+	mutexOut sync.Mutex // used for multi-transaction operations
 
 	rpcHandler *rpc.Client
 	character  int32
@@ -57,6 +60,9 @@ func (e *Equipment) Setup(rpc *rpc.Client, id int32, server byte) {
 
 // Sets equipment item by slot
 func (e *Equipment) Set(slot uint16, item Item) (bool, error) {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
 	ok, err := e.sync(rpc.EquipItem, &item, nil)
 	if err == nil {
 		e.Equip[int(slot)] = item
@@ -67,6 +73,9 @@ func (e *Equipment) Set(slot uint16, item Item) (bool, error) {
 
 // Returns equipment item by slot
 func (e *Equipment) Get(slot uint16) Item {
+	e.mutex.RLock()
+	defer e.mutex.RUnlock()
+
 	if value, ok := e.Equip[int(slot)]; ok {
 		return value
 	}
@@ -76,6 +85,9 @@ func (e *Equipment) Get(slot uint16) Item {
 
 // Removes equipment item by slot
 func (e *Equipment) Remove(slot uint16) (bool, error) {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
 	item, ok := e.Equip[int(slot)]
 	if !ok {
 		return ok, errors.New("such item does not exist in the equipment")
@@ -90,11 +102,14 @@ func (e *Equipment) Remove(slot uint16) (bool, error) {
 }
 
 func (e *Equipment) EquipItem(old, new uint16, i *Inventory) (bool, error) {
+	e.mutexOut.Lock()
+	defer e.mutexOut.Unlock()
+
 	// take from inventory (old) and move into equipment(new)
 	item := i.Get(old)
 
-	if _, ok := e.Equip[int(new)]; ok {
-		return ok, errors.New("such item already exists in the equipment")
+	if item := e.Get(new); item.Kind != 0 {
+		return false, errors.New("such item already exists in the equipment")
 	}
 
 	if ok, err := i.Remove(old); !ok {
@@ -121,6 +136,9 @@ func (e *Equipment) EquipItem(old, new uint16, i *Inventory) (bool, error) {
 }
 
 func (e *Equipment) SwapEquipItem(old, new uint16, i *Inventory) (bool, error) {
+	e.mutexOut.Lock()
+	defer e.mutexOut.Unlock()
+
 	// swap equipment item from the inventory
 	oldItem := e.Get(new)
 	newItem := i.Get(old)
@@ -154,6 +172,9 @@ func (e *Equipment) SwapEquipItem(old, new uint16, i *Inventory) (bool, error) {
 }
 
 func (e *Equipment) UnEquipItem(old, new uint16, i *Inventory) (bool, error) {
+	e.mutexOut.Lock()
+	defer e.mutexOut.Unlock()
+
 	// take from equipment (old) and move into inventory(new)
 	item, ok := e.Equip[int(old)]
 	if !ok {
@@ -185,6 +206,9 @@ func (e *Equipment) UnEquipItem(old, new uint16, i *Inventory) (bool, error) {
 
 // Swap inventory item by slot
 func (e *Equipment) Swap(old, new uint16) (bool, error) {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
 	oldItem, ok := e.Equip[int(old)]
 	if !ok {
 		return ok, errors.New("such item does not exist in the equipment")
@@ -211,6 +235,9 @@ func (e *Equipment) Swap(old, new uint16) (bool, error) {
 }
 
 func (e *Equipment) MoveItem(old, new uint16) (bool, error) {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
 	// take from equipment (old) and move into equipment(new)
 	oldItem, ok := e.Equip[int(old)]
 	if !ok {
@@ -289,6 +316,9 @@ func (e *Equipment) EquipAccessory(old uint16, slots []EquipmentType, i *Invento
 
 // Serializes equipment into byte array
 func (e *Equipment) Serialize() ([]byte, int) {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
 	// collect keys for sorted iteration
 	var keys []int
 	for k := range e.Equip {
@@ -309,6 +339,9 @@ func (e *Equipment) Serialize() ([]byte, int) {
 
 // Serializes equipment kind_idx into byte array
 func (e *Equipment) SerializeKind() []byte {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
 	// collect keys for sorted iteration
 	var keys []int
 	for k := range eqTypes {
@@ -333,6 +366,9 @@ func (e *Equipment) SerializeKind() []byte {
 
 // SerializeEx serializes equipment with kind and option into byte array
 func (e *Equipment) SerializeEx() ([]byte, int) {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
 	// collect keys for sorted iteration
 	var keys []int
 	for k := range e.Equip {

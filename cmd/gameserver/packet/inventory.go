@@ -45,9 +45,7 @@ func StorageExchangeMove(session *network.Session, reader *network.Reader) {
 	switch {
 	case isEquip && !isInventory:
 		// from equipment to inventory
-		ctx.Mutex.Lock()
 		ok, err := ctx.Char.Equipment.UnEquipItem(deleteSlot, createSlot, ctx.Char.Inventory)
-		ctx.Mutex.Unlock()
 
 		notifyStorageExchange(session, ok)
 
@@ -67,16 +65,12 @@ func StorageExchangeMove(session *network.Session, reader *network.Reader) {
 		// todo: check for dual-handed weapons and ignore
 		if deleteSlot == inventory.RightHand {
 			// switch weapon
-			ctx.Mutex.Lock()
 			ctx.Char.Equipment.MoveItem(inventory.LeftHand, inventory.RightHand)
-			ctx.Mutex.Unlock()
 		}
 	case isInventory && !isEquip:
 		// from inventory to equipment
-		ctx.Mutex.Lock()
 		ok, err := ctx.Char.Equipment.EquipItem(deleteSlot, createSlot, ctx.Char.Inventory)
 		item := ctx.Char.Equipment.Get(createSlot)
-		ctx.Mutex.Unlock()
 
 		notifyStorageExchange(session, ok)
 
@@ -95,10 +89,8 @@ func StorageExchangeMove(session *network.Session, reader *network.Reader) {
 		ctx.World.BroadcastSessionPacket(session, pkt)
 	case isEquip && isInventory:
 		// exchanging equipment items? rings? because on weaps it doesn't work
-		ctx.Mutex.Lock()
 		ok, err := ctx.Char.Equipment.MoveItem(deleteSlot, createSlot)
 		item := ctx.Char.Equipment.Get(createSlot)
-		ctx.Mutex.Unlock()
 
 		notifyStorageExchange(session, ok)
 
@@ -121,9 +113,7 @@ func StorageExchangeMove(session *network.Session, reader *network.Reader) {
 		ctx.World.BroadcastSessionPacket(session, pkt)
 	case !isEquip && !isInventory:
 		// moving item in inventory
-		ctx.Mutex.Lock()
 		ok, err := ctx.Char.Inventory.Move(deleteSlot, createSlot)
-		ctx.Mutex.Unlock()
 
 		notifyStorageExchange(session, ok)
 
@@ -151,7 +141,6 @@ func StorageItemSwap(session *network.Session, reader *network.Reader) {
 
 	state, err := false, nil
 
-	ctx.Mutex.Lock()
 	inv := ctx.Char.Inventory
 	eq := &ctx.Char.Equipment
 
@@ -172,7 +161,6 @@ func StorageItemSwap(session *network.Session, reader *network.Reader) {
 			state, err = eq.Swap(srcSlot, dstSlot)
 		}
 	}
-	ctx.Mutex.Unlock()
 
 	if err != nil {
 		log.Error(err.Error())
@@ -196,20 +184,19 @@ func StorageItemDrop(session *network.Session, reader *network.Reader) {
 
 	ctx.Mutex.RLock()
 	charId := ctx.Char.Id
-	item := ctx.Char.Inventory.Get(slot)
 	world := ctx.World
 	x := int(ctx.Char.X)
 	y := int(ctx.Char.Y)
 	ctx.Mutex.RUnlock()
+
+	item := ctx.Char.Inventory.Get(slot)
 
 	if world == nil {
 		log.Error("Unable to get current world!")
 		return
 	}
 
-	ctx.Mutex.Lock()
 	state, err := ctx.Char.Inventory.Remove(slot)
-	ctx.Mutex.Unlock()
 
 	if err != nil {
 		log.Error(err.Error())

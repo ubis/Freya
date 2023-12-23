@@ -66,7 +66,7 @@ func LoadCharacters(c *rpc.Client, r *character.ListReq, s *character.ListRes) e
 func LoadStyle(db *sqlx.DB, id int32) character.Style {
 	var style = character.Style{}
 	var err = db.Get(&style,
-		"SELECT battle_style, rank, face, color, hair, aura, gender, show_helmet "+
+		"SELECT battle_style, `rank`, face, color, hair, aura, gender, show_helmet "+
 			"FROM characters "+
 			"WHERE id = ?", id)
 

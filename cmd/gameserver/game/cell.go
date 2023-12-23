@@ -18,7 +18,7 @@ type Cell struct {
 	row    byte
 
 	pmutex  sync.RWMutex
-	players map[uint16]*network.Session
+	players map[uint16]network.SessionHandler
 
 	mobs   map[int]*Mob
 	mmutex sync.RWMutex
@@ -30,7 +30,7 @@ type Cell struct {
 }
 
 // sendPlayers sends information about all players to a specified session.
-func (c *Cell) sendPlayers(session *network.Session) {
+func (c *Cell) sendPlayers(session network.SessionHandler) {
 	c.pmutex.RLock()
 	defer c.pmutex.RUnlock()
 
@@ -48,7 +48,7 @@ func (c *Cell) sendPlayers(session *network.Session) {
 
 // sendMobs sends a packet containing information about all mobs in the cell
 // to a specified session.
-func (c *Cell) sendMobs(session *network.Session) {
+func (c *Cell) sendMobs(session network.SessionHandler) {
 	c.mmutex.RLock()
 	defer c.mmutex.RUnlock()
 
@@ -70,7 +70,7 @@ func (c *Cell) sendMobs(session *network.Session) {
 
 // sendItems sends a packet containing information about all items in the cell
 // to a specified session.
-func (c *Cell) sendItems(session *network.Session) {
+func (c *Cell) sendItems(session network.SessionHandler) {
 	c.imutex.RLock()
 	defer c.imutex.RUnlock()
 
@@ -93,7 +93,7 @@ func (c *Cell) sendItems(session *network.Session) {
 // Initialize initializes a Cell with its column and row coordinates.
 func (c *Cell) Initialize(world *World) {
 	c.world = world
-	c.players = make(map[uint16]*network.Session)
+	c.players = make(map[uint16]network.SessionHandler)
 	c.mobs = make(map[int]*Mob)
 	c.items = make(map[int32]*Item)
 }
@@ -111,34 +111,26 @@ func (c *Cell) GetItemCount() int32 {
 }
 
 // AddPlayer adds a player's session to the cell.
-func (c *Cell) AddPlayer(session *network.Session) {
-	id, err := context.GetCharId(session)
-	if err != nil {
-		log.Error("Failed to retrieve character id:", err.Error())
-	}
-
-	log.Debugf("Adding %d player to %d:%d cell", id, c.column, c.row)
+func (c *Cell) AddPlayer(session network.SessionHandler) {
+	log.Debugf("Adding %d player to %d:%d cell",
+		session.GetUserIdx(), c.column, c.row)
 
 	c.pmutex.Lock()
 	defer c.pmutex.Unlock()
 
-	index := session.UserIdx
+	index := session.GetUserIdx()
 	c.players[index] = session
 }
 
 // RemovePlayer removes a player's session from the cell.
-func (c *Cell) RemovePlayer(session *network.Session) {
-	id, err := context.GetCharId(session)
-	if err != nil {
-		log.Error("Failed to retrieve character id:", err.Error())
-	}
-
-	log.Debugf("Removing %d player from %d:%d cell", id, c.column, c.row)
+func (c *Cell) RemovePlayer(session network.SessionHandler) {
+	log.Debugf("Removing %d player from %d:%d cell",
+		session.GetUserIdx(), c.column, c.row)
 
 	c.pmutex.Lock()
 	defer c.pmutex.Unlock()
 
-	index := session.UserIdx
+	index := session.GetUserIdx()
 	delete(c.players, index)
 }
 
@@ -178,7 +170,7 @@ func (c *Cell) FindItem(id int32) *Item {
 }
 
 // SendState sends the state of the cell to a specified session.
-func (c *Cell) SendState(session *network.Session) {
+func (c *Cell) SendState(session network.SessionHandler) {
 	c.sendPlayers(session)
 	c.sendMobs(session)
 	c.sendItems(session)

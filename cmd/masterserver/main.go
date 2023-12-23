@@ -51,7 +51,7 @@ func main() {
 	}
 
 	// init DatabaseManager
-	g_DatabaseManager.Init(g_ServerConfig.GameDB)
+	g_DatabaseManager.Init(g_ServerManager, g_ServerConfig.GameDB)
 
 	// init DataLoader
 	g_DataLoader.Init()

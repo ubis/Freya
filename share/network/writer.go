@@ -62,6 +62,11 @@ func (w *Writer) getType(obj interface{}, length int) []byte {
 	var tmp = make([]byte, 8)
 
 	switch objType := obj.(type) {
+	case bool:
+		tmp[0] = 1
+		if !objType {
+			tmp[0] = 0
+		}
 	case int8:
 		tmp[0] = byte(objType)
 	case uint8:

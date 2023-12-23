@@ -2,56 +2,45 @@ package packet
 
 import (
 	"strings"
+	"time"
 
-	"github.com/ubis/Freya/cmd/gameserver/context"
 	"github.com/ubis/Freya/share/event"
+	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/models/character"
 	"github.com/ubis/Freya/share/models/server"
 	"github.com/ubis/Freya/share/network"
 	"github.com/ubis/Freya/share/rpc"
 	"github.com/ubis/Freya/share/script"
-
-	"github.com/ubis/Freya/share/log"
 )
 
-// Initialized Packet
-func Initialized(session *network.Session, reader *network.Reader) {
+// Initialize Packet
+func Initialize(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateVerified, reader.Type) {
+		return
+	}
+
 	charId := reader.ReadInt32()
 
-	if !session.Data.Verified || !session.Data.LoggedIn || session.DataEx == nil {
-		log.Errorf("User is not verified (char: %d)", charId)
-		return
-	}
-
-	ctx, err := context.PreParse(session)
-	if err != nil {
-		log.Error(err.Error())
-		return
-	}
-
 	// verify char id
-	if (charId >> 3) != session.Data.AccountId {
-		log.Errorf("User is using invalid character id (id: %d, char: %d)",
-			session.Data.AccountId, charId)
+	if (charId >> 3) != session.Account {
+		session.LogFatalf("Player is trying to use an invalid character: %d",
+			charId)
 		return
 	}
 
-	c := character.Character{}
-
-	if len(session.Data.CharacterList) == 0 {
-		// fetch characters
-		reqList := character.ListReq{
-			Account: session.Data.AccountId,
-			Server:  byte(g_ServerSettings.ServerId),
-		}
+	// fetch characters
+	if len(session.Characters) == 0 {
+		reqList := character.ListReq{Account: session.Account}
 		resList := character.ListRes{}
-		g_RPCHandler.Call(rpc.LoadCharacters, &reqList, &resList)
+		session.RPC.Call(rpc.LoadCharacters, &reqList, &resList)
 
-		session.Data.CharacterList = resList.List
+		session.Characters = resList.List
 	}
 
-	// fetch character
-	for _, data := range session.Data.CharacterList {
+	c := &character.Character{}
+
+	// find character
+	for _, data := range session.Characters {
 		if data.Id == charId {
 			c = data
 			break
@@ -60,18 +49,16 @@ func Initialized(session *network.Session, reader *network.Reader) {
 
 	// check if character exists
 	if c.Id != charId {
-		log.Errorf("User is using invalid character id (id: %d, char: %d)",
-			session.Data.AccountId, charId)
+		session.LogFatalf("Unable to find such character: %d", charId)
 		return
 	}
 
 	// load additional character data
-	req := character.DataReq{
-		Server: byte(g_ServerSettings.ServerId),
-		Id:     c.Id,
-	}
+	req := character.DataReq{Id: c.Id}
 	res := character.DataRes{}
-	g_RPCHandler.Call(rpc.LoadCharacterData, req, &res)
+	session.RPC.Call(rpc.LoadCharacterData, &req, &res)
+
+	session.Character = c
 
 	// serialize data
 	eq, eqlen := c.Equipment.Serialize()
@@ -79,14 +66,14 @@ func Initialized(session *network.Session, reader *network.Reader) {
 	sk, sklen := res.Skills.Serialize()
 	sl, sllen := res.Links.Serialize()
 
-	pkt := network.NewWriter(INITIALIZED)
+	pkt := network.NewWriter(CSCInitialize)
 	pkt.WriteBytes(make([]byte, 57))
 	pkt.WriteByte(0x00)
 	pkt.WriteByte(0x14)
-	pkt.WriteByte(g_ServerSettings.ChannelId)
+	pkt.WriteByte(session.ServerInstance.ChannelId)
 	pkt.WriteBytes(make([]byte, 23))
 	pkt.WriteByte(0xFF)
-	pkt.WriteUint16(g_ServerConfig.MaxUsers)
+	pkt.WriteUint16(session.ServerConfig.MaxUsers)
 	pkt.WriteUint32(0x8501A8C0)
 	pkt.WriteUint16(0x985A)
 	pkt.WriteInt32(0x01)
@@ -206,8 +193,6 @@ func Initialized(session *network.Session, reader *network.Reader) {
 	pkt.WriteBytes(sk)
 	pkt.WriteBytes(sl)
 
-	session.Send(pkt)
-
 	// player is not moving anywhere, initialize begin/end movement variables
 	c.BeginX = int16(c.X)
 	c.BeginY = int16(c.Y)
@@ -219,47 +204,43 @@ func Initialized(session *network.Session, reader *network.Reader) {
 	c.Links = &res.Links
 
 	// set-up RPC and data inside inventory to sync with the database
-	c.Inventory.Setup(g_RPCHandler, c.Id, byte(g_ServerSettings.ChannelId))
+	c.Inventory.Setup(session.RPC, c.Id)
 
 	// set-up RPC and data inside equipment to sync with the database
-	c.Equipment.Setup(g_RPCHandler, c.Id, byte(g_ServerSettings.ChannelId))
+	c.Equipment.Setup(session.RPC, c.Id)
 
 	// set-up RPC and data inside links to sync with the database
-	c.Links.Setup(g_RPCHandler, c.Id, byte(g_ServerSettings.ChannelId))
+	c.Links.Setup(session.RPC, c.Id)
 
-	ctx.Mutex.Lock()
-	ctx.Char = &c
-	worldManager := ctx.WorldManager
-	ctx.Mutex.Unlock()
-
-	if worldManager == nil {
-		log.Error("Unable to get world manager!")
+	// prepare to enter the world
+	session.World = session.WorldManager.FindWorld(c.World)
+	if session.World == nil {
+		session.LogFatalf("Unable to find world: %d for character %d",
+			c.World, charId)
 		return
 	}
 
-	world := worldManager.FindWorld(c.World)
-	if world == nil {
-		log.Error("Unable to get world")
-		return
-	}
+	session.SetState(StateInGame)
 
-	world.EnterWorld(session)
+	session.Send(pkt)
+
+	session.World.EnterWorld(session.SessionHandler)
 	event.Trigger(event.PlayerJoin, session)
 }
 
-// Uninitialze Packet
-func Uninitialze(session *network.Session, reader *network.Reader) {
+// UnInitialize Packet
+func UnInitialize(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateInGame, reader.Type) {
+		return
+	}
+
 	_ = reader.ReadUint16() // index
 	_ = reader.ReadByte()   // map id
 	_ = reader.ReadByte()   // log out
 
-	world := context.GetWorld(session)
-	if world == nil {
-		log.Error("Unable to get current world!")
-		return
-	}
+	session.SetState(StateVerified)
 
-	pkt := network.NewWriter(UNINITIALZE)
+	pkt := network.NewWriter(CSCUnInitialize)
 	pkt.WriteByte(0) // result
 
 	// complete - 0x00
@@ -270,11 +251,15 @@ func Uninitialze(session *network.Session, reader *network.Reader) {
 
 	session.Send(pkt)
 
-	world.ExitWorld(session, server.DelUserLogout)
+	session.World.ExitWorld(session.SessionHandler, server.DelUserLogout)
 }
 
-// MessageEvnt Packet
-func MessageEvnt(session *network.Session, reader *network.Reader) {
+// MessageEvent Packet
+func MessageEvent(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateInGame, reader.Type) {
+		return
+	}
+
 	unk1 := reader.ReadInt16()
 	msglen := reader.ReadInt16()
 	_ = reader.ReadInt16()
@@ -293,20 +278,8 @@ func MessageEvnt(session *network.Session, reader *network.Reader) {
 		return
 	}
 
-	world := context.GetWorld(session)
-	if world == nil {
-		log.Error("Unable to get current world!")
-		return
-	}
-
-	id, err := context.GetCharId(session)
-	if err != nil {
-		log.Error(err.Error())
-		return
-	}
-
-	pkt := network.NewWriter(NFY_MESSAGEEVNT)
-	pkt.WriteUint32(id)
+	pkt := network.NewWriter(NFYMessageEvent)
+	pkt.WriteUint32(session.Character.Id)
 	pkt.WriteByte(0) // 0x03 = [GM] prefix
 	pkt.WriteByte(unk1)
 	pkt.WriteByte(0)
@@ -320,51 +293,41 @@ func MessageEvnt(session *network.Session, reader *network.Reader) {
 	pkt.WriteByte(0)
 	pkt.WriteByte(0)
 
-	world.BroadcastSessionPacket(session, pkt)
+	session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+	time.Sleep(time.Second * 10)
 }
 
 // WarpCommand packet
-func WarpCommand(session *network.Session, reader *network.Reader) {
+func WarpCommand(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateInGame, reader.Type) {
+		return
+	}
+
 	warpId := reader.ReadByte()
 
-	ctx, err := context.Parse(session)
-	if err != nil {
-		log.Error(err.Error())
-		return
-	}
-
-	wm := context.GetWorldManager(session)
-	if wm == nil {
-		log.Error("Unable to get world manager!")
-		return
-	}
-
-	world := context.GetWorld(session)
-	if world == nil {
-		log.Error("Unable to get current world!")
-		return
-	}
-
-	warp := world.FindWarp(warpId)
+	warp := session.World.FindWarp(warpId)
 	if warp == nil {
-		log.Error("Unable to find warp:", warpId)
+		session.LogErrorf("Unable to find warp id: %d for character: %d",
+			warpId, session.Character.Id)
 		return
 	}
 
-	newWorld := wm.FindWorld(warp.World)
+	newWorld := session.WorldManager.FindWorld(warp.World)
 	if newWorld == nil {
-		log.Error("Unable to find new world:", warp.World)
+		session.LogErrorf("Unable to find new world by "+
+			"warp id: %d for character: %d",
+			warpId, session.Character.Id)
 		return
 	}
 
-	pkt := network.NewWriter(WARPCOMMAND)
+	pkt := network.NewWriter(CSCWarpCommand)
 	pkt.WriteInt16(warp.Location[0].X) // pos x
 	pkt.WriteInt16(warp.Location[0].Y) // pos y
 	pkt.WriteInt32(0)                  // exp
 	pkt.WriteInt32(0)                  // axp
 	pkt.WriteInt32(0)                  // alz
 	pkt.WriteInt32(0)                  // unk
-	pkt.WriteInt16(session.UserIdx)
+	pkt.WriteInt16(session.GetUserIdx())
 	pkt.WriteInt16(0x0100)
 	pkt.WriteInt32(0x08)
 	pkt.WriteByte(0)
@@ -372,53 +335,38 @@ func WarpCommand(session *network.Session, reader *network.Reader) {
 	pkt.WriteInt32(0)
 	pkt.WriteInt32(0)
 
-	world.ExitWorld(session, server.DelUserWarp)
+	session.World.ExitWorld(session, server.DelUserWarp)
+
+	x, y := warp.Location[0].X, warp.Location[0].Y
+
+	session.Character.SetWorld(warp.World)
+	session.Character.SetPosition(x, y)
+	session.Character.SetMovement(x, y, x, y)
 
 	session.Send(pkt)
-
-	ctx.Mutex.Lock()
-	ctx.Char.World = byte(warp.World)
-	ctx.Char.X = byte(warp.Location[0].X)
-	ctx.Char.Y = byte(warp.Location[0].Y)
-	ctx.Char.BeginX = int16(warp.Location[0].X)
-	ctx.Char.BeginY = int16(warp.Location[0].Y)
-	ctx.Char.EndX = int16(warp.Location[0].X)
-	ctx.Char.EndY = int16(warp.Location[0].Y)
-	ctx.Mutex.Unlock()
 
 	newWorld.EnterWorld(session)
 }
 
-func fillPlayerInfo(pkt *network.Writer, session *network.Session) {
-	ctx, err := context.Parse(session)
-	if err != nil {
-		log.Error(err.Error())
-		return
-	}
+func fillPlayerInfo(pkt *network.Writer, session *Session) {
+	c := session.Character
 
-	ctx.Mutex.RLock()
-	defer ctx.Mutex.RUnlock()
-
-	c := ctx.Char
-
-	if c == nil {
-		// client is not ready
-		return
-	}
+	sx, sy, dx, dy := c.GetMovement()
+	style, liveStyle := c.GetStyle()
 
 	pkt.WriteUint32(c.Id)
-	pkt.WriteUint32(session.UserIdx)
-	pkt.WriteUint32(c.Level)
-	pkt.WriteInt32(0x01C2)    // might be dwMoveBgnTime
-	pkt.WriteUint16(c.BeginX) // start
-	pkt.WriteUint16(c.BeginY)
-	pkt.WriteUint16(c.EndX) // end
-	pkt.WriteUint16(c.EndY)
+	pkt.WriteUint32(session.GetUserIdx())
+	pkt.WriteUint32(c.GetLevel())
+	pkt.WriteInt32(0x01C2) // might be dwMoveBgnTime
+	pkt.WriteUint16(sx)    // start
+	pkt.WriteUint16(sy)
+	pkt.WriteUint16(dx) // end
+	pkt.WriteUint16(dy)
 	pkt.WriteByte(0)
 	pkt.WriteInt32(0)
 	pkt.WriteInt16(0)
-	pkt.WriteInt32(c.Style.Get())
-	pkt.WriteByte(c.LiveStyle) // animation id aka "live style"
+	pkt.WriteInt32(style.Get())
+	pkt.WriteByte(liveStyle)
 	pkt.WriteInt16(0)
 
 	eq, eqlen := c.Equipment.SerializeEx()
@@ -437,63 +385,61 @@ func fillPlayerInfo(pkt *network.Writer, session *network.Session) {
 	pkt.WriteBytes(eq)
 }
 
-func NewUserSingle(session *network.Session, reason server.NewUserType) *network.Writer {
-	pkt := network.NewWriter(NEWUSERLIST)
+func NewUserSingle(session network.SessionHandler, reason server.NewUserType) *network.Writer {
+	pkt := network.NewWriter(NFYNewUserList)
 	pkt.WriteByte(1) // player num
 	pkt.WriteByte(byte(reason))
 
-	fillPlayerInfo(pkt, session)
+	ses, ok := session.Retrieve().(*Session)
+	if !ok {
+		log.Error("Unable to parse client session!")
+		return nil
+	}
+
+	fillPlayerInfo(pkt, ses)
 
 	return pkt
 }
 
-func NewUserList(players map[uint16]*network.Session, reason server.NewUserType) *network.Writer {
+func NewUserList(players map[uint16]network.SessionHandler, reason server.NewUserType) *network.Writer {
 	online := len(players)
 
-	pkt := network.NewWriter(NEWUSERLIST)
+	pkt := network.NewWriter(NFYNewUserList)
 	pkt.WriteByte(online)
 	pkt.WriteByte(byte(reason))
 
 	for _, v := range players {
-		fillPlayerInfo(pkt, v)
+		ses, ok := v.Retrieve().(*Session)
+		if !ok {
+			log.Error("Unable to parse client session!")
+			return nil
+		}
+
+		fillPlayerInfo(pkt, ses)
 	}
 
 	return pkt
 }
 
 // DelUserList to all already connected players
-func DelUserList(session *network.Session, reason server.DelUserType) *network.Writer {
-	charId, err := context.GetCharId(session)
-	if err != nil {
-		log.Error(err.Error())
+func DelUserList(session network.SessionHandler, reason server.DelUserType) *network.Writer {
+	ses, ok := session.Retrieve().(*Session)
+	if !ok {
+		log.Error("Unable to parse client session!")
 		return nil
 	}
 
-	pkt := network.NewWriter(DELUSERLIST)
-	pkt.WriteUint32(charId)
+	pkt := network.NewWriter(NFYDelUserList)
+	pkt.WriteUint32(ses.Character.Id)
 	pkt.WriteByte(byte(reason)) // type
-
-	/* types:
-	 * dead = 0x10
-	 * warp = 0x11
-	 * logout = 0x12
-	 * retn = 0x13
-	 * dissapear = 0x14
-	 * nfsdead = 0x15
-	 */
 
 	return pkt
 }
 
-func SendMessage(session *network.Session, msg string) *network.Writer {
-	id, err := context.GetCharId(session)
-	if err != nil {
-		log.Error(err.Error())
-		return nil
-	}
-
-	pkt := network.NewWriter(NFY_MESSAGEEVNT)
-	pkt.WriteInt32(id)
+// fixme
+func SendMessage(session *Session, msg string) *network.Writer {
+	pkt := network.NewWriter(NFYMessageEvent)
+	pkt.WriteInt32(session.Character.Id)
 	pkt.WriteByte(0) // 0x03 = [GM] prefix
 	pkt.WriteByte(0x3F)
 	pkt.WriteByte(0)

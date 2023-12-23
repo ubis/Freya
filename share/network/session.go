@@ -9,8 +9,6 @@ import (
 	"github.com/ubis/Freya/share/encryption"
 	"github.com/ubis/Freya/share/event"
 	"github.com/ubis/Freya/share/log"
-	"github.com/ubis/Freya/share/models/character"
-	"github.com/ubis/Freya/share/models/subpasswd"
 )
 
 // max buffer size
@@ -24,15 +22,6 @@ type Session struct {
 	UserIdx    uint16
 	AuthKey    uint32
 	Ses        any
-	DataEx     any
-	Data       struct {
-		AccountId     int32 // database account id
-		Verified      bool  // version verification
-		LoggedIn      bool  // auth verification
-		CharVerified  bool  // character delete password verification
-		SubPassword   *subpasswd.Details
-		CharacterList []character.Character
-	}
 
 	PeriodicJobs map[string]*PeriodicTask
 	jobMutex     sync.Mutex

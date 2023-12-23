@@ -1,18 +1,22 @@
 package database
 
 import (
+	"github.com/ubis/Freya/cmd/masterserver/server"
 	"github.com/ubis/Freya/share/log"
+	"github.com/ubis/Freya/share/rpc"
 
 	"github.com/jmoiron/sqlx"
 )
 
 type DatabaseManager struct {
 	DBList map[int]*Database
+	Server *server.ServerManager
 }
 
 // Initializes Database Manager which will attempt to connect
-func (dm *DatabaseManager) Init(db map[int]*Database) {
+func (dm *DatabaseManager) Init(svr *server.ServerManager, db map[int]*Database) {
 	dm.DBList = db
+	dm.Server = svr
 
 	for _, value := range dm.DBList {
 		dm.connect(value)
@@ -27,6 +31,22 @@ func (dm *DatabaseManager) Get(index byte) *sqlx.DB {
 	}
 
 	return dm.DBList[int(index)].DB
+}
+
+func (dm *DatabaseManager) Find(c *rpc.Client) *sqlx.DB {
+	server := dm.Server.FindServer(c)
+
+	if server == nil {
+		log.Error("Unable to find GameWorld database!")
+		return nil
+	}
+
+	if dm.DBList[int(server.ServerId)] == nil {
+		log.Errorf("Game #%d database doesn't exist!", server.ServerId)
+		return nil
+	}
+
+	return dm.DBList[int(server.ServerId)].DB
 }
 
 // Attempts to connect to specified database

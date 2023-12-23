@@ -8,7 +8,7 @@ import (
 )
 
 func QuickLinkSet(c *rpc.Client, r *skills.QuickLinkRequest, s *skills.QuickLinkResponse) error {
-	var db = g_DatabaseManager.Get(r.Server)
+	var db = g_DatabaseManager.Find(c)
 
 	s.Result = false
 
@@ -27,7 +27,7 @@ func QuickLinkSet(c *rpc.Client, r *skills.QuickLinkRequest, s *skills.QuickLink
 }
 
 func QuickLinkRemove(c *rpc.Client, r *skills.QuickLinkRequest, s *skills.QuickLinkResponse) error {
-	var db = g_DatabaseManager.Get(r.Server)
+	var db = g_DatabaseManager.Find(c)
 
 	s.Result = false
 
@@ -44,7 +44,7 @@ func QuickLinkRemove(c *rpc.Client, r *skills.QuickLinkRequest, s *skills.QuickL
 }
 
 func QuickLinkSwap(c *rpc.Client, r *skills.QuickLinkRequest, s *skills.QuickLinkResponse) error {
-	var db = g_DatabaseManager.Get(r.Server)
+	var db = g_DatabaseManager.Find(c)
 
 	s.Result = false
 

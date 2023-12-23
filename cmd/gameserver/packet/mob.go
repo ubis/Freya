@@ -6,7 +6,7 @@ import (
 )
 
 func NewMobsList(mobs []context.MobHandler) *network.Writer {
-	pkt := network.NewWriter(NFY_NEWMOBSLIST)
+	pkt := network.NewWriter(NFYNewMonsterList)
 
 	pkt.WriteByte(len(mobs)) // count
 
@@ -32,7 +32,7 @@ func NewMobsList(mobs []context.MobHandler) *network.Writer {
 }
 
 func MobMoveBegin(mob context.MobHandler) *network.Writer {
-	pkt := network.NewWriter(NFY_MOBSMOVEBGN)
+	pkt := network.NewWriter(NFYMonsterMoveBegin)
 
 	id := mob.GetId()
 	pos := mob.GetPosition()
@@ -48,7 +48,7 @@ func MobMoveBegin(mob context.MobHandler) *network.Writer {
 }
 
 func MobMoveEnd(mob context.MobHandler) *network.Writer {
-	pkt := network.NewWriter(NFY_MOBSMOVEEND)
+	pkt := network.NewWriter(NFYMonsterMoveEnd)
 
 	id := mob.GetId()
 	pos := mob.GetPosition()

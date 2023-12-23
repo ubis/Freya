@@ -18,7 +18,6 @@ type Equipment struct {
 
 	rpcHandler *rpc.Client
 	character  int32
-	serverId   byte
 }
 
 // Initializes Equipment
@@ -28,7 +27,7 @@ func (e *Equipment) Init() {
 
 func (e *Equipment) sync(cmd string, old *Item, new *Item) (bool, error) {
 	// being initialized
-	if e.character == 0 && e.serverId == 0 {
+	if e.character == 0 {
 		return true, nil
 	}
 
@@ -37,7 +36,6 @@ func (e *Equipment) sync(cmd string, old *Item, new *Item) (bool, error) {
 	}
 
 	req := ItemRequest{
-		Server:  e.serverId,
 		Id:      e.character,
 		Command: cmd,
 		Item:    *old,
@@ -52,10 +50,9 @@ func (e *Equipment) sync(cmd string, old *Item, new *Item) (bool, error) {
 	return res.Result, nil
 }
 
-func (e *Equipment) Setup(rpc *rpc.Client, id int32, server byte) {
+func (e *Equipment) Setup(rpc *rpc.Client, id int32) {
 	e.rpcHandler = rpc
 	e.character = id
-	e.serverId = server
 }
 
 // Sets equipment item by slot

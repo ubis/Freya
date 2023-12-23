@@ -11,109 +11,130 @@ import (
 	"github.com/ubis/Freya/share/rpc"
 )
 
-// GetSvrTime Packet
-func GetSvrTime(session *network.Session, reader *network.Reader) {
+// GetServerTime Packet
+func GetServerTime(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateVerified, reader.Type) {
+		return
+	}
+
 	var now = time.Now()
 	var _, z = time.Now().Zone()
 
 	z = z / 60 // to hours
 	z = z * -1 // add reverse sign
 
-	var packet = network.NewWriter(GETSVRTIME)
-	packet.WriteInt64(now.Unix()) // utc time
-	packet.WriteInt16(z)          // timezone
+	pkt := network.NewWriter(CSCGetServerTime)
+	pkt.WriteInt64(now.Unix()) // utc time
+	pkt.WriteInt16(z)          // timezone
 
-	session.Send(packet)
+	session.Send(pkt)
 }
 
 // ServerEnv Packet
-func ServerEnv(session *network.Session, reader *network.Reader) {
-	var packet = network.NewWriter(SERVERENV)
-	packet.WriteUint16(0x00BE)      // MaxLevel
-	packet.WriteByte(0x01)          // UseDummy
-	packet.WriteByte(0x01)          // Allow CashShop
-	packet.WriteByte(0x00)          // Allow NetCafePoint
-	packet.WriteUint16(0x0A)        // MaxRank
-	packet.WriteUint16(0x1E)        // Limit Loud Character Lv
-	packet.WriteUint16(0x04)        // Limit Loud Mastery Lv
-	packet.WriteInt64(0x0BA43B7400) // Limit Inventory Alz Save
-	packet.WriteInt64(0x0BA43B7400) // Limit Warehouse Alz Save
-	packet.WriteInt64(0x0BA43B7400) // Limit Trade Alz
-	packet.WriteByte(0x00)          // Allow Duplicated PCBang Premium
-	packet.WriteByte(0x00)          // Allow GuildBoard
-	packet.WriteByte(0x00)          // PCBang Premium Prior Type
-	packet.WriteInt32(0x00)         // Use Trade Channel Restriction
-	packet.WriteInt32(0x01)         // Use AgentShop
-	packet.WriteInt16(0x01)         // Use Lord BroadCast CoolTime Sec
-	packet.WriteByte(0x10)          // Dummy Limit
-	packet.WriteUint16(0x00)        // AgentShop Restriction Lv
-	packet.WriteUint16(0x00)        // PersonalShop Restriction Lv
-	packet.WriteByte(0x01)          // Use TPoint
-	packet.WriteByte(0x01)          // Use Guild Expansion
-	packet.WriteByte(0x00)          // Ignore Party Invite Distance
-	packet.WriteByte(0x01)          // Limited BroadCast By Lord
-	packet.WriteByte(0x00)          // Limit Normal Chat Lv
-	packet.WriteByte(0x00)          // Limit Trade Chat Lv
-	packet.WriteInt32(0x64)         // Max DP Limit
-	packet.WriteInt32(0x00)         // unk1
-	packet.WriteInt16(0x07)         // unk2
-
-	session.Send(packet)
-}
-
-// VerifyLinks
-func VerifyLinks(session *network.Session, reader *network.Reader) {
-	var timestamp = reader.ReadUint32()
-	var count = reader.ReadUint16()
-	var channel = reader.ReadByte()
-	var server = reader.ReadByte()
-
-	var send = account.VerifyReq{
-		timestamp, count, server, channel, session.GetIp(), session.Data.AccountId}
-	var recv = account.VerifyRes{}
-	g_RPCHandler.Call(rpc.UserVerify, send, &recv)
-
-	var packet = network.NewWriter(VERIFYLINKS)
-	packet.WriteByte(channel)
-	packet.WriteByte(server)
-
-	if recv.Verified {
-		packet.WriteByte(0x01)
-	} else {
-		packet.WriteByte(0x00)
+func ServerEnv(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateVerified, reader.Type) {
+		return
 	}
 
-	session.Send(packet)
+	pkt := network.NewWriter(CSCServerEnv)
+	pkt.WriteUint16(0x00BE)      // MaxLevel
+	pkt.WriteByte(0x01)          // UseDummy
+	pkt.WriteByte(0x01)          // Allow CashShop
+	pkt.WriteByte(0x00)          // Allow NetCafePoint
+	pkt.WriteUint16(0x0A)        // MaxRank
+	pkt.WriteUint16(0x1E)        // Limit Loud Character Lv
+	pkt.WriteUint16(0x04)        // Limit Loud Mastery Lv
+	pkt.WriteInt64(0x0BA43B7400) // Limit Inventory Alz Save
+	pkt.WriteInt64(0x0BA43B7400) // Limit Warehouse Alz Save
+	pkt.WriteInt64(0x0BA43B7400) // Limit Trade Alz
+	pkt.WriteByte(0x00)          // Allow Duplicated PCBang Premium
+	pkt.WriteByte(0x00)          // Allow GuildBoard
+	pkt.WriteByte(0x00)          // PCBang Premium Prior Type
+	pkt.WriteInt32(0x00)         // Use Trade Channel Restriction
+	pkt.WriteInt32(0x01)         // Use AgentShop
+	pkt.WriteInt16(0x01)         // Use Lord BroadCast CoolTime Sec
+	pkt.WriteByte(0x10)          // Dummy Limit
+	pkt.WriteUint16(0x00)        // AgentShop Restriction Lv
+	pkt.WriteUint16(0x00)        // PersonalShop Restriction Lv
+	pkt.WriteByte(0x01)          // Use TPoint
+	pkt.WriteByte(0x01)          // Use Guild Expansion
+	pkt.WriteByte(0x00)          // Ignore Party Invite Distance
+	pkt.WriteByte(0x01)          // Limited BroadCast By Lord
+	pkt.WriteByte(0x00)          // Limit Normal Chat Lv
+	pkt.WriteByte(0x00)          // Limit Trade Chat Lv
+	pkt.WriteInt32(0x64)         // Max DP Limit
+	pkt.WriteInt32(0x00)         // unk1
+	pkt.WriteInt16(0x07)         // unk2
+
+	session.Send(pkt)
 }
 
-// SystemMessg Packet which is NFY
-func SystemMessg(message byte, length uint16) *network.Writer {
-	var packet = network.NewWriter(SYSTEMMESSG)
-	packet.WriteByte(message)
-	packet.WriteUint16(length)
+// VerifyLinks Packet
+func VerifyLinks(session *Session, reader *network.Reader) {
+	// if !verifyState(session, StateInGame, reader.Type) {
+	// 	return
+	// }
 
-	return packet
+	timestamp := reader.ReadUint32()
+	count := reader.ReadUint16()
+	channel := reader.ReadByte()
+	server := reader.ReadByte()
+
+	req := account.VerifyReq{
+		AuthKey:   timestamp,
+		UserIdx:   count,
+		ServerId:  server,
+		ChannelId: channel,
+		IP:        session.GetIp(),
+		DBIdx:     session.Account,
+	}
+	res := account.VerifyRes{}
+	session.RPC.Call(rpc.UserVerify, &req, &res)
+
+	pkt := network.NewWriter(CSCVerifyLinks)
+	pkt.WriteByte(channel)
+	pkt.WriteByte(server)
+	pkt.WriteBool(res.Verified)
+
+	session.Send(pkt)
 }
 
-// BackToCharLobby Packet
-func BackToCharLobby(session *network.Session, reader *network.Reader) {
-	pkt := network.NewWriter(BACK_TO_CHAR_LOBBY)
+// SystemMessage Packet which is NFY
+func SystemMessage(message byte, length uint16) *network.Writer {
+	pkt := network.NewWriter(NFYSystemMessage)
+	pkt.WriteByte(message)
+	pkt.WriteUint16(length)
+
+	return pkt
+}
+
+// BackToCharacterLobby Packet
+func BackToCharacterLobby(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateInGame, reader.Type) {
+		return
+	}
+
+	pkt := network.NewWriter(CSCBackToCharacterLobby)
 	pkt.WriteByte(1)
 
 	session.Send(pkt)
 }
 
-// ChannelChange Packet
-func ChannelList(session *network.Session, reader *network.Reader) {
+// ChannelList Packet
+func ChannelList(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateInGame, reader.Type) {
+		return
+	}
+
 	// request server list
 	req := server.ListReq{}
 	res := server.ListRes{}
-	g_RPCHandler.Call(rpc.ServerList, &req, &res)
+	session.RPC.Call(rpc.ServerList, &req, &res)
 
 	var server *server.ServerItem
 
 	for _, v := range res.List {
-		if v.Id != byte(g_ServerSettings.ServerId) {
+		if v.Id != byte(session.ServerInstance.ServerId) {
 			continue
 		}
 
@@ -121,7 +142,7 @@ func ChannelList(session *network.Session, reader *network.Reader) {
 		break
 	}
 
-	pkt := network.NewWriter(CHANNEL_LIST)
+	pkt := network.NewWriter(CSCChannelList)
 
 	if server == nil {
 		pkt.WriteByte(0)
@@ -167,10 +188,14 @@ func ChannelList(session *network.Session, reader *network.Reader) {
 }
 
 // ChannelChange Packet
-func ChannelChange(session *network.Session, reader *network.Reader) {
+func ChannelChange(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateInGame, reader.Type) {
+		return
+	}
+
 	_ = reader.ReadByte() // channel id
 
-	pkt := network.NewWriter(CHANNEL_CHANGE)
+	pkt := network.NewWriter(CSCChannelChange)
 	pkt.WriteInt32(1)
 
 	session.Send(pkt)

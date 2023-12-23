@@ -4,126 +4,138 @@ import (
 	"encoding/binary"
 	"net"
 
-	"github.com/ubis/Freya/cmd/gameserver/context"
 	"github.com/ubis/Freya/cmd/gameserver/game"
+	"github.com/ubis/Freya/cmd/gameserver/packet"
+	"github.com/ubis/Freya/cmd/gameserver/server"
 	"github.com/ubis/Freya/share/event"
 	"github.com/ubis/Freya/share/log"
-	"github.com/ubis/Freya/share/models/server"
+	svr "github.com/ubis/Freya/share/models/server"
 	"github.com/ubis/Freya/share/network"
 	"github.com/ubis/Freya/share/rpc"
 )
 
+type EventFunc func(*server.Instance, *event.Event)
+
+func register(inst *server.Instance, name string, method EventFunc) {
+	event.Register(name, event.Handler(func(e *event.Event) {
+		method(inst, e)
+	}))
+}
+
 // Registers server events
-func RegisterEvents(wm *game.WorldManager) {
+func RegisterEvents(inst *server.Instance, wm *game.WorldManager) {
 	log.Info("Registering events...")
 
 	event.Register(event.ClientConnectEvent, event.Handler(func(e *event.Event) {
-		OnClientConnect(e, wm)
+		OnClientConnect(inst, e, wm)
 	}))
 
-	event.Register(event.ClientDisconnectEvent, event.Handler(OnClientDisconnect))
-	event.Register(event.PacketReceiveEvent, event.Handler(OnPacketReceive))
-	event.Register(event.PacketSendEvent, event.Handler(OnPacketSend))
-	event.Register(event.SyncConnectEvent, event.Handler(OnSyncConnect))
-	event.Register(event.SyncDisconnectEvent, event.Handler(OnSyncDisconnect))
+	register(inst, event.ClientDisconnectEvent, OnClientDisconnect)
+	register(inst, event.PacketReceiveEvent, OnPacketReceive)
+	register(inst, event.PacketSendEvent, OnPacketSend)
+	register(inst, event.SyncConnectEvent, OnSyncConnect)
+	register(inst, event.SyncDisconnectEvent, OnSyncDisconnect)
+}
+
+func parseSession(e *event.Event) (*network.Session, bool) {
+	rawSession, ok := e.Get()
+	if !ok {
+		return nil, false
+	}
+
+	session, ok := rawSession.(*network.Session)
+	return session, ok
+}
+
+func parsePacketArgs(e *event.Event) (*network.PacketArgs, bool) {
+	rawPacket, ok := e.Get()
+	if !ok {
+		return nil, false
+	}
+
+	session, ok := rawPacket.(*network.PacketArgs)
+	return session, ok
 }
 
 // OnClientConnect event informs server about new connected client
-func OnClientConnect(e *event.Event, wm *game.WorldManager) {
-	rawSession, ok := e.Get()
+func OnClientConnect(i *server.Instance, e *event.Event, wm *game.WorldManager) {
+	session, ok := parseSession(e)
 	if !ok {
 		return
 	}
 
-	s, ok := rawSession.(*network.Session)
-	if !ok {
-		return
-	}
+	session.Store(packet.NewSession(session, i, wm))
 
-	s.DataEx = &context.Context{WorldManager: wm}
-	log.Infof("Client `%s` connected to the GameServer", s.GetEndPnt())
+	log.Infof("Client `%s` connected to the GameServer", session.GetEndPnt())
 }
 
 // OnClientDisconnect event informs server about disconnected client
-func OnClientDisconnect(e *event.Event) {
-	rawSession, ok := e.Get()
-	if !ok {
-		return
-	}
-
-	s, ok := rawSession.(*network.Session)
+func OnClientDisconnect(i *server.Instance, e *event.Event) {
+	session, ok := parseSession(e)
 	if !ok {
 		return
 	}
 
 	// in case client was in the world, notify other players
-	world := context.GetWorld(s)
+	world := packet.GetCurrentWorld(session)
 	if world != nil {
-		world.ExitWorld(s, server.DelUserLogout)
+		world.ExitWorld(session, svr.DelUserLogout)
 	}
 
-	log.Infof("Client `%s` disconnected from the GameServer", s.GetEndPnt())
+	log.Infof("Client `%s` disconnected from the GameServer", session.GetEndPnt())
 }
 
 // OnPacketReceive event informs server about received packet
-func OnPacketReceive(e *event.Event) {
-	rawPacket, ok := e.Get()
-	if !ok {
-		return
-	}
+func OnPacketReceive(i *server.Instance, e *event.Event) {
+	handler := i.PacketHandler
 
-	a, ok := rawPacket.(*network.PacketArgs)
+	a, ok := parsePacketArgs(e)
 	if !ok {
 		return
 	}
 
 	log.Debugf("Received Packet `%s` (Len: %d, type: %d, src: %s)",
-		g_PacketHandler.Name(a.Type), a.Length, a.Type, a.Session.GetEndPnt(),
-	)
+		handler.Name(a.Type), a.Length, a.Type, a.Session.GetEndPnt())
 
 	// let it handle
-	g_PacketHandler.Handle(a)
+	handler.Handle(a)
 }
 
 // OnPacketSend event informs server about sent packet
-func OnPacketSend(e *event.Event) {
-	rawPacket, ok := e.Get()
-	if !ok {
-		return
-	}
+func OnPacketSend(i *server.Instance, e *event.Event) {
+	handler := i.PacketHandler
 
-	a, ok := rawPacket.(*network.PacketArgs)
+	a, ok := parsePacketArgs(e)
 	if !ok {
 		return
 	}
 
 	log.Debugf("Sent Packet `%s` (Len: %d, type: %d, src: %s)",
-		g_PacketHandler.Name(a.Type), a.Length, a.Type, a.Session.GetEndPnt(),
-	)
+		handler.Name(a.Type), a.Length, a.Type, a.Session.GetEndPnt())
 }
 
 // OnSyncConnect event informs server about successful connection with the Master Server
-func OnSyncConnect(event *event.Event) {
+func OnSyncConnect(i *server.Instance, event *event.Event) {
 	log.Info("Established connection with the Master Server!")
 
 	// register this server
-	req := server.RegisterReq{
-		Type:         server.GAME_SERVER,
-		ServerType:   byte(g_ServerConfig.ServerType),
-		ServerId:     byte(g_ServerSettings.ServerId),
-		ChannelId:    byte(g_ServerSettings.ChannelId),
-		PublicIp:     binary.LittleEndian.Uint32(net.ParseIP(g_ServerConfig.PublicIp)[12:16]),
-		PublicPort:   uint16(g_ServerConfig.Port),
-		UseLocalIp:   g_ServerConfig.UseLocalIp,
-		CurrentUsers: uint16(g_NetworkManager.GetOnlineUsers()),
-		MaxUsers:     uint16(g_ServerConfig.MaxUsers),
+	req := svr.RegisterReq{
+		Type:         svr.GAME_SERVER,
+		ServerType:   byte(i.Config.ServerType),
+		ServerId:     byte(i.ServerId),
+		ChannelId:    byte(i.ChannelId),
+		PublicIp:     binary.LittleEndian.Uint32(net.ParseIP(i.Config.PublicIp)[12:16]),
+		PublicPort:   uint16(i.Config.Port),
+		UseLocalIp:   i.Config.UseLocalIp,
+		CurrentUsers: uint16(i.Server.GetOnlineUsers()),
+		MaxUsers:     uint16(i.Config.MaxUsers),
 	}
-	res := server.RegisterRes{}
+	res := svr.RegisterRes{}
 
-	g_RPCHandler.Call(rpc.ServerRegister, &req, &res)
+	i.RPC.Call(rpc.ServerRegister, &req, &res)
 }
 
 // OnSyncDisconnect event informs server about lost connection with the Master Server
-func OnSyncDisconnect(event *event.Event) {
+func OnSyncDisconnect(i *server.Instance, event *event.Event) {
 	log.Info("Lost connection with the Master Server! Reconnecting...")
 }

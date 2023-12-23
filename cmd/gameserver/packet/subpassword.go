@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"time"
 
+	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/models/subpasswd"
 	"github.com/ubis/Freya/share/network"
 	"github.com/ubis/Freya/share/rpc"
@@ -12,29 +13,31 @@ import (
 )
 
 // SubPasswordSet Packet
-func SubPasswordSet(session *network.Session, reader *network.Reader) {
-	var passwd = string(bytes.Trim(reader.ReadBytes(10), "\x00"))
-	reader.ReadBytes(5)
-
-	var question = reader.ReadInt32()
-	var answer = string(bytes.Trim(reader.ReadBytes(16), "\x00"))
-
-	var packet = network.NewWriter(SUBPW_SET)
-
-	var sub = session.Data.SubPassword
-	var verified = &sub.Verified
-	if sub.Password == "" {
-		// verified because user is creating for the first time
-		*verified = true
+func SubPasswordSet(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateVerified, reader.Type) {
+		return
 	}
 
-	if len(passwd) < 4 || question < 1 || question > 10 || !*verified {
-		packet.WriteInt32(0x00) // failed
-		packet.WriteInt32(0x00)
-		packet.WriteInt32(0x01)
-		packet.WriteInt32(0x00)
+	passwd := string(bytes.Trim(reader.ReadBytes(10), "\x00"))
+	reader.ReadBytes(5)
 
-		session.Send(packet)
+	question := reader.ReadInt32()
+	answer := string(bytes.Trim(reader.ReadBytes(16), "\x00"))
+
+	pkt := network.NewWriter(CSCSubPasswordSet)
+
+	sub := session.SubPassword
+
+	if len(passwd) < 4 || question < 1 || question > 10 {
+		pkt.WriteInt32(0x00) // failed
+		pkt.WriteInt32(0x00)
+		pkt.WriteInt32(0x01)
+		pkt.WriteInt32(0x00)
+
+		log.Info("a")
+		network.DumpPacket(pkt)
+
+		session.Send(pkt)
 		return
 	}
 
@@ -42,53 +45,60 @@ func SubPasswordSet(session *network.Session, reader *network.Reader) {
 		// creating sub password for the first time
 		// check answer
 		if len(answer) < 4 {
-			packet.WriteInt32(0x00) // failed
-			packet.WriteInt32(0x00)
-			packet.WriteInt32(0x01)
-			packet.WriteInt32(0x00)
+			pkt.WriteInt32(0x00) // failed
+			pkt.WriteInt32(0x00)
+			pkt.WriteInt32(0x01)
+			pkt.WriteInt32(0x00)
 
-			session.Send(packet)
+			log.Info("b")
+			network.DumpPacket(pkt)
+
+			session.Send(pkt)
 			return
 		}
 
-		var hash, _ = bcrypt.GenerateFromPassword([]byte(answer), bcrypt.DefaultCost)
+		hash, _ := bcrypt.GenerateFromPassword([]byte(answer), bcrypt.DefaultCost)
 		sub.Answer = string(hash)
 		sub.Question = byte(question)
 		sub.Expires = time.Now()
 	}
 
-	var hash, _ = bcrypt.GenerateFromPassword([]byte(passwd), bcrypt.DefaultCost)
+	hash, _ := bcrypt.GenerateFromPassword([]byte(passwd), bcrypt.DefaultCost)
 	sub.Password = string(hash)
 
 	// update to db
-	var req = subpasswd.SetReq{session.Data.AccountId, *sub}
-	var res = subpasswd.SetRes{}
-	var err = g_RPCHandler.Call(rpc.SetSubPassword, req, &res)
+	req := subpasswd.SetReq{Account: session.Account, Details: *sub}
+	res := subpasswd.SetRes{}
+	err := session.RPC.Call(rpc.SetSubPassword, &req, &res)
 
 	if err == nil && res.Success {
-		packet.WriteInt32(0x01) // success
+		pkt.WriteInt32(0x01) // success
 	} else {
-		packet.WriteInt32(0x00) // failed
+		pkt.WriteInt32(0x00) // failed
 	}
 
-	*verified = false
+	pkt.WriteInt32(0x00)
+	pkt.WriteInt32(0x01)
+	pkt.WriteInt32(0x00)
 
-	packet.WriteInt32(0x00)
-	packet.WriteInt32(0x01)
-	packet.WriteInt32(0x00)
+	network.DumpPacket(pkt)
 
-	session.Send(packet)
+	session.Send(pkt)
 }
 
 // SubPasswordCheckRequest Packet
-func SubPasswordCheckRequest(session *network.Session, reader *network.Reader) {
-	sub := session.Data.SubPassword
+func SubPasswordCheckRequest(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateVerified, reader.Type) {
+		return
+	}
+
+	sub := session.SubPassword
 	left := time.Until(sub.Expires)
 	state := 1 // 1 - verification is needed; 0 - not needed
 
-	pkt := network.NewWriter(SUBPW_CHECK_REQ)
+	pkt := network.NewWriter(CSCSubPasswordCheckRequest)
 
-	if g_ServerConfig.IgnoreSubPassword || left.Seconds() > 0 {
+	if session.ServerConfig.IgnoreSubPassword || left.Seconds() > 0 {
 		state = 0
 	}
 
@@ -97,229 +107,261 @@ func SubPasswordCheckRequest(session *network.Session, reader *network.Reader) {
 }
 
 // SubPasswordCheck Packet
-func SubPasswordCheck(session *network.Session, reader *network.Reader) {
-	var password = string(bytes.Trim(reader.ReadBytes(10), "\x00"))
+func SubPasswordCheck(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateVerified, reader.Type) {
+		return
+	}
+
+	password := string(bytes.Trim(reader.ReadBytes(10), "\x00"))
 	reader.ReadBytes(5)
-	var hours = reader.ReadInt32()
+	hours := reader.ReadInt32()
 
-	var sub = session.Data.SubPassword
-	var err = bcrypt.CompareHashAndPassword([]byte(sub.Password), []byte(password))
+	sub := session.SubPassword
+	err := bcrypt.CompareHashAndPassword([]byte(sub.Password), []byte(password))
 
-	var packet = network.NewWriter(SUBPW_CHECK)
+	pkt := network.NewWriter(CSCSubPasswordCheck)
 
 	if hours < 0 || hours > 4 {
-		packet.WriteInt32(0x00) // failed
-		packet.WriteByte(sub.FailTimes)
-		packet.WriteInt32(0x00)
-		packet.WriteInt32(0x01)
+		pkt.WriteInt32(0x00) // failed
+		pkt.WriteByte(sub.FailTimes)
+		pkt.WriteInt32(0x00)
+		pkt.WriteInt32(0x01)
 
 		sub.FailTimes++
-		session.Send(packet)
+		session.Send(pkt)
 		return
 	}
 
 	if err != nil {
-		packet.WriteInt32(0x00) // failed
+		pkt.WriteInt32(0x00) // failed
 		sub.FailTimes++
 	} else {
 		sub.Expires = time.Now().Add(time.Hour * time.Duration(hours))
-		var req = subpasswd.SetReq{session.Data.AccountId, *sub}
-		var res = subpasswd.SetRes{}
-		err = g_RPCHandler.Call(rpc.SetSubPassword, req, &res)
+		req := subpasswd.SetReq{Account: session.Account, Details: *sub}
+		res := subpasswd.SetRes{}
+		err := session.RPC.Call(rpc.SetSubPassword, &req, &res)
 
 		if err != nil || !res.Success {
-			packet.WriteInt32(0x00) // failed
+			pkt.WriteInt32(0x00) // failed
 			sub.FailTimes++
 		} else {
-			packet.WriteInt32(0x01) // success
+			pkt.WriteInt32(0x01) // success
 			sub.FailTimes = 0
 			sub.Verified = true
 		}
 	}
 
-	packet.WriteByte(sub.FailTimes)
-	packet.WriteInt32(0x00)
-	packet.WriteInt32(0x01)
+	pkt.WriteByte(sub.FailTimes)
+	pkt.WriteInt32(0x00)
+	pkt.WriteInt32(0x01)
 
-	session.Send(packet)
+	session.Send(pkt)
 }
 
 // SubPasswordFindRequest Packet
-func SubPasswordFindRequest(session *network.Session, reader *network.Reader) {
-	var sub = session.Data.SubPassword
+func SubPasswordFindRequest(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateVerified, reader.Type) {
+		return
+	}
 
-	var packet = network.NewWriter(SUBPW_FIND_REQ)
-	packet.WriteInt32(sub.Question)
-	packet.WriteInt32(sub.Question)
-	packet.WriteInt32(0x01)
+	sub := session.SubPassword
 
-	session.Send(packet)
+	pkt := network.NewWriter(CSCSubPasswordFindRequest)
+	pkt.WriteInt32(sub.Question)
+	pkt.WriteInt32(sub.Question)
+	pkt.WriteInt32(0x01)
+
+	session.Send(pkt)
 }
 
 // SubPasswordFind Packet
-func SubPasswordFind(session *network.Session, reader *network.Reader) {
+func SubPasswordFind(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateVerified, reader.Type) {
+		return
+	}
+
 	reader.ReadBytes(8)
-	var answer = string(bytes.Trim(reader.ReadBytes(16), "\x00"))
+	answer := string(bytes.Trim(reader.ReadBytes(16), "\x00"))
 
-	var sub = session.Data.SubPassword
-	var err = bcrypt.CompareHashAndPassword([]byte(sub.Answer), []byte(answer))
+	sub := session.SubPassword
+	err := bcrypt.CompareHashAndPassword([]byte(sub.Answer), []byte(answer))
 
-	var packet = network.NewWriter(SUBPW_FIND)
+	pkt := network.NewWriter(CSCSubPasswordFind)
 
 	if err != nil {
-		packet.WriteInt32(0x00) // failed
+		pkt.WriteInt32(0x00) // failed
 		sub.FailTimes++
 	} else {
-		packet.WriteInt32(0x01) // success
+		pkt.WriteInt32(0x01) // success
 		sub.FailTimes = 0
 		sub.Verified = true
 	}
 
-	packet.WriteByte(sub.FailTimes)
-	packet.WriteInt32(0x01)
+	pkt.WriteByte(sub.FailTimes)
+	pkt.WriteInt32(0x01)
 
-	session.Send(packet)
+	session.Send(pkt)
 }
 
-// SubPasswordDelRequest Packet
-func SubPasswordDelRequest(session *network.Session, reader *network.Reader) {
+// SubPasswordDeleteRequest Packet
+func SubPasswordDeleteRequest(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateVerified, reader.Type) {
+		return
+	}
+
 	reader.ReadBytes(4)
-	var password = string(bytes.Trim(reader.ReadBytes(10), "\x00"))
+	password := string(bytes.Trim(reader.ReadBytes(10), "\x00"))
 
-	var sub = session.Data.SubPassword
-	var err = bcrypt.CompareHashAndPassword([]byte(sub.Password), []byte(password))
+	sub := session.SubPassword
+	err := bcrypt.CompareHashAndPassword([]byte(sub.Password), []byte(password))
 
-	var packet = network.NewWriter(SUBPW_DEL_REQ)
+	pkt := network.NewWriter(CSCSubPasswordDeleteRequest)
 
 	if err != nil {
-		packet.WriteInt32(0x00) // failed
+		pkt.WriteInt32(0x00) // failed
 		sub.FailTimes++
 	} else {
-		packet.WriteInt32(0x01) // success
+		pkt.WriteInt32(0x01) // success
 		sub.FailTimes = 0
 		sub.Verified = true
 	}
 
-	packet.WriteByte(sub.FailTimes)
-	packet.WriteInt32(0x01)
+	pkt.WriteByte(sub.FailTimes)
+	pkt.WriteInt32(0x01)
 
-	session.Send(packet)
+	session.Send(pkt)
 }
 
-// SubPasswordDel Packet
-func SubPasswordDel(session *network.Session, reader *network.Reader) {
-	var packet = network.NewWriter(SUBPW_DEL)
+// SubPasswordDelete Packet
+func SubPasswordDelete(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateVerified, reader.Type) {
+		return
+	}
 
-	var sub = session.Data.SubPassword
+	pkt := network.NewWriter(CSCSubPasswordDelete)
+
+	sub := session.SubPassword
 
 	if !sub.Verified {
-		packet.WriteInt32(0x00) // failed
-		packet.WriteInt32(0x01)
+		pkt.WriteInt32(0x00) // failed
+		pkt.WriteInt32(0x01)
 
-		session.Send(packet)
+		session.Send(pkt)
 		return
 	}
 
 	// update to db
-	var req = subpasswd.SetReq{Account: session.Data.AccountId}
-	var res = subpasswd.SetRes{}
-	var err = g_RPCHandler.Call(rpc.RemoveSubPassword, req, &res)
+	req := subpasswd.SetReq{Account: session.Account}
+	res := subpasswd.SetRes{}
+	err := session.RPC.Call(rpc.RemoveSubPassword, req, &res)
 
 	if err == nil && res.Success {
 		*sub = subpasswd.Details{}
-		packet.WriteInt32(0x01) // success
+		pkt.WriteInt32(0x01) // success
 	} else {
-		packet.WriteInt32(0x00) // failed
+		pkt.WriteInt32(0x00) // failed
 	}
 
-	packet.WriteInt32(0x01)
+	pkt.WriteInt32(0x01)
 
-	session.Send(packet)
+	session.Send(pkt)
 }
 
 // SubPasswordChangeQARequest Packet
-func SubPasswordChangeQARequest(session *network.Session, reader *network.Reader) {
+func SubPasswordChangeQARequest(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateVerified, reader.Type) {
+		return
+	}
+
 	reader.ReadBytes(4)
-	var password = string(bytes.Trim(reader.ReadBytes(10), "\x00"))
+	password := string(bytes.Trim(reader.ReadBytes(10), "\x00"))
 
-	var sub = session.Data.SubPassword
-	var err = bcrypt.CompareHashAndPassword([]byte(sub.Password), []byte(password))
+	sub := session.SubPassword
+	err := bcrypt.CompareHashAndPassword([]byte(sub.Password), []byte(password))
 
-	var packet = network.NewWriter(SUBPW_CHG_QA_REQ)
+	pkt := network.NewWriter(CSCSubPasswordChangeQARequest)
 
 	if err != nil {
-		packet.WriteInt32(0x00) // failed
+		pkt.WriteInt32(0x00) // failed
 		sub.FailTimes++
 	} else {
-		packet.WriteInt32(0x01) // success
+		pkt.WriteInt32(0x01) // success
 		sub.FailTimes = 0
 		sub.Verified = true
 	}
 
-	packet.WriteByte(sub.FailTimes)
-	packet.WriteInt32(0x01)
+	pkt.WriteByte(sub.FailTimes)
+	pkt.WriteInt32(0x01)
 
-	session.Send(packet)
+	session.Send(pkt)
 }
 
 // SubPasswordChangeQA Packet
-func SubPasswordChangeQA(session *network.Session, reader *network.Reader) {
-	reader.ReadBytes(4)
-	var question = reader.ReadInt32()
-	var answer = string(bytes.Trim(reader.ReadBytes(16), "\x00"))
-
-	var packet = network.NewWriter(SUBPW_CHG_QA)
-
-	var sub = session.Data.SubPassword
-
-	if len(answer) < 4 || question < 1 || question > 10 || !sub.Verified {
-		packet.WriteInt32(0x00) // failed
-		packet.WriteInt32(0x01)
-
-		session.Send(packet)
+func SubPasswordChangeQA(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateVerified, reader.Type) {
 		return
 	}
 
-	var hash, _ = bcrypt.GenerateFromPassword([]byte(answer), bcrypt.DefaultCost)
+	reader.ReadBytes(4)
+	question := reader.ReadInt32()
+	answer := string(bytes.Trim(reader.ReadBytes(16), "\x00"))
+
+	pkt := network.NewWriter(CSCSubPasswordChangeQA)
+
+	sub := session.SubPassword
+
+	if len(answer) < 4 || question < 1 || question > 10 || !sub.Verified {
+		pkt.WriteInt32(0x00) // failed
+		pkt.WriteInt32(0x01)
+
+		session.Send(pkt)
+		return
+	}
+
+	hash, _ := bcrypt.GenerateFromPassword([]byte(answer), bcrypt.DefaultCost)
 	sub.Answer = string(hash)
 	sub.Question = byte(question)
 
 	// update to db
-	var req = subpasswd.SetReq{session.Data.AccountId, *sub}
-	var res = subpasswd.SetRes{}
-	var err = g_RPCHandler.Call(rpc.SetSubPassword, req, &res)
+	req := subpasswd.SetReq{Account: session.Account, Details: *sub}
+	res := subpasswd.SetRes{}
+	err := session.RPC.Call(rpc.SetSubPassword, req, &res)
 
 	if err == nil && res.Success {
-		packet.WriteInt32(0x01) // success
+		pkt.WriteInt32(0x01) // success
 	} else {
-		packet.WriteInt32(0x00) // failed
+		pkt.WriteInt32(0x00) // failed
 	}
 
 	sub.Verified = false
-	packet.WriteInt32(0x01)
+	pkt.WriteInt32(0x01)
 
-	session.Send(packet)
+	session.Send(pkt)
 }
 
 // CharacterDeleteCheckSubPassword Packet
-func CharacterDeleteCheckSubPassword(session *network.Session, reader *network.Reader) {
-	var password = string(bytes.Trim(reader.ReadBytes(10), "\x00"))
+func CharacterDeleteCheckSubPassword(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateVerified, reader.Type) {
+		return
+	}
 
-	var sub = session.Data.SubPassword
-	var err = bcrypt.CompareHashAndPassword([]byte(sub.Password), []byte(password))
+	password := string(bytes.Trim(reader.ReadBytes(10), "\x00"))
 
-	var packet = network.NewWriter(CHAR_DEL_CHK_SUBPW)
+	sub := session.SubPassword
+	err := bcrypt.CompareHashAndPassword([]byte(sub.Password), []byte(password))
+
+	pkt := network.NewWriter(CSCCharacterDeleteCheckSubPassword)
 
 	if err != nil {
-		packet.WriteInt32(0x00) // failed
+		pkt.WriteInt32(0x00) // failed
 		sub.FailTimes++
 	} else {
-		packet.WriteInt32(0x01) // success
+		pkt.WriteInt32(0x01) // success
 		sub.FailTimes = 0
 		sub.Verified = true
 	}
 
-	packet.WriteByte(sub.FailTimes)
+	pkt.WriteByte(sub.FailTimes)
 
-	session.Send(packet)
+	session.Send(pkt)
 }

@@ -40,8 +40,8 @@ func (pk *PacketHandler) Handle(args *PacketArgs) {
 	// recover on panic
 	defer func() {
 		if err := recover(); err != nil {
-			log.Warningf("Panic! Recovered from: %s, src: %s, id: %d",
-				pk.Name(args.Type), args.Session.GetEndPnt(), args.Session.Data.AccountId,
+			log.Warningf("Panic! Recovered from: %s, src: %s",
+				pk.Name(args.Type), args.Session.GetEndPnt(),
 			)
 			log.Error(err)
 			log.Error(string(debug.Stack()))
@@ -63,8 +63,8 @@ func (pk *PacketHandler) Handle(args *PacketArgs) {
 
 	var invoke = pk.packets[args.Reader.Type].Method
 	if invoke == nil {
-		log.Errorf("Trying to access procedure `%s` (Type: %d, src: %s, id: %d)",
-			pk.Name(args.Type), args.Type, args.Session.GetEndPnt(), args.Session.Data.AccountId,
+		log.Errorf("Trying to access procedure `%s` (Type: %d, src: %s)",
+			pk.Name(args.Type), args.Type, args.Session.GetEndPnt(),
 		)
 
 		return

@@ -59,6 +59,21 @@ func (sm *ServerManager) GetServer(endpnt string) *server.Server {
 	return server
 }
 
+func (sm *ServerManager) FindServer(c *rpc.Client) *server.Server {
+	sm.lock.RLock()
+	defer sm.lock.RUnlock()
+
+	for _, v := range sm.servers {
+		if v.Client != c {
+			continue
+		}
+
+		return v
+	}
+
+	return nil
+}
+
 // Returns sorted game server list
 func (sm *ServerManager) GetGameServerList() []server.ServerItem {
 	var serverList []server.ServerItem

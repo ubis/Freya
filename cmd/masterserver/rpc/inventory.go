@@ -8,7 +8,7 @@ import (
 )
 
 func EquipItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
-	var db = g_DatabaseManager.Get(r.Server)
+	var db = g_DatabaseManager.Find(c)
 
 	s.Result = false
 
@@ -26,7 +26,7 @@ func EquipItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemRespons
 }
 
 func UnEquipItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
-	var db = g_DatabaseManager.Get(r.Server)
+	var db = g_DatabaseManager.Find(c)
 
 	s.Result = false
 
@@ -43,7 +43,7 @@ func UnEquipItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemRespo
 }
 
 func SwapEquipmentItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
-	var db = g_DatabaseManager.Get(r.Server)
+	var db = g_DatabaseManager.Find(c)
 
 	s.Result = false
 
@@ -102,7 +102,7 @@ func SwapEquipmentItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.Ite
 }
 
 func MoveEquipmentItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
-	var db = g_DatabaseManager.Get(r.Server)
+	var db = g_DatabaseManager.Find(c)
 
 	s.Result = false
 
@@ -120,7 +120,7 @@ func MoveEquipmentItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.Ite
 }
 
 func AddItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
-	var db = g_DatabaseManager.Get(r.Server)
+	var db = g_DatabaseManager.Find(c)
 
 	s.Result = false
 
@@ -138,7 +138,7 @@ func AddItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse)
 }
 
 func StackItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
-	var db = g_DatabaseManager.Get(r.Server)
+	var db = g_DatabaseManager.Find(c)
 
 	s.Result = false
 
@@ -156,7 +156,7 @@ func StackItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemRespons
 }
 
 func RemoveItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
-	var db = g_DatabaseManager.Get(r.Server)
+	var db = g_DatabaseManager.Find(c)
 
 	s.Result = false
 
@@ -173,7 +173,7 @@ func RemoveItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemRespon
 }
 
 func SwapItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
-	var db = g_DatabaseManager.Get(r.Server)
+	var db = g_DatabaseManager.Find(c)
 
 	s.Result = false
 
@@ -232,7 +232,7 @@ func SwapItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse
 }
 
 func MoveItem(c *rpc.Client, r *inventory.ItemRequest, s *inventory.ItemResponse) error {
-	var db = g_DatabaseManager.Get(r.Server)
+	var db = g_DatabaseManager.Find(c)
 
 	s.Result = false
 

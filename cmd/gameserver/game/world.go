@@ -52,24 +52,6 @@ func (w *World) getWorldCell(x, y int) *Cell {
 	return w.Grid[column][row]
 }
 
-// getCurrentCell retrieves the cell based on the current character position.
-func (w *World) getCurrentCell(session *network.Session) *Cell {
-	var x, y byte
-
-	if err := context.GetCharPosition(session, &x, &y); err != nil {
-		log.Error("Failed to get character position:", err)
-		return nil
-	}
-
-	cell := w.getWorldCell(int(x), int(y))
-	if cell == nil {
-		log.Error("Invalid world cell")
-		return nil
-	}
-
-	return cell
-}
-
 // getNearbyCells returns a slice of nearby cells based on radius.
 func (w *World) getNearbyCells(column, row byte, radius int) []*Cell {
 	var nearbyCells []*Cell
@@ -218,16 +200,10 @@ func (w *World) Initialize(manager *WorldManager) {
 }
 
 // EnterWorld adds a player session to the current world cell.
-func (w *World) EnterWorld(session *network.Session) {
-	cell := w.getCurrentCell(session)
+func (w *World) EnterWorld(session network.SessionHandler) {
+	cell := packet.GetCurrentCellByPos(session)
 	if cell == nil {
 		log.Error("Unable to get current cell")
-		return
-	}
-
-	ctx, err := context.Parse(session)
-	if err != nil {
-		log.Error("Unable to parse session context:", err.Error())
 		return
 	}
 
@@ -247,34 +223,19 @@ func (w *World) EnterWorld(session *network.Session) {
 	cell.AddPlayer(session)
 
 	// update player context to set current world and cell
-	ctx.Mutex.Lock()
-	ctx.World = w
-	ctx.Cell = cell
-	ctx.Mutex.Unlock()
+	packet.SetCurrentWorld(session, w, cell)
 }
 
 // ExitWorld removes a player session from the current world cell.
-func (w *World) ExitWorld(session *network.Session, reason server.DelUserType) {
-	ctx, err := context.Parse(session)
-	if err != nil {
-		log.Error("Unable to parse session context:", err.Error())
-		return
-	}
-
-	ctx.Mutex.RLock()
-	cell := ctx.Cell
-	ctx.Mutex.RUnlock()
-
+func (w *World) ExitWorld(session network.SessionHandler, reason server.DelUserType) {
+	cell := packet.GetCurrentCellByPos(session)
 	if cell == nil {
 		// player was not in the world
 		return
 	}
 
 	// remove current world and cell from player's context
-	ctx.Mutex.Lock()
-	ctx.World = nil
-	ctx.Cell = nil
-	ctx.Mutex.Unlock()
+	packet.SetCurrentWorld(session, nil, nil)
 
 	// remove player from the cell
 	cell.RemovePlayer(session)
@@ -290,24 +251,15 @@ func (w *World) ExitWorld(session *network.Session, reason server.DelUserType) {
 }
 
 // AdjustCell adjusts the player's cell based on position changes.
-func (w *World) AdjustCell(session *network.Session) {
-	ctx, err := context.Parse(session)
-	if err != nil {
-		log.Error("Unable to parse session context:", err.Error())
-		return
-	}
-
-	ctx.Mutex.RLock()
-	cell := ctx.Cell
-	ctx.Mutex.RUnlock()
-
+func (w *World) AdjustCell(session network.SessionHandler) {
+	cell := packet.GetCurrentCell(session)
 	if cell == nil {
 		// player is not in the world
 		return
 	}
 
 	// get new cell from current position
-	newCell := w.getCurrentCell(session)
+	newCell := packet.GetCurrentCellByPos(session)
 	if newCell == nil {
 		log.Error("Unable to retrieve new cell!")
 		return
@@ -336,9 +288,7 @@ func (w *World) AdjustCell(session *network.Session) {
 	cell.RemovePlayer(session)
 
 	// update current cell
-	ctx.Mutex.Lock()
-	ctx.Cell = newCell
-	ctx.Mutex.Unlock()
+	packet.SetCurrentWorld(session, w, newCell)
 
 	pkt := packet.NewUserSingle(session, server.NewUserMove)
 	if pkt == nil {
@@ -352,6 +302,10 @@ func (w *World) AdjustCell(session *network.Session) {
 	newCell.AddPlayer(session)
 }
 
+func (w *World) FindCell(x, y int) context.CellHandler {
+	return w.getWorldCell(x, y)
+}
+
 // BroadcastPacket broadcasts a packet to nearby cells.
 func (w *World) BroadcastPacket(column, row byte, pkt *network.Writer) {
 	w.sendToNearbyCells(pkt, column, row, 2)
@@ -359,8 +313,8 @@ func (w *World) BroadcastPacket(column, row byte, pkt *network.Writer) {
 
 // BroadcastSessionPacket sends a packet to nearby cells centered around
 // the cell that the given session's character currently occupies.
-func (w *World) BroadcastSessionPacket(session *network.Session, pkt *network.Writer) {
-	cell := context.GetWorldCell(session)
+func (w *World) BroadcastSessionPacket(session network.SessionHandler, pkt *network.Writer) {
+	cell := packet.GetCurrentCellByPos(session)
 	if cell == nil {
 		log.Error("Unable to get current cell!")
 		return

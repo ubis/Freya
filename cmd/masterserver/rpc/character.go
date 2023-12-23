@@ -13,9 +13,9 @@ import (
 )
 
 // LoadCharacters RPC Call
-func LoadCharacters(_ *rpc.Client, r *character.ListReq, s *character.ListRes) error {
-	var db = g_DatabaseManager.Get(r.Server)
-	var res = character.ListRes{List: make([]character.Character, 0, 6)}
+func LoadCharacters(c *rpc.Client, r *character.ListReq, s *character.ListRes) error {
+	var db = g_DatabaseManager.Find(c)
+	var res = character.ListRes{List: make([]*character.Character, 0, 6)}
 
 	if db == nil {
 		*s = res
@@ -38,7 +38,7 @@ func LoadCharacters(_ *rpc.Client, r *character.ListReq, s *character.ListRes) e
 
 	// iterate over each row
 	for rows.Next() {
-		var c = character.Character{}
+		var c = &character.Character{}
 		var err = rows.StructScan(&c)
 
 		if err == nil {
@@ -108,8 +108,8 @@ func LoadEquipment(db *sqlx.DB, id int32) inventory.Equipment {
 }
 
 // CreateCharacter RPC Call
-func CreateCharacter(_ *rpc.Client, r *character.CreateReq, s *character.CreateRes) error {
-	var db = g_DatabaseManager.Get(r.Server)
+func CreateCharacter(cl *rpc.Client, r *character.CreateReq, s *character.CreateRes) error {
+	var db = g_DatabaseManager.Find(cl)
 	var res = character.CreateRes{}
 
 	var c = r.Character
@@ -211,8 +211,8 @@ func CreateCharacter(_ *rpc.Client, r *character.CreateReq, s *character.CreateR
 }
 
 // DeleteCharacter RPC Call
-func DeleteCharacter(_ *rpc.Client, r *character.DeleteReq, s *character.DeleteRes) error {
-	var db = g_DatabaseManager.Get(r.Server)
+func DeleteCharacter(c *rpc.Client, r *character.DeleteReq, s *character.DeleteRes) error {
+	var db = g_DatabaseManager.Find(c)
 	var res = character.DeleteRes{}
 
 	if db == nil {
@@ -226,15 +226,15 @@ func DeleteCharacter(_ *rpc.Client, r *character.DeleteReq, s *character.DeleteR
 	db.MustExec("DELETE FROM characters_skills WHERE id = ?", r.CharId)
 	db.MustExec("DELETE FROM characters WHERE id = ?", r.CharId)
 
-	res.Result = character.Success
+	res.Result = character.SuccessRemoval
 
 	*s = res
 	return nil
 }
 
 // SetSlotOrder RPC Call
-func SetSlotOrder(_ *rpc.Client, r *character.SetOrderReq, s *character.SetOrderRes) error {
-	var db = g_DatabaseManager.Get(r.Server)
+func SetSlotOrder(c *rpc.Client, r *character.SetOrderReq, s *character.SetOrderRes) error {
+	var db = g_DatabaseManager.Find(c)
 	var res = character.SetOrderRes{}
 
 	if db == nil {
@@ -253,7 +253,7 @@ func SetSlotOrder(_ *rpc.Client, r *character.SetOrderReq, s *character.SetOrder
 
 // LoadCharacterData RPC Call
 func LoadCharacterData(c *rpc.Client, r *character.DataReq, s *character.DataRes) error {
-	var db = g_DatabaseManager.Get(r.Server)
+	var db = g_DatabaseManager.Find(c)
 	var res = character.DataRes{}
 
 	if db == nil {

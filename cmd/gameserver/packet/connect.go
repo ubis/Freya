@@ -5,12 +5,18 @@ import (
 )
 
 // Connect2Svr Packet
-func Connect2Svr(session *network.Session, reader *network.Reader) {
-	var packet = network.NewWriter(CONNECT2SVR)
-	packet.WriteUint32(session.Encryption.Key.Seed2nd)
-	packet.WriteUint32(session.AuthKey)
-	packet.WriteUint16(session.UserIdx)
-	packet.WriteUint16(session.Encryption.RecvXorKeyIdx)
+func Connect2Svr(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateUnknown, reader.Type) {
+		return
+	}
 
-	session.Send(packet)
+	session.SetState(StateConnected)
+
+	pkt := network.NewWriter(CSCConnect2Svr)
+	pkt.WriteUint32(session.GetSeed())
+	pkt.WriteUint32(session.GetAuthKey())
+	pkt.WriteUint16(session.GetUserIdx())
+	pkt.WriteUint16(session.GetKeyIdx())
+
+	session.Send(pkt)
 }

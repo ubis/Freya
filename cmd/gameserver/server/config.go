@@ -1,4 +1,4 @@
-package def
+package server
 
 import (
 	"github.com/ubis/Freya/share/conf"
@@ -22,10 +22,10 @@ type Config struct {
 }
 
 // Attempts to read server configuration file
-func (c *Config) Read() {
+func (c *Config) Read(name string) {
 	log.Info("Reading configuration...")
 
-	var location = directory.Root() + "/cfg/" + GetName() + ".ini"
+	var location = directory.Root() + "/cfg/" + name + ".ini"
 
 	// parse configuration file...
 	if err := conf.Open(location); err != nil {

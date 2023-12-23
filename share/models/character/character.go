@@ -1,6 +1,7 @@
 package character
 
 import (
+	"sync"
 	"time"
 
 	"github.com/ubis/Freya/share/models/inventory"
@@ -9,17 +10,15 @@ import (
 
 type ListReq struct {
 	Account int32
-	Server  byte
 }
 
 type ListRes struct {
-	List      []Character
+	List      []*Character
 	LastId    int32
 	SlotOrder int32
 }
 
 type CreateReq struct {
-	Server byte
 	Character
 }
 
@@ -29,7 +28,6 @@ type CreateRes struct {
 }
 
 type DeleteReq struct {
-	Server byte
 	CharId int32
 }
 
@@ -38,7 +36,6 @@ type DeleteRes struct {
 }
 
 type SetOrderReq struct {
-	Server  byte
 	Account int32
 	Order   int32
 }
@@ -83,11 +80,100 @@ type Character struct {
 	BeginY int16 `db:"-"`
 	EndX   int16 `db:"-"`
 	EndY   int16 `db:"-"`
+
+	mutex sync.RWMutex
+}
+
+func (c *Character) SetWorld(world byte) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	c.World = world
+}
+
+func (c *Character) GetWorld() byte {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	return c.World
+}
+
+func (c *Character) SetLevel(level uint16) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	c.Level = level
+}
+
+func (c *Character) GetLevel() uint16 {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	return c.Level
+}
+
+func (c *Character) GetHealth() (uint16, uint16) {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	return c.CurrentHP, c.MaxHP
+}
+
+func (c *Character) GetMana() (uint16, uint16) {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	return c.CurrentMP, c.MaxMP
+}
+
+func (c *Character) SetLiveStyle(style int32) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	c.LiveStyle = style
+}
+
+func (c *Character) GetStyle() (Style, int32) {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	return c.Style, c.LiveStyle
+}
+
+func (c *Character) SetPosition(x, y byte) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	c.X = x
+	c.Y = y
+}
+
+func (c *Character) GetPosition() (byte, byte) {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	return c.X, c.Y
+}
+
+func (c *Character) SetMovement(sx, sy, dx, dy byte) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	c.BeginX = int16(sx)
+	c.BeginY = int16(sy)
+	c.EndX = int16(sx)
+	c.EndY = int16(sy)
+}
+
+func (c *Character) GetMovement() (byte, byte, byte, byte) {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	return byte(c.BeginX), byte(c.BeginY), byte(c.EndX), byte(c.EndY)
 }
 
 type DataReq struct {
-	Server byte
-	Id     int32
+	Id int32
 }
 
 type DataRes struct {

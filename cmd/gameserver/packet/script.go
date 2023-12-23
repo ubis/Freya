@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"github.com/ubis/Freya/cmd/gameserver/context"
 	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/models/inventory"
 	"github.com/ubis/Freya/share/network"
@@ -11,15 +10,15 @@ import (
 type sessionPacketFunc struct{}
 
 type clientMessageFunc struct {
-	Fn func(*network.Session, string) *network.Writer
+	Fn func(*Session, string) *network.Writer
 }
 
 type playerGetLevelFunc struct {
-	Fn func(*network.Session) int
+	Fn func(*Session) int
 }
 
 type playerSetLevelFunc struct {
-	Fn func(*network.Session, int)
+	Fn func(*Session, int)
 }
 
 type playerPositionFunc struct{}
@@ -30,7 +29,7 @@ func (cmf sessionPacketFunc) Call(L *lua.LState) []lua.LValue {
 	num := L.CheckNumber(2)  // opcode
 	tbl := L.CheckTable(3)   // byte array
 
-	session, ok := ud.Value.(*network.Session)
+	session, ok := ud.Value.(*Session)
 	if !ok {
 		return nil
 	}
@@ -58,7 +57,7 @@ func (cmf clientMessageFunc) Call(L *lua.LState) []lua.LValue {
 	ud := L.CheckUserData(1)
 	msg := L.CheckString(2)
 
-	session, ok := ud.Value.(*network.Session)
+	session, ok := ud.Value.(*Session)
 	if !ok {
 		return nil
 	}
@@ -72,7 +71,7 @@ func (cmf clientMessageFunc) Call(L *lua.LState) []lua.LValue {
 func (cmf playerGetLevelFunc) Call(L *lua.LState) []lua.LValue {
 	ud := L.CheckUserData(1)
 
-	session, ok := ud.Value.(*network.Session)
+	session, ok := ud.Value.(*Session)
 	if !ok {
 		return nil
 	}
@@ -86,7 +85,7 @@ func (cmf playerSetLevelFunc) Call(L *lua.LState) []lua.LValue {
 	ud := L.CheckUserData(1)
 	level := L.CheckInt(2)
 
-	session, ok := ud.Value.(*network.Session)
+	session, ok := ud.Value.(*Session)
 	if !ok {
 		return nil
 	}
@@ -98,17 +97,12 @@ func (cmf playerSetLevelFunc) Call(L *lua.LState) []lua.LValue {
 
 func (cmd playerPositionFunc) Call(L *lua.LState) []lua.LValue {
 	ud := L.CheckUserData(1)
-	session, ok := ud.Value.(*network.Session)
+	session, ok := ud.Value.(*Session)
 	if !ok {
 		return nil
 	}
 
-	var x, y byte
-
-	if err := context.GetCharPosition(session, &x, &y); err != nil {
-		log.Error(err.Error())
-		return nil
-	}
+	x, y := session.Character.GetPosition()
 
 	return []lua.LValue{lua.LNumber(x), lua.LNumber(y)}
 }
@@ -118,30 +112,21 @@ func (cmd playerDropItemFunc) Call(L *lua.LState) []lua.LValue {
 	kind := L.CheckNumber(2)
 	option := L.CheckNumber(3)
 
-	session, ok := ud.Value.(*network.Session)
+	session, ok := ud.Value.(*Session)
 	if !ok {
 		return nil
 	}
 
-	ctx, err := context.Parse(session)
-	if err != nil {
-		log.Error(err.Error())
-		return nil
-	}
-
-	ctx.Mutex.RLock()
-	world := ctx.World
-	id := ctx.Char.Id
-	x := int(ctx.Char.X)
-	y := int(ctx.Char.Y)
-	ctx.Mutex.RUnlock()
+	world := session.World
+	id := session.Character.Id
+	x, y := session.Character.GetPosition()
 
 	item := &inventory.Item{
 		Kind:   uint32(kind),
 		Option: int32(option),
 	}
 
-	if !world.DropItem(item, id, x, y) {
+	if !world.DropItem(item, id, int(x), int(y)) {
 		log.Error("unable to drop new item", item)
 	}
 

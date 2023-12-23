@@ -1,58 +1,57 @@
 package packet
 
 import (
-	"github.com/ubis/Freya/cmd/gameserver/context"
-	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/models/skills"
 	"github.com/ubis/Freya/share/network"
 )
 
-func QuickLinkSet(session *network.Session, reader *network.Reader) {
-	slot := reader.ReadUint16()
-	skill := reader.ReadUint16()
-
-	ctx, err := context.Parse(session)
-	if err != nil {
-		log.Error(err.Error())
+// QuickLinkSet Packet
+func QuickLinkSet(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateInGame, reader.Type) {
 		return
 	}
 
-	ok, err := false, nil
+	slot := reader.ReadUint16()
+	skill := reader.ReadUint16()
+
+	state := false
+	var err error
 
 	// removing quick link
 	if skill == 0xFFFF {
-		ok, err = ctx.Char.Links.Remove(slot)
+		state, err = session.Character.Links.Remove(slot)
 	} else {
-		ok, err = ctx.Char.Links.Set(slot, skills.Link{Skill: skill})
+		state, err = session.Character.Links.Set(slot, skills.Link{Skill: skill})
 	}
 
 	if err != nil {
-		log.Error(err.Error())
+		session.LogErrorf("An error occurred: %s for character: %d ",
+			err.Error(), session.Character.Id)
 	}
 
-	pkt := network.NewWriter(QUICKLINKSET)
-	pkt.WriteBool(ok)
+	pkt := network.NewWriter(CSCQuickLinkSet)
+	pkt.WriteBool(state)
 
 	session.Send(pkt)
 }
 
-func QuickLinkSwap(session *network.Session, reader *network.Reader) {
-	old := reader.ReadUint16()
-	new := reader.ReadUint16()
-
-	ctx, err := context.Parse(session)
-	if err != nil {
-		log.Error(err.Error())
+// QuickLinkSwap Packet
+func QuickLinkSwap(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateInGame, reader.Type) {
 		return
 	}
 
-	ok, err := ctx.Char.Links.Swap(old, new)
+	old := reader.ReadUint16()
+	new := reader.ReadUint16()
+
+	state, err := session.Character.Links.Swap(old, new)
 	if err != nil {
-		log.Error(err.Error())
+		session.LogErrorf("An error occurred: %s for character: %d ",
+			err.Error(), session.Character.Id)
 	}
 
-	pkt := network.NewWriter(QUICKLINKSWAP)
-	pkt.WriteBool(ok)
+	pkt := network.NewWriter(CSCQuickLinkSwap)
+	pkt.WriteBool(state)
 
 	session.Send(pkt)
 }

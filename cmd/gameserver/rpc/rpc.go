@@ -1,17 +1,19 @@
 package rpc
 
 import (
-	"github.com/ubis/Freya/cmd/gameserver/def"
+	"github.com/ubis/Freya/share/network"
 	"github.com/ubis/Freya/share/rpc"
 )
 
-var g_ServerConfig = def.ServerConfig
-var g_ServerSettings = def.ServerSettings
-var g_NetworkManager = def.NetworkManager
-var g_PacketHandler = def.PacketHandler
-var g_RPCHandler = def.RPCHandler
+type RPC struct {
+	*rpc.Client
 
-func RegisterCalls() {
-	g_RPCHandler.Register(rpc.UserVerify, UserVerify)
-	g_RPCHandler.Register(rpc.OnlineCheck, OnlineCheck)
+	Server *network.Network
+}
+
+func RegisterCalls(r *rpc.Client, net *network.Network) {
+	inst := &RPC{Client: r, Server: net}
+
+	r.Register(rpc.UserVerify, inst.UserVerify)
+	r.Register(rpc.OnlineCheck, inst.OnlineCheck)
 }

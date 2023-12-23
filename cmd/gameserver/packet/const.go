@@ -1,73 +1,150 @@
 package packet
 
-// Packet Type ID's
+// Packet opcode values
 const (
-	GETMYCHARTR           = 133
-	NEWMYCHARTR           = 134
-	DELMYCHARTR           = 135
-	CONNECT2SVR           = 140
-	VERIFYLINKS           = 141
-	INITIALIZED           = 142
-	UNINITIALZE           = 143
-	QUICKLINKSET          = 146
-	QUICKLINKSWAP         = 147
-	GETSVRTIME            = 148
-	ITEMLOOTING           = 153
-	SKILLTOUSER           = 175
-	MOVEBEGINED           = 190
-	MOVEENDED00           = 191
-	MOVECHANGED           = 192
-	MOVETILEPOS           = 194
-	MESSAGEEVNT           = 195
-	NEWUSERLIST           = 200
-	DELUSERLIST           = 201
-	NFY_NEWMOBSLIST       = 202
-	NFY_DELMOBSLIST       = 203
-	NFY_NEWITEMLIST       = 204
-	NFY_DELITEMLIST       = 205
-	NFY_ITEM_EQUIP        = 206
-	NFY_ITEM_UNEQUIP      = 207
-	NFY_MOVEBEGINED       = 210
-	NFY_MOVEENDED00       = 211
-	NFY_MOVECHANGED       = 212
-	NFY_MOBSMOVEBGN       = 213
-	NFY_MOBSMOVEEND       = 214
-	NFY_MESSAGEEVNT       = 217
-	NFY_SKILLTOUSER       = 221
-	SYSTEMMESSG           = 241
-	WARPCOMMAND           = 244
-	SKILLTOACTS           = 310
-	NFY_SKILLTOACTS       = 311
-	CHANGESTYLE           = 322
-	NFY_CHANGESTYLE       = 323
-	CHARGEINFO            = 324
-	NEW_TARGET_USER       = 350
-	CHANGEDIRECTION       = 391
-	NFY_CHANGEDIRECTION   = 392
-	KEYMOVEBEGINED        = 401
-	KEYMOVEENDED00        = 402
-	NFY_KEYMOVEBEGINED    = 403
-	NFY_KEYMOVEENDED00    = 404
-	KEYMOVECHANGED        = 405
-	NFY_KEYMOVECHANGED    = 406
-	SERVERENV             = 464
-	ACCESSORY_EQUIP       = 486
-	CHECK_USR_PDATA       = 800
-	BACK_TO_CHAR_LOBBY    = 985
-	SUBPW_SET             = 1030
-	SUBPW_CHECK_REQ       = 1032
-	SUBPW_CHECK           = 1034
-	SUBPW_FIND_REQ        = 1036
-	SUBPW_FIND            = 1038
-	SUBPW_DEL_REQ         = 1040
-	SUBPW_DEL             = 1042
-	SUBPW_CHG_QA_REQ      = 1044
-	SUBPW_CHG_QA          = 1046
-	SET_CHAR_SLOT_ORDER   = 2001
-	CHANNEL_LIST          = 2112
-	CHANNEL_CHANGE        = 2141
-	CHAR_DEL_CHK_SUBPW    = 2160
-	STORAGE_EXCHANGE_MOVE = 2165
-	STORAGE_ITEM_SWAP     = 2166
-	STORAGE_ITEM_DROP     = 2168
+	CSCGetMyChar                       = 133
+	CSCNewMyChar                       = 134
+	CSCDelMyChar                       = 135
+	CSCConnect2Svr                     = 140
+	CSCVerifyLinks                     = 141
+	CSCInitialize                      = 142
+	CSCUnInitialize                    = 143
+	CSCQuickLinkSet                    = 146
+	CSCQuickLinkSwap                   = 147
+	CSCGetServerTime                   = 148
+	CSCItemLooting                     = 153
+	CSCSkillToUser                     = 175
+	CSCMoveBegin                       = 190
+	CSCMoveEnd                         = 191
+	CSCMoveChange                      = 192
+	CSCMoveTile                        = 194
+	CSCMessageEvent                    = 195
+	NFYNewUserList                     = 200
+	NFYDelUserList                     = 201
+	NFYNewMonsterList                  = 202
+	NFYDelMonsterList                  = 203
+	NFYNewItemList                     = 204
+	NFYDelItemList                     = 205
+	NFYItemEquip                       = 206
+	NFYItemUnEquip                     = 207
+	NFYMoveBegin                       = 210
+	NFYMoveEnd                         = 211
+	NFYMoveChange                      = 212
+	NFYMonsterMoveBegin                = 213
+	NFYMonsterMoveEnd                  = 214
+	NFYMessageEvent                    = 217
+	NFYSkillToUser                     = 221
+	NFYSystemMessage                   = 241
+	CSCWarpCommand                     = 244
+	CSCSkillToAction                   = 310
+	NFYSkillToAction                   = 311
+	CSCChangeStyle                     = 322
+	NFYChangeStyle                     = 323
+	CSCChargeInfo                      = 324
+	CSCNewTargetUser                   = 350
+	CSCChangeDirection                 = 391
+	NFYChangeDirection                 = 392
+	CSCKeyMoveBegin                    = 401
+	CSCKeyMoveEnd                      = 402
+	NFYKeyMoveBegin                    = 403
+	NFYKeyMoveEnd                      = 404
+	CSCKeyMoveChange                   = 405
+	NFYKeyMoveChange                   = 406
+	CSCServerEnv                       = 464
+	CSCAccessoryEquip                  = 486
+	CSCCheckUserPrivacyData            = 800
+	CSCBackToCharacterLobby            = 985
+	CSCSubPasswordSet                  = 1030
+	CSCSubPasswordCheckRequest         = 1032
+	CSCSubPasswordCheck                = 1034
+	CSCSubPasswordFindRequest          = 1036
+	CSCSubPasswordFind                 = 1038
+	CSCSubPasswordDeleteRequest        = 1040
+	CSCSubPasswordDelete               = 1042
+	CSCSubPasswordChangeQARequest      = 1044
+	CSCSubPasswordChangeQA             = 1046
+	CSCSetCharacterSlotOrder           = 2001
+	CSCChannelList                     = 2112
+	CSCChannelChange                   = 2141
+	CSCCharacterDeleteCheckSubPassword = 2160
+	CSCStorageExchangeMove             = 2165
+	CSCStorageItemSwap                 = 2166
+	CSCStorageItemDrop                 = 2168
+)
+
+var opcodeNames = map[uint16]string{
+	CSCGetMyChar:                       "GetMyChar",
+	CSCNewMyChar:                       "NewMyChar",
+	CSCDelMyChar:                       "DelMyChar",
+	CSCConnect2Svr:                     "Connect2Svr",
+	CSCVerifyLinks:                     "VerifyLinks",
+	CSCInitialize:                      "Initialize",
+	CSCUnInitialize:                    "UnInitialize",
+	CSCQuickLinkSet:                    "QuickLinkSet",
+	CSCQuickLinkSwap:                   "QuickLinkSwap",
+	CSCGetServerTime:                   "GetServerTime",
+	CSCItemLooting:                     "ItemLooting",
+	CSCSkillToUser:                     "SkillToUser",
+	CSCMoveBegin:                       "MoveBegin",
+	CSCMoveEnd:                         "MoveEnd",
+	CSCMoveChange:                      "MoveChange",
+	CSCMoveTile:                        "MoveTile",
+	CSCMessageEvent:                    "MessageEvent",
+	NFYNewUserList:                     "NewUserList",
+	NFYDelUserList:                     "DelUserList",
+	NFYNewMonsterList:                  "NewMonsterList",
+	NFYDelMonsterList:                  "DelMonsterList",
+	NFYNewItemList:                     "NewItemList",
+	NFYDelItemList:                     "DelItemList",
+	NFYItemEquip:                       "ItemEquip",
+	NFYItemUnEquip:                     "ItemUnEquip",
+	NFYMoveBegin:                       "MoveBegin",
+	NFYMoveEnd:                         "MoveEnd",
+	NFYMoveChange:                      "MoveChange",
+	NFYMonsterMoveBegin:                "MonsterMoveBegin",
+	NFYMonsterMoveEnd:                  "MonsterMoveEnd",
+	NFYMessageEvent:                    "MessageEvent",
+	NFYSkillToUser:                     "SkillToUser",
+	NFYSystemMessage:                   "SystemMessage",
+	CSCWarpCommand:                     "WarpCommand",
+	CSCSkillToAction:                   "SkillToAction",
+	NFYSkillToAction:                   "SkillToAction",
+	CSCChangeStyle:                     "ChangeStyle",
+	NFYChangeStyle:                     "ChangeStyle",
+	CSCChargeInfo:                      "ChargeInfo",
+	CSCNewTargetUser:                   "NewTargetUser",
+	CSCChangeDirection:                 "ChangeDirection",
+	NFYChangeDirection:                 "ChangeDirection",
+	CSCKeyMoveBegin:                    "KeyMoveBegin",
+	CSCKeyMoveEnd:                      "KeyMoveEnd",
+	NFYKeyMoveBegin:                    "KeyMoveBegin",
+	NFYKeyMoveEnd:                      "KeyMoveEnd",
+	CSCKeyMoveChange:                   "KeyMoveChange",
+	NFYKeyMoveChange:                   "KeyMoveChange",
+	CSCServerEnv:                       "ServerEnv",
+	CSCAccessoryEquip:                  "AccessoryEquip",
+	CSCCheckUserPrivacyData:            "CheckUserPrivacyData",
+	CSCBackToCharacterLobby:            "BackToCharacterLobby",
+	CSCSubPasswordSet:                  "SubPasswordSet",
+	CSCSubPasswordCheckRequest:         "SubPasswordCheckRequest",
+	CSCSubPasswordCheck:                "SubPasswordCheck",
+	CSCSubPasswordFindRequest:          "SubPasswordFindRequest",
+	CSCSubPasswordFind:                 "SubPasswordFind",
+	CSCSubPasswordDeleteRequest:        "SubPasswordDeleteRequest",
+	CSCSubPasswordDelete:               "SubPasswordDelete",
+	CSCSubPasswordChangeQARequest:      "SubPasswordChangeQARequest",
+	CSCSubPasswordChangeQA:             "SubPasswordChangeQA",
+	CSCSetCharacterSlotOrder:           "SetCharacterSlotOrder",
+	CSCChannelList:                     "ChannelList",
+	CSCChannelChange:                   "ChannelChange",
+	CSCCharacterDeleteCheckSubPassword: "CharacterDeleteCheckSubPassword",
+	CSCStorageExchangeMove:             "StorageExchangeMove",
+	CSCStorageItemSwap:                 "StorageItemSwap",
+	CSCStorageItemDrop:                 "StorageItemDrop",
+}
+
+// Max in-game values
+const (
+	MaxCharacterSlot       = 5
+	MaxCharacterNameLength = 16
 )

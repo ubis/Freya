@@ -9,7 +9,6 @@ import (
 
 	"github.com/ubis/Freya/share/event"
 	"github.com/ubis/Freya/share/log"
-	"github.com/ubis/Freya/share/network"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -98,7 +97,7 @@ func RegisterFunc(funcName string, callable LuaCallable) {
 // ExecCommand executes a Lua command using the provided arguments and session.
 // It searches for the command handler across all loaded scripts and
 // executes the first match found.
-func ExecCommand(command string, args []string, session *network.Session) error {
+func ExecCommand(command string, args []string, session any) error {
 	var fn *lua.LFunction
 	var file *script
 

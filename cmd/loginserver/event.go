@@ -5,7 +5,9 @@ import (
 	"github.com/ubis/Freya/cmd/loginserver/server"
 	"github.com/ubis/Freya/share/event"
 	"github.com/ubis/Freya/share/log"
+	svr "github.com/ubis/Freya/share/models/server"
 	"github.com/ubis/Freya/share/network"
+	"github.com/ubis/Freya/share/rpc"
 )
 
 type EventFunc func(*server.Instance, *event.Event)
@@ -20,7 +22,6 @@ func register(inst *server.Instance, name string, method EventFunc) {
 func RegisterEvents(inst *server.Instance) {
 	log.Info("Registering events...")
 
-	register(inst, event.ClientConnectEvent, OnClientConnect)
 	register(inst, event.ClientConnectEvent, OnClientConnect)
 	register(inst, event.ClientDisconnectEvent, OnClientDisconnect)
 	register(inst, event.PacketReceiveEvent, OnPacketReceive)
@@ -105,9 +106,9 @@ func OnSyncConnect(i *server.Instance, e *event.Event) {
 	log.Info("Established connection with the Master Server!")
 
 	// register this server
-	// req := server.RegisterReq{Type: server.LOGIN_SERVER}
-	// res := server.RegisterRes{}
-	// i.RPC.Call(rpc.ServerRegister, &req, &res)
+	req := svr.RegisterReq{Type: svr.LOGIN_SERVER}
+	res := svr.RegisterRes{}
+	i.RPC.Call(rpc.ServerRegister, &req, &res)
 }
 
 // OnSyncDisconnect event informs server about lost connection with the Master Server

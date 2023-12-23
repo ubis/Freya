@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"github.com/ubis/Freya/cmd/gameserver/context"
-	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/models/inventory"
 	"github.com/ubis/Freya/share/network"
 )
@@ -14,135 +12,119 @@ const (
 	Equipment
 )
 
-func notifyStorageExchange(session *network.Session, result bool) {
-	packet := network.NewWriter(STORAGE_EXCHANGE_MOVE)
-	packet.WriteBool(result)
-	packet.WriteInt32(0)
-
-	session.Send(packet)
-}
-
-func StorageExchangeMove(session *network.Session, reader *network.Reader) {
-	isEquip := reader.ReadUint32() == 1
-	deleteSlot := uint16(reader.ReadUint32())
-	isInventory := reader.ReadUint32() == 1
-	createSlot := uint16(reader.ReadUint32())
-
-	var id int32
-
-	ctx, err := context.Parse(session)
-	if err != nil {
-		log.Error(err.Error())
+// StorageExchangeMove Packet
+func StorageExchangeMove(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateInGame, reader.Type) {
 		return
 	}
 
-	id, err = context.GetCharId(session)
-	if err != nil {
-		log.Error(err.Error())
-		return
-	}
-
-	switch {
-	case isEquip && !isInventory:
-		// from equipment to inventory
-		ok, err := ctx.Char.Equipment.UnEquipItem(deleteSlot, createSlot, ctx.Char.Inventory)
-
-		notifyStorageExchange(session, ok)
-
-		if err != nil {
-			log.Error(err.Error())
-			return
-		}
-
-		pkt := network.NewWriter(NFY_ITEM_UNEQUIP)
-		pkt.WriteInt32(id)
-		pkt.WriteInt16(deleteSlot)
-
-		ctx.World.BroadcastSessionPacket(session, pkt)
-
-		// with one-handed dual weapons we need to move from left hand to
-		// the right, if right-hand weapon was removed
-		// todo: check for dual-handed weapons and ignore
-		if deleteSlot == inventory.RightHand {
-			// switch weapon
-			ctx.Char.Equipment.MoveItem(inventory.LeftHand, inventory.RightHand)
-		}
-	case isInventory && !isEquip:
-		// from inventory to equipment
-		ok, err := ctx.Char.Equipment.EquipItem(deleteSlot, createSlot, ctx.Char.Inventory)
-		item := ctx.Char.Equipment.Get(createSlot)
-
-		notifyStorageExchange(session, ok)
-
-		if err != nil {
-			log.Error(err.Error())
-			return
-		}
-
-		pkt := network.NewWriter(NFY_ITEM_EQUIP)
-		pkt.WriteInt32(id)
-		pkt.WriteInt32(item.Kind)
-		pkt.WriteInt16(item.Slot)
-		pkt.WriteInt32(0)
-		pkt.WriteByte(0)
-
-		ctx.World.BroadcastSessionPacket(session, pkt)
-	case isEquip && isInventory:
-		// exchanging equipment items? rings? because on weaps it doesn't work
-		ok, err := ctx.Char.Equipment.MoveItem(deleteSlot, createSlot)
-		item := ctx.Char.Equipment.Get(createSlot)
-
-		notifyStorageExchange(session, ok)
-
-		if err != nil {
-			log.Error(err.Error())
-			return
-		}
-
-		pkt := network.NewWriter(NFY_ITEM_UNEQUIP)
-		pkt.WriteInt32(id)
-		pkt.WriteInt16(deleteSlot)
-		ctx.World.BroadcastSessionPacket(session, pkt)
-
-		pkt = network.NewWriter(NFY_ITEM_EQUIP)
-		pkt.WriteInt32(id)
-		pkt.WriteInt32(item.Kind)
-		pkt.WriteInt16(item.Slot)
-		pkt.WriteInt32(0)
-		pkt.WriteByte(0)
-		ctx.World.BroadcastSessionPacket(session, pkt)
-	case !isEquip && !isInventory:
-		// moving item in inventory
-		ok, err := ctx.Char.Inventory.Move(deleteSlot, createSlot)
-
-		notifyStorageExchange(session, ok)
-
-		if err != nil {
-			log.Error(err.Error())
-			return
-		}
-	default:
-		notifyStorageExchange(session, false)
-		return
-	}
-}
-
-func StorageItemSwap(session *network.Session, reader *network.Reader) {
 	src := StorageType(reader.ReadInt32())
 	srcSlot := uint16(reader.ReadInt32())
 	dst := StorageType(reader.ReadInt32())
 	dstSlot := uint16(reader.ReadInt32())
 
-	ctx, err := context.Parse(session)
+	inv := session.Character.Inventory
+	eq := &session.Character.Equipment
+
+	state := false
+	var err error
+
+	switch src {
+	case Inventory:
+		switch dst {
+		case Inventory:
+			state, err = inv.Move(srcSlot, dstSlot)
+		case Equipment:
+			state, err = eq.EquipItem(srcSlot, dstSlot, inv)
+			if !state {
+				break
+			}
+
+			item := eq.Get(dstSlot)
+
+			pkt := network.NewWriter(NFYItemEquip)
+			pkt.WriteInt32(session.Character.Id)
+			pkt.WriteInt32(item.Kind)
+			pkt.WriteInt16(item.Slot)
+			pkt.WriteInt32(0)
+			pkt.WriteByte(0)
+
+			session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+		}
+	case Equipment:
+		switch dst {
+		case Inventory:
+			state, err = eq.UnEquipItem(srcSlot, dstSlot, inv)
+			if !state {
+				break
+			}
+
+			pkt := network.NewWriter(NFYItemUnEquip)
+			pkt.WriteInt32(session.Character.Id)
+			pkt.WriteInt16(srcSlot)
+
+			session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+
+			// with one-handed dual weapons we need to move from left hand to
+			// the right, if right-hand weapon was removed
+			// todo: check for dual-handed weapons and ignore
+			if srcSlot != inventory.RightHand {
+				break
+			}
+
+			// switch weapon
+			eq.MoveItem(inventory.LeftHand, inventory.RightHand)
+		case Equipment:
+			state, err = eq.MoveItem(srcSlot, dstSlot)
+			if !state {
+				break
+			}
+
+			item := eq.Get(dstSlot)
+
+			pkt := network.NewWriter(NFYItemUnEquip)
+			pkt.WriteInt32(session.Character.Id)
+			pkt.WriteInt16(srcSlot)
+			session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+
+			pkt = network.NewWriter(NFYItemEquip)
+			pkt.WriteInt32(session.Character.Id)
+			pkt.WriteInt32(item.Kind)
+			pkt.WriteInt16(item.Slot)
+			pkt.WriteInt32(0)
+			pkt.WriteByte(0)
+			session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+		}
+	}
+
 	if err != nil {
-		log.Error(err.Error())
+		session.LogErrorf("An error occurred: %s for character: %d ",
+			err.Error(), session.Character.Id)
+	}
+
+	pkt := network.NewWriter(CSCStorageExchangeMove)
+	pkt.WriteBool(state)
+	pkt.WriteInt32(0)
+
+	session.Send(pkt)
+}
+
+// StorageItemSwap
+func StorageItemSwap(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateInGame, reader.Type) {
 		return
 	}
 
-	state, err := false, nil
+	src := StorageType(reader.ReadInt32())
+	srcSlot := uint16(reader.ReadInt32())
+	dst := StorageType(reader.ReadInt32())
+	dstSlot := uint16(reader.ReadInt32())
 
-	inv := ctx.Char.Inventory
-	eq := &ctx.Char.Equipment
+	state := false
+	var err error
+
+	inv := session.Character.Inventory
+	eq := &session.Character.Equipment
 
 	switch src {
 	case Inventory:
@@ -151,6 +133,19 @@ func StorageItemSwap(session *network.Session, reader *network.Reader) {
 			state, err = inv.Swap(srcSlot, dstSlot)
 		case Equipment:
 			state, err = eq.SwapEquipItem(srcSlot, dstSlot, inv)
+			if !state {
+				break
+			}
+
+			item := eq.Get(dstSlot)
+
+			pkt := network.NewWriter(NFYItemEquip)
+			pkt.WriteInt32(session.Character.Id)
+			pkt.WriteInt32(item.Kind)
+			pkt.WriteInt16(item.Slot)
+			pkt.WriteInt32(0)
+			pkt.WriteByte(0)
+			session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
 		}
 	case Equipment:
 		switch dst {
@@ -163,56 +158,50 @@ func StorageItemSwap(session *network.Session, reader *network.Reader) {
 	}
 
 	if err != nil {
-		log.Error(err.Error())
+		session.LogErrorf("An error occurred: %s for character: %d ",
+			err.Error(), session.Character.Id)
 	}
 
-	pkt := network.NewWriter(STORAGE_ITEM_SWAP)
+	pkt := network.NewWriter(CSCStorageItemSwap)
 	pkt.WriteBool(state)
 
 	session.Send(pkt)
 }
 
-func StorageItemDrop(session *network.Session, reader *network.Reader) {
+// StorageItemDrop Packet
+func StorageItemDrop(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateInGame, reader.Type) {
+		return
+	}
+
 	_ = reader.ReadInt32() // unk
 	slot := reader.ReadUint16()
 
-	ctx, err := context.Parse(session)
+	item := session.Character.Inventory.Get(slot)
+
+	state, err := session.Character.Inventory.Remove(slot)
 	if err != nil {
-		log.Error(err.Error())
-		return
+		session.LogErrorf("An error occurred: %s for character: %d ",
+			err.Error(), session.Character.Id)
 	}
 
-	ctx.Mutex.RLock()
-	charId := ctx.Char.Id
-	world := ctx.World
-	x := int(ctx.Char.X)
-	y := int(ctx.Char.Y)
-	ctx.Mutex.RUnlock()
-
-	item := ctx.Char.Inventory.Get(slot)
-
-	if world == nil {
-		log.Error("Unable to get current world!")
-		return
-	}
-
-	state, err := ctx.Char.Inventory.Remove(slot)
-
-	if err != nil {
-		log.Error(err.Error())
-	}
-
-	pkt := network.NewWriter(STORAGE_ITEM_DROP)
+	pkt := network.NewWriter(CSCStorageItemDrop)
 	pkt.WriteBool(state)
 
 	session.Send(pkt)
 
 	if state {
-		world.DropItem(&item, charId, x, y)
+		x, y := session.Character.GetPosition()
+		session.World.DropItem(&item, session.Character.Id, int(x), int(y))
 	}
 }
 
-func AccessoryEquip(session *network.Session, reader *network.Reader) {
+// AccessoryEquip
+func AccessoryEquip(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateInGame, reader.Type) {
+		return
+	}
+
 	type AccessoryType int
 
 	const (
@@ -224,12 +213,6 @@ func AccessoryEquip(session *network.Session, reader *network.Reader) {
 	slot := uint16(reader.ReadUint32())
 	reader.ReadInt32() // seem to be identical to slot
 	accyType := AccessoryType(reader.ReadInt32())
-
-	ctx, err := context.Parse(session)
-	if err != nil {
-		log.Error(err.Error())
-		return
-	}
 
 	// we need to un-equip last type
 	// then switch 1st to 2nd, 2nd to 3rd, 3rd to 4th
@@ -251,20 +234,22 @@ func AccessoryEquip(session *network.Session, reader *network.Reader) {
 			inventory.Ring1, inventory.Ring2, inventory.Ring3, inventory.Ring4,
 		}
 	default:
-		log.Error("Unknown accessory type:", accyType)
+		session.LogErrorf("Unknown accessory type: %d for character: %d ",
+			accyType, session.Character.Id)
 		return
 	}
 
-	ctx.Mutex.Lock()
-	ok, err := ctx.Char.Equipment.EquipAccessory(slot, slots, ctx.Char.Inventory)
-	ctx.Mutex.Unlock()
+	inv := session.Character.Inventory
+	eq := &session.Character.Equipment
 
+	state, err := eq.EquipAccessory(slot, slots, inv)
 	if err != nil {
-		log.Error(err.Error())
+		session.LogErrorf("An error occurred: %s for character: %d ",
+			err.Error(), session.Character.Id)
 	}
 
-	pkt := network.NewWriter(ACCESSORY_EQUIP)
-	pkt.WriteBool(ok)
+	pkt := network.NewWriter(CSCAccessoryEquip)
+	pkt.WriteBool(state)
 
 	session.Send(pkt)
 }

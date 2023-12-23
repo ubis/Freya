@@ -16,12 +16,11 @@ type Links struct {
 
 	rpcHandler *rpc.Client
 	character  int32
-	serverId   byte
 }
 
 func (e *Links) sync(cmd string, old *Link, new *Link) (bool, error) {
 	// being initialized
-	if e.character == 0 && e.serverId == 0 {
+	if e.character == 0 {
 		return true, nil
 	}
 
@@ -30,7 +29,6 @@ func (e *Links) sync(cmd string, old *Link, new *Link) (bool, error) {
 	}
 
 	req := QuickLinkRequest{
-		Server:  e.serverId,
 		Id:      e.character,
 		Command: cmd,
 		OldLink: old,
@@ -50,10 +48,9 @@ func (e *Links) Init() {
 	e.List = make(map[int]Link)
 }
 
-func (e *Links) Setup(rpc *rpc.Client, id int32, server byte) {
+func (e *Links) Setup(rpc *rpc.Client, id int32) {
 	e.rpcHandler = rpc
 	e.character = id
-	e.serverId = server
 }
 
 // Sets skill link to the list by slot

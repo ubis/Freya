@@ -15,7 +15,7 @@ import (
 func (e *RPC) UserVerify(c *rpc.Client, r *account.VerifyReq, s *account.VerifyRes) error {
 	net := e.Server
 
-	state := net.VerifyUser(r.UserIdx, r.AuthKey, r.IP, r.DBIdx)
+	state := net.VerifyUser(r.UserIdx, r.AuthKey, r.IP)
 	*s = account.VerifyRes{Verified: state}
 
 	if !state {
@@ -35,6 +35,7 @@ func (e *RPC) UserVerify(c *rpc.Client, r *account.VerifyReq, s *account.VerifyR
 
 		// restore account data
 		ses.Account = r.DBIdx
+
 		ses.Send(packet.ServerSate(ses))
 	})
 
@@ -44,11 +45,27 @@ func (e *RPC) UserVerify(c *rpc.Client, r *account.VerifyReq, s *account.VerifyR
 
 // OnlineCheck RPC Call
 func (e *RPC) OnlineCheck(c *rpc.Client, r *account.OnlineReq, s *account.OnlineRes) error {
-	net := e.Server
-	res := account.OnlineRes{}
-	ok, idx := net.IsOnline(r.Account)
+	users := e.Server.GetUsers()
+	online := false
+	var index uint16
 
-	if !ok {
+	for _, v := range users {
+		ses, ok := v.Retrieve().(*packet.Session)
+		if !ok {
+			log.Error("Unable to parse client session!")
+			continue
+		}
+
+		if ses.Account == r.Account {
+			online = true
+			index = v.GetUserIdx()
+			break
+		}
+	}
+
+	res := account.OnlineRes{}
+
+	if !online {
 		*s = res
 		return nil
 	}
@@ -56,11 +73,11 @@ func (e *RPC) OnlineCheck(c *rpc.Client, r *account.OnlineReq, s *account.Online
 	// user is online in this server
 	if r.Kick {
 		// kick user
-		res.Result = net.CloseUser(idx)
+		res.Result = e.Server.CloseUser(index)
 	} else {
 		// notify user about double login
 		m := packet.SystemMessage(message.LoginDuplicate, 0)
-		res.Result = net.SendToUser(idx, m)
+		res.Result = e.Server.SendToUser(index, m)
 	}
 
 	*s = res

@@ -1,7 +1,6 @@
 package inventory
 
 type ItemRequest struct {
-	Server  byte
 	Id      int32
 	Command string
 	Item    Item

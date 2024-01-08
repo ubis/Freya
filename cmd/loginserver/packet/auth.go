@@ -36,8 +36,31 @@ func AuthAccount(session *Session, reader *network.Reader) {
 		return
 	}
 
-	// skip 2 bytes
-	reader.ReadUint16()
+	serverStatus := 0 // 0 = normal, 1 = maintenance, 2 = outofservice
+	pkt := network.NewWriter(CSCAuthAccount)
+	pkt.WriteUint32(uint32(serverStatus))
+	pkt.WriteUint32(0xFEFFFFFF)
+	pkt.WriteUint32(0x02000000)
+	session.Send(pkt)
+
+	if serverStatus == 0 {
+		conf := session.ServerConfig
+		now := time.Now()
+		pkt := network.NewWriter(NFYDisconnectTimer)
+		pkt.WriteInt64(now.Unix() + int64(conf.AutoDisconnectTime))
+		pkt.WriteByte(0)
+		session.Send(pkt)
+	}
+}
+
+// Authenticate Packet
+func Authenticate(session *Session, reader *network.Reader) {
+	if !verifyState(session, StateVerified) {
+		return
+	}
+
+	// 4 bytes padding
+	reader.ReadUint32()
 
 	// read and decrypt RSA block
 	loginData := reader.ReadBytes(server.RSA_LOGIN_LENGTH)
@@ -49,8 +72,8 @@ func AuthAccount(session *Session, reader *network.Reader) {
 	}
 
 	// extract name and pass
-	name := string(bytes.Trim(data[:32], "\x00"))
-	pass := string(bytes.Trim(data[32:], "\x00"))
+	name := string(bytes.Trim(data[:129], "\x00"))
+	pass := string(bytes.Trim(data[129:], "\x00"))
 
 	req := account.AuthRequest{UserId: name, Password: pass}
 	res := account.AuthResponse{Status: account.None}
@@ -61,50 +84,80 @@ func AuthAccount(session *Session, reader *network.Reader) {
 		res.Status = account.OutOfService
 	}
 
-	pkt := network.NewWriter(CSCAuthAccount)
-	pkt.WriteByte(res.Status)
-	pkt.WriteInt32(res.Id)
-	pkt.WriteInt16(0x00)
-	pkt.WriteByte(len(res.CharList)) // server count
-	pkt.WriteInt64(0x00)
-	pkt.WriteInt32(0x00) // premium service id
-	pkt.WriteInt32(0x00) // premium service expire date
-	pkt.WriteByte(0x00)
-	pkt.WriteByte(res.SubPassChar) // subpassword exists for character
-	pkt.WriteBytes(make([]byte, 7))
-	pkt.WriteInt32(0x00) // language
-	pkt.WriteString(res.AuthKey + "\x00")
+	pkt := network.NewWriter(CSCAuthenticate)
+	pkt.WriteBool(true) // keep alive
+	pkt.WriteUint32(0)  // unknown
+	pkt.WriteUint32(0)  // unknown
+
+	// login status
+	if res.Status == account.Normal || res.Status == account.Online {
+		pkt.WriteInt32(1)
+	} else {
+		pkt.WriteInt32(0)
+	}
+
+	pkt.WriteUint32(0)        // not extended
+	pkt.WriteByte(res.Status) // account status
+	session.Send(pkt)
+
+	if res.Status != account.Normal {
+		log.Infof("User `%s` failed to log in.", name)
+		event.Trigger(event.PlayerLogin, session, name, false)
+		return
+	}
+
+	conf := session.ServerConfig
+
+	pkt = network.NewWriter(NFYAuthTimer)
+	pkt.WriteUint32(conf.AutoDisconnectTime)
+	session.Send(pkt)
+
+	URLToClient(session)
+
+	pkt = network.NewWriter(CSCAuthenticate)
+	pkt.WriteBool(true) // keep alive
+	pkt.WriteUint32(0)  // unknown
+	pkt.WriteUint32(0)  // unknown
+
+	// TODO: Migrate account.Online case
+
+	// login status
+	if res.Status == account.Normal || res.Status == account.Online {
+		pkt.WriteInt32(1)
+	} else {
+		pkt.WriteInt32(0)
+	}
+
+	pkt.WriteUint32(0x11)     // extended
+	pkt.WriteByte(res.Status) // account status
+	pkt.WriteBytes(make([]byte, 55))
+	pkt.WriteBytes(make([]byte, 32)) // TODO: This is a 32 byte auth key with following charset: 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
+	pkt.WriteBytes(make([]byte, 3))
 
 	for _, value := range res.CharList {
 		pkt.WriteByte(value.Server)
 		pkt.WriteByte(value.Count)
 	}
 
+	maxCharCount := 128
+	pkt.WriteBytes(make([]byte, maxCharCount-len(res.CharList))) // max char count
 	session.Send(pkt)
 
-	if res.Status == account.Normal {
-		log.Infof("User `%s` successfully logged in.", name)
+	pkt = network.NewWriter(NFYAuthTimer)
+	pkt.WriteUint32(conf.AutoDisconnectTime)
+	session.Send(pkt)
 
-		session.Account = res.Id
-		event.Trigger(event.PlayerLogin, session, name, true)
+	log.Infof("User `%s` successfully logged in.", name)
 
-		// send url's
-		URLToClient(session)
+	session.Account = res.Id
+	event.Trigger(event.PlayerLogin, session, name, true)
 
-		// send normal system message
-		session.Send(SystemMessage(message.Normal, 0))
+	// send normal system message
+	session.Send(SystemMessage(message.Normal, 0))
 
-		// create new periodic task to send server list periodically
-		task := network.NewPeriodicTask(time.Second*5, func() {
-			session.Send(ServerSate(session))
-		})
-
-		session.AddJob("ServerState", task)
-	} else if res.Status == account.Online {
-		session.Account = res.Id
-		log.Infof("User `%s` double login attempt.", name)
-	} else {
-		log.Infof("User `%s` failed to log in.", name)
-		event.Trigger(event.PlayerLogin, session, name, false)
-	}
+	// create new periodic task to send server list periodically
+	task := network.NewPeriodicTask(time.Second*5, func() {
+		session.Send(ServerSate(session))
+	})
+	session.AddJob("ServerState", task)
 }

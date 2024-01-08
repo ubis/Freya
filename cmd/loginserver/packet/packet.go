@@ -55,6 +55,11 @@ func RegisterPackets(h *network.PacketHandler) {
 	register(h, NFYUrlToClient, nil)
 	register(h, CSCPublicKey, PublicKey)
 	register(h, CSCPreServerEnvRequest, PreServerEnvRequest)
+	register(h, NFYDisconnectTimer, nil)
+	register(h, CSCAuthenticate, Authenticate)
+	register(h, NFYAuthTimer, nil)
+	register(h, CSCUnknown3383, nil)
+	register(h, CSCUnknown5383, nil)
 }
 
 func RegisterFunc() {

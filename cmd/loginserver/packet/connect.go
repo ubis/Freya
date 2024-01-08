@@ -13,6 +13,8 @@ func Connect2Svr(session *Session, reader *network.Reader) {
 		return
 	}
 
+	// clientAuthKey := reader.ReadUint32()
+
 	session.state = StateConnected
 
 	pkt := network.NewWriter(CSCConnect2Svr)
@@ -20,6 +22,8 @@ func Connect2Svr(session *Session, reader *network.Reader) {
 	pkt.WriteUint32(session.GetAuthKey())
 	pkt.WriteUint16(session.GetUserIdx())
 	pkt.WriteUint16(session.GetKeyIdx())
+	pkt.WriteUint32(2)
+	pkt.WriteUint32(4)
 
 	session.Send(pkt)
 }
@@ -46,7 +50,7 @@ func CheckVersion(session *Session, reader *network.Reader) {
 
 	pkt := network.NewWriter(CSCCheckVersion)
 	pkt.WriteInt32(targetVersion)
-	pkt.WriteInt32(0x00) // debug
+	pkt.WriteInt32(conf.ServerMagicKey)
 	pkt.WriteInt32(0x00) // reserved
 	pkt.WriteInt32(0x00) // reserved
 

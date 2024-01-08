@@ -11,6 +11,8 @@ type Config struct {
 
 	Version            int
 	MagicKey           int
+	ServerMagicKey     int
+	AutoDisconnectTime int
 	IgnoreVersionCheck bool
 	CashWeb_URL        string
 	CashWeb_Odc_URL    string

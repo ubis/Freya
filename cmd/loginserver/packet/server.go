@@ -18,8 +18,10 @@ func PreServerEnvRequest(session *Session, reader *network.Reader) {
 		return
 	}
 
+	// username := reader.ReadBytes(129)
+
 	pkt := network.NewWriter(CSCPreServerEnvRequest)
-	pkt.WriteBytes(make([]byte, 4113))
+	pkt.WriteBytes(make([]byte, 4108)) // auth captcha image data
 
 	session.Send(pkt)
 }
@@ -138,8 +140,8 @@ func VerifyLinks(session *Session, reader *network.Reader) {
 		return
 	}
 
-	timestamp := reader.ReadUint32()
-	count := reader.ReadUint16()
+	authKey := reader.ReadUint32()
+	userIdx := reader.ReadUint16()
 	channel := reader.ReadByte()
 	server := reader.ReadByte()
 	magickey := reader.ReadInt32()
@@ -157,8 +159,8 @@ func VerifyLinks(session *Session, reader *network.Reader) {
 	}
 
 	req := account.VerifyReq{
-		AuthKey:   timestamp,
-		UserIdx:   count,
+		AuthKey:   authKey,
+		UserIdx:   userIdx,
 		ServerId:  server,
 		ChannelId: channel,
 		IP:        session.GetIp(),

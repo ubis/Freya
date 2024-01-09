@@ -55,6 +55,8 @@ func URLToClient(session *Session) {
 	pkt.WriteString(guildweb_url)
 	pkt.WriteInt32(len(sns_url))
 	pkt.WriteString(sns_url)
+	pkt.WriteInt32(0)
+	pkt.WriteByte(0)
 
 	session.Send(pkt)
 }

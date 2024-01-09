@@ -96,8 +96,8 @@ func Authenticate(session *Session, reader *network.Reader) {
 		pkt.WriteInt32(0)
 	}
 
-	pkt.WriteUint32(0)        // not extended
-	pkt.WriteByte(res.Status) // account status
+	pkt.WriteUint32(0)         // not extended
+	pkt.WriteInt32(res.Status) // account status
 	session.Send(pkt)
 
 	if res.Status != account.Normal {

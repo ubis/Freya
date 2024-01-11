@@ -182,3 +182,21 @@ func VerifyLinks(session *Session, reader *network.Reader) {
 
 	session.Send(pkt)
 }
+
+// DisconnectTimer Packet which is NFY
+func DisconnectTimer(ms int) *network.Writer {
+	pkt := network.NewWriter(NFYDisconnectTimer)
+	pkt.WriteInt64(ms)
+	pkt.WriteByte(0)
+
+	return pkt
+}
+
+// AuthTimer Packet which is NFY
+func AuthTimer(ms int) *network.Writer {
+	pkt := network.NewWriter(NFYAuthTimer)
+	pkt.WriteInt64(ms)
+	pkt.WriteByte(0)
+
+	return pkt
+}

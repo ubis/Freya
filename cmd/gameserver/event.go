@@ -1,9 +1,6 @@
 package main
 
 import (
-	"encoding/binary"
-	"net"
-
 	"github.com/ubis/Freya/cmd/gameserver/game"
 	"github.com/ubis/Freya/cmd/gameserver/packet"
 	"github.com/ubis/Freya/cmd/gameserver/server"
@@ -124,7 +121,7 @@ func OnSyncConnect(i *server.Instance, event *event.Event) {
 		ServerType:   byte(i.Config.ServerType),
 		ServerId:     byte(i.ServerId),
 		ChannelId:    byte(i.ChannelId),
-		PublicIp:     binary.LittleEndian.Uint32(net.ParseIP(i.Config.PublicIp)[12:16]),
+		PublicIp:     i.Config.PublicIp,
 		PublicPort:   uint16(i.Config.Port),
 		UseLocalIp:   i.Config.UseLocalIp,
 		CurrentUsers: uint16(i.Server.GetOnlineUsers()),

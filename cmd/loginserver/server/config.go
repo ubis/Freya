@@ -12,8 +12,8 @@ type Config struct {
 	Version            int
 	MagicKey           int
 	ServerMagicKey     int
-	AutoDisconnectTime int
 	IgnoreVersionCheck bool
+	AutoDisconnectTime int
 	CashWeb_URL        string
 	CashWeb_Odc_URL    string
 	CashWeb_Charge_URL string
@@ -43,6 +43,7 @@ func (c *Config) Read() {
 	c.Version = conf.GetInt("client", "client_version", 0)
 	c.MagicKey = conf.GetInt("client", "magic_key", 0)
 	c.IgnoreVersionCheck = conf.GetBool("client", "ignore_client_version", false)
+	c.AutoDisconnectTime = conf.GetInt("client", "auto_disconnect_time", 120000)
 	c.CashWeb_URL = conf.GetString("client", "cashweb_url", "")
 	c.CashWeb_Odc_URL = conf.GetString("client", "cashweb_odc_url", "")
 	c.CashWeb_Charge_URL = conf.GetString("client", "cashweb_charge_url", "")

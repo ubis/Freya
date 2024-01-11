@@ -1,9 +1,6 @@
 package packet
 
 import (
-	"encoding/binary"
-	"net"
-
 	"github.com/ubis/Freya/share/log"
 	"github.com/ubis/Freya/share/models/account"
 	"github.com/ubis/Freya/share/models/message"
@@ -96,40 +93,34 @@ func ServerSate(session *Session) *network.Writer {
 	for i := 0; i < len(s); i++ {
 		pkt.WriteByte(s[i].Id)
 		pkt.WriteByte(s[i].Hot) // 0x10 = HOT! Flag; or bit_set(5)
+		pkt.WriteInt16(0x00)
 		pkt.WriteInt32(0x00)
 		pkt.WriteByte(len(s[i].List))
 
 		for j := 0; j < len(s[i].List); j++ {
 			c := s[i].List[j]
-			pkt.WriteByte(c.Id)
+			pkt.WriteByte(s[i].Id) // server id
+			pkt.WriteByte(c.Id)    // channel id
 			pkt.WriteUint16(c.CurrentUsers)
-			pkt.WriteUint16(0x00)
-			pkt.WriteUint16(0xFFFF)
-			pkt.WriteUint16(0x00)
-			pkt.WriteUint16(0x00)
-			pkt.WriteUint32(0x00)
-			pkt.WriteUint16(0x00)
-			pkt.WriteUint16(0x00)
-			pkt.WriteUint16(0x00)
-			pkt.WriteByte(0x00)
-			pkt.WriteByte(0x00)
-			pkt.WriteByte(0x00)
-			pkt.WriteByte(0xFF)
+			pkt.WriteBytes(make([]byte, 22))
 			pkt.WriteUint16(c.MaxUsers)
+
+			ip := c.Ip
 
 			// if session is local, provide local IPs...
 			// this helps during development when you have local & remote clients
 			// however, here we assume that locally all servers will run on the
 			// same IP
 			if session.IsLocal() && c.UseLocalIp {
-				ip := net.ParseIP(session.GetLocalEndPntIp())[12:16]
-				pkt.WriteUint32(binary.LittleEndian.Uint32(ip))
-			} else {
-				pkt.WriteUint32(c.Ip)
+				ip = session.GetLocalEndPntIp()
 			}
+
+			pkt.WriteString(ip)
+			pkt.WriteBytes(make([]byte, 65-len(ip)))
 
 			pkt.WriteUint16(c.Port)
 			pkt.WriteUint32(c.Type)
+			pkt.WriteUint32(0x00)
 		}
 	}
 

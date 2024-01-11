@@ -36,21 +36,31 @@ func AuthAccount(session *Session, reader *network.Reader) {
 		return
 	}
 
-	serverStatus := 0 // 0 = normal, 1 = maintenance, 2 = outofservice
+	const (
+		statusNormal int = iota
+		statusMaintenance
+		statusOutOfService
+	)
+
+	// here we could check if server is in the maintenance and/or whitelist mode
+	// which could be set through IPC, through master server
+	serverStatus := statusNormal
+
 	pkt := network.NewWriter(CSCAuthAccount)
-	pkt.WriteUint32(uint32(serverStatus))
+	pkt.WriteInt32(serverStatus)
 	pkt.WriteUint32(0xFEFFFFFF)
 	pkt.WriteUint32(0x02000000)
+
 	session.Send(pkt)
 
-	if serverStatus == 0 {
-		conf := session.ServerConfig
-		now := time.Now()
-		pkt := network.NewWriter(NFYDisconnectTimer)
-		pkt.WriteInt64(now.Unix() + int64(conf.AutoDisconnectTime))
-		pkt.WriteByte(0)
-		session.Send(pkt)
+	if serverStatus != statusNormal {
+		return
 	}
+
+	// set-up disconnection timer
+	// to-do: set this on server-side as well
+	conf := session.ServerConfig
+	session.Send(DisconnectTimer(conf.AutoDisconnectTime))
 }
 
 // Authenticate Packet
@@ -81,57 +91,44 @@ func Authenticate(session *Session, reader *network.Reader) {
 
 	// if server is down...
 	if err != nil {
-		res.Status = account.OutOfService
+		res.Status = account.OutOfService2
 	}
+
+	keepAlive := res.Status == account.Normal || res.Status == account.Online
 
 	pkt := network.NewWriter(CSCAuthenticate)
-	pkt.WriteBool(true) // keep alive
-	pkt.WriteUint32(0)  // unknown
-	pkt.WriteUint32(0)  // unknown
-
-	// login status
-	if res.Status == account.Normal || res.Status == account.Online {
-		pkt.WriteInt32(1)
-	} else {
-		pkt.WriteInt32(0)
-	}
-
+	pkt.WriteBool(keepAlive)   // keep alive
+	pkt.WriteUint32(0)         // unknown
+	pkt.WriteUint32(0)         // unknown
+	pkt.WriteInt32(keepAlive)  // login status
 	pkt.WriteUint32(0)         // not extended
 	pkt.WriteInt32(res.Status) // account status
+
 	session.Send(pkt)
 
-	if res.Status != account.Normal {
+	// set-up logging-in timer
+	// to-do: set this on server-side as well
+	conf := session.ServerConfig
+	session.Send(AuthTimer(conf.AutoDisconnectTime))
+
+	if !keepAlive {
 		log.Infof("User `%s` failed to log in.", name)
 		event.Trigger(event.PlayerLogin, session, name, false)
 		return
 	}
 
-	conf := session.ServerConfig
-
-	pkt = network.NewWriter(NFYAuthTimer)
-	pkt.WriteUint32(conf.AutoDisconnectTime)
-	session.Send(pkt)
-
+	// send URLs to the client
 	URLToClient(session)
 
 	pkt = network.NewWriter(CSCAuthenticate)
-	pkt.WriteBool(true) // keep alive
-	pkt.WriteUint32(0)  // unknown
-	pkt.WriteUint32(0)  // unknown
-
-	// TODO: Migrate account.Online case
-
-	// login status
-	if res.Status == account.Normal || res.Status == account.Online {
-		pkt.WriteInt32(1)
-	} else {
-		pkt.WriteInt32(0)
-	}
-
+	pkt.WriteBool(keepAlive)  // keep alive
+	pkt.WriteUint32(0)        // unknown
+	pkt.WriteUint32(0)        // unknown
+	pkt.WriteInt32(keepAlive) // login status
 	pkt.WriteUint32(0x11)     // extended
 	pkt.WriteByte(res.Status) // account status
 	pkt.WriteBytes(make([]byte, 55))
-	pkt.WriteBytes(make([]byte, 32)) // TODO: This is a 32 byte auth key with following charset: 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
+	pkt.WriteString(res.AuthKey + "\x00")
 	pkt.WriteBytes(make([]byte, 3))
 
 	for _, value := range res.CharList {
@@ -143,13 +140,16 @@ func Authenticate(session *Session, reader *network.Reader) {
 	pkt.WriteBytes(make([]byte, maxCharCount-len(res.CharList))) // max char count
 	session.Send(pkt)
 
-	pkt = network.NewWriter(NFYAuthTimer)
-	pkt.WriteUint32(conf.AutoDisconnectTime)
-	session.Send(pkt)
+	// set-up logging-in timer
+	// to-do: set this on server-side as well
+	session.Send(AuthTimer(conf.AutoDisconnectTime))
 
 	log.Infof("User `%s` successfully logged in.", name)
 
+	// set-up player account id
 	session.Account = res.Id
+
+	// trigger player login event
 	event.Trigger(event.PlayerLogin, session, name, true)
 
 	// send normal system message

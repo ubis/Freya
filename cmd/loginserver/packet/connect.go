@@ -13,13 +13,24 @@ func Connect2Svr(session *Session, reader *network.Reader) {
 		return
 	}
 
-	session.state = StateConnected
+	if err := network.Deserialize(reader, &C2SConnect2Svr{}); err != nil {
+		session.SerializationError(reader.Type, err)
+		return
+	}
 
-	pkt := network.NewWriter(CSCConnect2Svr)
-	pkt.WriteUint32(session.GetSeed())
-	pkt.WriteUint32(session.GetAuthKey())
-	pkt.WriteUint16(session.GetUserIdx())
-	pkt.WriteUint16(session.GetKeyIdx())
+	pkt := S2CConnect2Svr{
+		S2CHeader: S2CHeader{
+			MagicCode: MagicKey,
+			Opcode:    CSCConnect2Svr,
+		},
+		XorSeed:   session.GetSeed(),
+		AuthKey:   session.GetAuthKey(),
+		UserIdx:   session.GetUserIdx(),
+		XorKeyIdx: uint16(session.GetKeyIdx()),
+	}
+
+	// mark state as connected and keys exchanged
+	session.state = StateConnected
 
 	session.Send(pkt)
 }

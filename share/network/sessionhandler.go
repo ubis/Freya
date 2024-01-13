@@ -10,7 +10,7 @@ type SessionHandler interface {
 	GetSeed() uint32
 	GetKeyIdx() uint32
 
-	Send(*Writer)
+	Send(data any)
 	Close()
 
 	GetEndPnt() string

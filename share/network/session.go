@@ -27,6 +27,37 @@ type Session struct {
 	jobMutex     sync.Mutex
 }
 
+func (s *Session) preparePacket(data any) ([]byte, int) {
+	var pkt []byte
+	var opcode int
+	var err error
+
+	if writer, ok := data.(*Writer); ok {
+		pkt = writer.Finalize()
+		opcode = writer.Type
+	} else {
+		// serialize it
+		pkt, err = Serialize(data)
+		if err != nil {
+			log.Error("An error occurred while trying to serialize packet:",
+				err.Error())
+			return nil, 0
+		}
+
+		// set-up length
+		// fixme: need to handle bigger packets (Initialize on newer EPs)
+		size := len(pkt)
+		pkt[2] = byte(size)
+		pkt[3] = byte(size >> 8)
+
+		// get packet opcode
+		opcode = int(pkt[4])
+		opcode += int(pkt[5]) << 8
+	}
+
+	return pkt, opcode
+}
+
 func (s *Session) Store(ses any) {
 	s.Ses = ses
 }
@@ -116,11 +147,14 @@ func (s *Session) Start(table *encryption.XorKeyTable) {
 }
 
 // Sends specified data to the client
-func (s *Session) Send(writer *Writer) {
-	data := writer.Finalize()
+func (s *Session) Send(data any) {
+	pkt, opcode := s.preparePacket(data)
+	if opcode == 0 {
+		return
+	}
 
 	// encrypt data
-	encrypt, err := s.Encryption.Encrypt(data)
+	encrypt, err := s.Encryption.Encrypt(pkt)
 	if err != nil {
 		log.Error("Error encrypting packet: " + err.Error())
 		return
@@ -137,8 +171,8 @@ func (s *Session) Send(writer *Writer) {
 	arg := &PacketArgs{
 		Session: s,
 		Length:  length,
-		Type:    writer.Type,
-		Data:    data,
+		Type:    opcode,
+		Data:    pkt,
 		Reader:  nil,
 	}
 

@@ -117,7 +117,7 @@ func (cmd playerDropItemFunc) Call(L *lua.LState) []lua.LValue {
 		return nil
 	}
 
-	world := session.World
+	world := GetCurrentWorld(session)
 	id := session.Character.Id
 	x, y := session.Character.GetPosition()
 

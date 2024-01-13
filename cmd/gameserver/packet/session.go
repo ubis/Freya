@@ -39,8 +39,8 @@ type Session struct {
 	Character *character.Character
 	mutex     sync.RWMutex
 
-	Cell         context.CellHandler
-	World        context.WorldHandler
+	cell         context.CellHandler
+	world        context.WorldHandler
 	WorldManager context.WorldManagerHandler
 }
 
@@ -116,6 +116,30 @@ func (session *Session) FindPlayerByIndex(index uint16) *Session {
 	return ses
 }
 
+func (session *Session) Broadcast(pkt *network.Writer) {
+	world := GetCurrentWorld(session)
+	if world == nil {
+		session.LogErrorf(
+			"An error occurred: unable to get world instance from character: %d ",
+			session.Character.Id)
+		return
+	}
+
+	world.BroadcastSessionPacket(session, pkt)
+}
+
+func (session *Session) AdjustCell() {
+	world := GetCurrentWorld(session)
+	if world == nil {
+		session.LogErrorf(
+			"An error occurred: unable to get world instance from character: %d ",
+			session.Character.Id)
+		return
+	}
+
+	world.AdjustCell(session)
+}
+
 func SetCurrentWorld(session network.SessionHandler, world context.WorldHandler, cell context.CellHandler) {
 	ses, ok := session.Retrieve().(*Session)
 	if !ok {
@@ -126,8 +150,8 @@ func SetCurrentWorld(session network.SessionHandler, world context.WorldHandler,
 	ses.mutex.Lock()
 	defer ses.mutex.Unlock()
 
-	ses.Cell = cell
-	ses.World = world
+	ses.cell = cell
+	ses.world = world
 }
 
 func GetCurrentWorld(session network.SessionHandler) context.WorldHandler {
@@ -140,7 +164,7 @@ func GetCurrentWorld(session network.SessionHandler) context.WorldHandler {
 	ses.mutex.RLock()
 	defer ses.mutex.RUnlock()
 
-	return ses.World
+	return ses.world
 }
 
 func GetCurrentCell(session network.SessionHandler) context.CellHandler {
@@ -150,7 +174,10 @@ func GetCurrentCell(session network.SessionHandler) context.CellHandler {
 		return nil
 	}
 
-	return ses.Cell
+	ses.mutex.RLock()
+	defer ses.mutex.RUnlock()
+
+	return ses.cell
 }
 
 func GetCurrentCellByPos(session network.SessionHandler) context.CellHandler {

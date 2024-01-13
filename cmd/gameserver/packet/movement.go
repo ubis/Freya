@@ -30,7 +30,7 @@ func MoveBegin(session *Session, reader *network.Reader) {
 
 	session.Character.SetMovement(startX, startY, endX, endY)
 
-	session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+	session.Broadcast(pkt)
 }
 
 // MoveEnd Packet
@@ -50,7 +50,7 @@ func MoveEnd(session *Session, reader *network.Reader) {
 	session.Character.SetPosition(pntX, pntY)
 	session.Character.SetMovement(pntX, pntY, pntX, pntY)
 
-	session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+	session.Broadcast(pkt)
 }
 
 // MoveChange Packet
@@ -77,7 +77,7 @@ func MoveChange(session *Session, reader *network.Reader) {
 
 	session.Character.SetMovement(startX, startY, endX, endY)
 
-	session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+	session.Broadcast(pkt)
 }
 
 // MoveTile packet
@@ -92,8 +92,7 @@ func MoveTile(session *Session, reader *network.Reader) {
 	pntY := byte(reader.ReadInt16()) // pnt y
 
 	session.Character.SetPosition(pntX, pntY)
-
-	session.World.AdjustCell(session.SessionHandler)
+	session.AdjustCell()
 }
 
 // ChangeDirection Packet
@@ -108,7 +107,7 @@ func ChangeDirection(session *Session, reader *network.Reader) {
 	pkt.WriteInt32(session.Character.Id)
 	pkt.WriteUint32(direction) // float
 
-	session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+	session.Broadcast(pkt)
 }
 
 // KeyMoveBegin Packet
@@ -134,7 +133,7 @@ func KeyMoveBegin(session *Session, reader *network.Reader) {
 	pkt.WriteUint32(endY)
 	pkt.WriteByte(dir)
 
-	session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+	session.Broadcast(pkt)
 }
 
 // KeyMoveEnd Packet
@@ -151,7 +150,7 @@ func KeyMoveEnd(session *Session, reader *network.Reader) {
 	pkt.WriteInt32(pntX)
 	pkt.WriteInt32(pntY)
 
-	session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+	session.Broadcast(pkt)
 }
 
 // KeyMoveChange Packet
@@ -177,5 +176,5 @@ func KeyMoveChange(session *Session, reader *network.Reader) {
 	pkt.WriteUint32(endY)
 	pkt.WriteByte(dir)
 
-	session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+	session.Broadcast(pkt)
 }

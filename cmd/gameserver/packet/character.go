@@ -272,7 +272,7 @@ func ChangeStyle(session *Session, reader *network.Reader) {
 	pkt.WriteInt32(0)
 	pkt.WriteInt16(0)
 
-	session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+	session.Broadcast(pkt)
 }
 
 // SkillToAction Packet
@@ -293,7 +293,7 @@ func SkillToAction(session *Session, reader *network.Reader) {
 	pkt.WriteByte(x)
 	pkt.WriteByte(y)
 
-	session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+	session.Broadcast(pkt)
 }
 
 // SkillToUser Packet
@@ -341,7 +341,7 @@ func handleStyleSkill(session *Session, reader *network.Reader) {
 	pkt.WriteInt16(unk1)
 	pkt.WriteInt32(unk2)
 
-	session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+	session.Broadcast(pkt)
 }
 
 func handleMoveSkill(session *Session, reader *network.Reader) {
@@ -371,8 +371,8 @@ func handleMoveSkill(session *Session, reader *network.Reader) {
 	pkt.WriteInt16(x)
 	pkt.WriteInt16(y)
 
-	session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
-	session.World.AdjustCell(session.SessionHandler)
+	session.Broadcast(pkt)
+	session.AdjustCell()
 }
 
 func GetPlayerLevel(session *Session) int {
@@ -388,7 +388,7 @@ func SetPlayerLevel(session *Session, level int) {
 	pkt.WriteByte(1) // 1 = level up; 2 = rank up
 	pkt.WriteInt32(session.Character.Id)
 
-	session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+	session.Broadcast(pkt)
 
 	pkt = network.NewWriter(287)
 	pkt.WriteByte(10) // 10 = level up

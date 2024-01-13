@@ -41,6 +41,13 @@ func ItemLooting(session *Session, reader *network.Reader) {
 	_ = reader.ReadUint32() // kind idx
 	slot := reader.ReadUint16()
 
+	world := GetCurrentWorld(session)
+	if world == nil {
+		session.LogErrorf("Unable to find current world for character: %d ",
+			session.Character.Id)
+		return
+	}
+
 	const (
 		statusOk = 0x60 + iota
 		statusOwnerFail
@@ -50,7 +57,7 @@ func ItemLooting(session *Session, reader *network.Reader) {
 		statusOutOfRange
 	)
 
-	item := session.World.PeekItem(id, key)
+	item := world.PeekItem(id, key)
 	if item == nil {
 		// such item does not exist
 		return
@@ -98,7 +105,7 @@ func ItemLooting(session *Session, reader *network.Reader) {
 		return
 	}
 
-	invItem := session.World.PickItem(id)
+	invItem := world.PickItem(id)
 	if invItem == nil {
 		// such item does not exist
 		return

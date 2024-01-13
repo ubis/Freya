@@ -49,7 +49,7 @@ func StorageExchangeMove(session *Session, reader *network.Reader) {
 			pkt.WriteInt32(0)
 			pkt.WriteByte(0)
 
-			session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+			session.Broadcast(pkt)
 		}
 	case Equipment:
 		switch dst {
@@ -63,7 +63,7 @@ func StorageExchangeMove(session *Session, reader *network.Reader) {
 			pkt.WriteInt32(session.Character.Id)
 			pkt.WriteInt16(srcSlot)
 
-			session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+			session.Broadcast(pkt)
 
 			// with one-handed dual weapons we need to move from left hand to
 			// the right, if right-hand weapon was removed
@@ -85,7 +85,7 @@ func StorageExchangeMove(session *Session, reader *network.Reader) {
 			pkt := network.NewWriter(NFYItemUnEquip)
 			pkt.WriteInt32(session.Character.Id)
 			pkt.WriteInt16(srcSlot)
-			session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+			session.Broadcast(pkt)
 
 			pkt = network.NewWriter(NFYItemEquip)
 			pkt.WriteInt32(session.Character.Id)
@@ -93,7 +93,7 @@ func StorageExchangeMove(session *Session, reader *network.Reader) {
 			pkt.WriteInt16(item.Slot)
 			pkt.WriteInt32(0)
 			pkt.WriteByte(0)
-			session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+			session.Broadcast(pkt)
 		}
 	}
 
@@ -145,7 +145,7 @@ func StorageItemSwap(session *Session, reader *network.Reader) {
 			pkt.WriteInt16(item.Slot)
 			pkt.WriteInt32(0)
 			pkt.WriteByte(0)
-			session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
+			session.Broadcast(pkt)
 		}
 	case Equipment:
 		switch dst {
@@ -177,6 +177,13 @@ func StorageItemDrop(session *Session, reader *network.Reader) {
 	_ = reader.ReadInt32() // unk
 	slot := reader.ReadUint16()
 
+	world := GetCurrentWorld(session)
+	if world == nil {
+		session.LogErrorf("Unable to find current world for character: %d ",
+			session.Character.Id)
+		return
+	}
+
 	item := session.Character.Inventory.Get(slot)
 
 	state, err := session.Character.Inventory.Remove(slot)
@@ -192,7 +199,7 @@ func StorageItemDrop(session *Session, reader *network.Reader) {
 
 	if state {
 		x, y := session.Character.GetPosition()
-		session.World.DropItem(&item, session.Character.Id, int(x), int(y))
+		world.DropItem(&item, session.Character.Id, int(x), int(y))
 	}
 }
 

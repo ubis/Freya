@@ -2,7 +2,6 @@ package packet
 
 import (
 	"strings"
-	"time"
 
 	"github.com/ubis/Freya/share/event"
 	"github.com/ubis/Freya/share/log"
@@ -213,18 +212,18 @@ func Initialize(session *Session, reader *network.Reader) {
 	c.Links.Setup(session.RPC, c.Id)
 
 	// prepare to enter the world
-	session.World = session.WorldManager.FindWorld(c.World)
-	if session.World == nil {
+	world := session.WorldManager.FindWorld(c.World)
+	if world == nil {
 		session.LogFatalf("Unable to find world: %d for character %d",
 			c.World, charId)
 		return
 	}
 
+	SetCurrentWorld(session, world, nil)
 	session.SetState(StateInGame)
-
 	session.Send(pkt)
 
-	session.World.EnterWorld(session.SessionHandler)
+	world.EnterWorld(session.SessionHandler)
 	event.Trigger(event.PlayerJoin, session)
 }
 
@@ -237,6 +236,13 @@ func UnInitialize(session *Session, reader *network.Reader) {
 	_ = reader.ReadUint16() // index
 	_ = reader.ReadByte()   // map id
 	_ = reader.ReadByte()   // log out
+
+	world := GetCurrentWorld(session)
+	if world == nil {
+		session.LogErrorf("Unable to find current world for character: %d ",
+			session.Character.Id)
+		return
+	}
 
 	session.SetState(StateVerified)
 
@@ -251,7 +257,7 @@ func UnInitialize(session *Session, reader *network.Reader) {
 
 	session.Send(pkt)
 
-	session.World.ExitWorld(session.SessionHandler, server.DelUserLogout)
+	world.ExitWorld(session.SessionHandler, server.DelUserLogout)
 }
 
 // MessageEvent Packet
@@ -293,8 +299,7 @@ func MessageEvent(session *Session, reader *network.Reader) {
 	pkt.WriteByte(0)
 	pkt.WriteByte(0)
 
-	session.World.BroadcastSessionPacket(session.SessionHandler, pkt)
-	time.Sleep(time.Second * 10)
+	session.Broadcast(pkt)
 }
 
 // WarpCommand packet
@@ -305,7 +310,14 @@ func WarpCommand(session *Session, reader *network.Reader) {
 
 	warpId := reader.ReadByte()
 
-	warp := session.World.FindWarp(warpId)
+	world := GetCurrentWorld(session)
+	if world == nil {
+		session.LogErrorf("Unable to find current world for character: %d ",
+			session.Character.Id)
+		return
+	}
+
+	warp := world.FindWarp(warpId)
 	if warp == nil {
 		session.LogErrorf("Unable to find warp id: %d for character: %d",
 			warpId, session.Character.Id)
@@ -335,7 +347,7 @@ func WarpCommand(session *Session, reader *network.Reader) {
 	pkt.WriteInt32(0)
 	pkt.WriteInt32(0)
 
-	session.World.ExitWorld(session, server.DelUserWarp)
+	world.ExitWorld(session, server.DelUserWarp)
 
 	x, y := warp.Location[0].X, warp.Location[0].Y
 
